@@ -1,0 +1,21 @@
+{
+  "name": "urbitcoin",
+  "version": "0.0.1",
+  "description": "Bitcoin Node JSON RPC API for Urbit",
+  "scripts": {
+    "build": "gulp",
+    "serve": "gulp watch"
+  },
+  "author": "Jose L. Bellod Cisneros",
+  "license": "MIT",
+  "repository": "https://github.com/yosoyubik/urbitcoin",
+  "devDependencies": {
+    "gulp": "^4.0.0"
+  },
+  "dependencies": {
+    "fs-extra": "^8.1.0",
+    "gulp-cli": "2.2.0",
+    "mv": "^2.1.1",
+    "promise": "^8.0.3"
+  }
+}
