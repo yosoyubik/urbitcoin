@@ -1,7 +1,7 @@
-/-  *btc-node-store
+/-  *btc-node-hook
 |%
 ++  rpc
-  =,  ^rpc
+  =,  btc-rpc
   |%
   ++  request-to-rpc
     =,  enjs:format
