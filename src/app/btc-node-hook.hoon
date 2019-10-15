@@ -2,12 +2,11 @@
 ::  and poke the responses into the btc-node-store
 ::
 /-  *btc-node-hook, *btc-node-store
-/+  *btc-node-json
+/+  lib=btc-node-json
 |%
 +$  move  [bone card]
 +$  card
   $%  [%request wire request:http outbound-config:iris]
-      :: [%hiss wire ~ mark %hiss hiss:eyre]
       [%poke wire dock [%btc-node-store-action btc-node-store-action]]
   ==
 ::
@@ -44,18 +43,9 @@
 ++  poke-noun
   |=  act=btc-node-hook-action
   ^-  (quip move _this)
-  ::  TODO: send a JSON rpc request based on the action
-  :: =/  req=request:http
-  ::   [%'POST' endpoint headers *(unit octs)]
-  :: =/  out  *outbound-config:iris
-
-  :: [ost.bol %request /[(scot %da now.bol)] req out]~
   =/  body=request:rpc:jstd
-    :*  ::jsonrpc='1.0'
-        id='curltext'
-        method='getblockchaininfo'
-        params=[%object ~]
-    ==
+    (request-to-rpc:btc-rpc:lib act)
+  ~&  body
   =/  req=request:http
     :*  %'POST'
         endpoint
@@ -65,27 +55,8 @@
           (en-json:html (request-to-json:rpc:jstd body))
     ==
   =/  out  *outbound-config:iris
-  :: =/  hiss=hiss:eyre
-  ::   (request-to-hiss:rpc:jstd endpoint req)
-  :: =/  auth=[@t (list @t)]
-  ::   'Authorization'^['Basic dXJiaXRjb2luZXI6dXJiaXRjb2luZXI=']~
-  :: =.  hiss  hiss(q (~(put in q.hiss) auth))
-  ~&  req+req
-  :: ~&  (~(put in q.hiss) auth)
   :_  this
   [ost.bol %request /[(scot %da now.bol)] req out]~
-  :: :_  ~
-  :: :-  ost.bol
-  :: ^-  card
-  :: :*  %hiss
-  ::     /[(scot %da now.bol)]
-  ::     ~
-  ::     %json-rpc-response
-  ::     %hiss
-  ::     hiss(q.q (~(put in q.q.hiss) auth))
-  ::     :: ^-(hiss:eyre [p.hiss [p.q.hiss (~(put in q.q.hiss) auth) r.q.hiss]])
-  :: ==
-  :: ~
 ::
 ++  http-response
   |=  [=wire response=client-response:iris]
