@@ -11,28 +11,33 @@
       %'SINGLE|ANYONECANPAY'
   ==
 +$  estimate-mode  (unit ?(%'ECONOMICAL' %'CONSERVATIVE' %'UNSET'))
-:: +$  import-request
-::   $:  desc=@t
-::       script-pubKey=?(@t json)
-::       timestamp=?(@da %'now')
-::       redeemscript=@t
-::       witnessscript=@t
-::       pubkeys=(unit (list @t))
-::       keys=(unit (list @t))
-::       range=?(@ [@ @])
-::       internal=?
-::       watchonly=?
-::       label=@t
-::       keypool=?
-::   ==
-:: +$  transaction
-::   $:  txid=@t
-::       vout=@ud
-::       scriptPubKey=@t
-::       redeemScript=@t
-::       witnessScript=@t
-::       amount=?(@ud @t)
-::   ==
++$  import-request
+  $:  desc=@t
+      script-pub-key=@t
+      timestamp=?(@da %'now')
+      redeem-script=@t
+      witness-script=@t
+      pub-keys=(unit (list @t))
+      keys=(unit (list @t))
+      range=?(@ud [@ud @ud])
+      internal=?
+      watchonly=?
+      label=@t
+      keypool=?
+  ==
++$  tx
+  $:  txid=@t
+      vout=@ud
+      script-pub-key=@t
+      redeem-script=@t
+      witness-script=@t
+      amount=@t
+  ==
++$  tx-short
+  $:  txid=@t
+      vout=@ud
+      sequencet=@ud
+  ==
 +$  btc-node-hook-action  request:btc-rpc
 ::
 ++  btc-rpc
@@ -290,20 +295,7 @@
         ::      }
         ::
         $:  %import-multi
-            $=  requests  %-  list
-            $:  desc=@t
-                script-pub-key=@t
-                timestamp=?(@da %'now')
-                redeem-script=@t
-                witness-script=@t
-                pubkeys=(unit (list @t))
-                keys=(unit (list @t))
-                range=?(@ [@ @])
-                internal=?
-                watchonly=?
-                label=@t
-                keypool=?
-            ==
+            requests=(list import-request)
             options=(unit rescan=?)
         ==
         ::  Adds a private key (as returned by dumpprivkey) to your wallet. Requires a new wallet backup.
@@ -491,7 +483,7 @@
         ::        ...
         ::      ]
         ::
-        [%lock-unspent unlock=? transactions=(unit (list [txid=@t vout=@]))]
+        [%lock-unspent unlock=? transactions=(unit (list [txid=@t vout=@ud]))]
         ::  Deletes the specified transaction from the wallet. Meant for use with pruned wallets and as a companion to importprunedfunds. This will affect wallet balances.
         ::
         ::  (Arguments:
@@ -532,7 +524,7 @@
         ::
         $:  %send-many
             dummy=%''
-            amounts=(list (pair @t @t))
+            amounts=(list [address=@t amount=@t])
             minconf=(unit @ud)
             comment=(unit @t)
             subtract-fee-from=(unit (list address))
@@ -632,15 +624,8 @@
         ::                                     "SINGLE|ANYONECANPAY"
         ::
         $:  %sign-raw-transaction-with-wallet
-           hex-string=@ux
-           $=  prev-txs  %-  unit   %-  list
-           $:  txid=@t
-               vout=@ud
-               script-pub-key=@t
-               redeem-script=@t
-               witness-script=@t
-               amount=?(@ud @t)
-           ==
+           hex-string=@t
+           prev-txs=(unit (list tx))
            =sig-hash-type
         ==
         ::  Unloads the wallet referenced by the request endpoint otherwise unloads the wallet specified in the argument.
@@ -709,11 +694,7 @@
         :: }
         ::
         $:  %wallet-create-fundedpsbt
-            $=  inputs  %-  list
-            $:  txid=@t
-                vout=@ud
-                sequence=@ud
-            ==
+            inputs=(list tx-short)
             ::  FIXME:
             ::  list of addressess and JUST one "data" key?
             ::

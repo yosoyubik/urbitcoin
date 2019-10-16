@@ -60,7 +60,7 @@
   ;:  weld
     =/  action=request:btc-rpc  [op 'XXXX' ~]
     %+  expect-eq
-      !>  [op (method:btc-rpc:lib op) %list ~[s+'XXXX' ~]]
+      !>  [op (method:btc-rpc:lib op) %list [s+'XXXX']~]
       !>  (request-to-rpc:btc-rpc:lib action)
   ::
     =/  action=request:btc-rpc
@@ -154,7 +154,7 @@
   =/  action=request:btc-rpc
     [op address=*@t minconf=*@ud]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'' n+(scot %ud *@ud)]]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-get-received-by-label  ^-  tang
@@ -186,14 +186,16 @@
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-import-address  ^-  tang
+  =/  op  %import-address
   =/  action=request:btc-rpc
-    [%import-address address=*@t label=*(unit @t) rescan=*(unit ?) p2sh=*(unit ?)]
+    [op address=*@t label=*(unit @t) rescan=*(unit ?) p2sh=*(unit ?)]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-import-multi  ^-  tang
-  =/  action=request:btc-rpc  [%import-multi requests=~ options=~]
+  =/  op  %import-multi
+  =/  action=request:btc-rpc  [op requests=~ options=~]
     :: :+  %import-multi
     :: :~  desc=*@t
     ::     script-pub-key=*@t
@@ -209,44 +211,46 @@
     ::     keypool=*?
     :: ==
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-import-privkey  ^-  tang
+  =/  op  %import-privkey
   =/  action=request:btc-rpc
-    [%import-privkey privkey=*@t label=*(unit @t) rescan=*(unit ?)]
+    [op privkey=*@t label=*(unit @t) rescan=*(unit ?)]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  (request-to-rpc:btc-rpc:lib action)
+::
 ++  test-import-pruned-funds  ^-  tang
+  =/  op  %import-pruned-funds
   =/  action=request:btc-rpc
-    [%import-pruned-funds raw-transaction=*@t tx-out-proof=*@t]
+    [op raw-transaction=*@t tx-out-proof=*@t]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-import-pubkey  ^-  tang
+  =/  op  %import-pubkey
   =/  action=request:btc-rpc
-    [%import-pubkey pubkey=*@t label=*(unit @t) rescan=*(unit ?)]
+    [op pubkey=*@t label=*(unit @t) rescan=*(unit ?)]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-import-wallet  ^-  tang
-  =/  action=request:btc-rpc  [%import-wallet filename=*@t]
-::     ~[s+filename.req]
-::   ::
+  =/  op  %import-wallet
+  =/  action=request:btc-rpc  [op filename=*@t]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-key-pool-refill  ^-  tang
-  =/  action=request:btc-rpc  [%key-pool-refill new-size=*(unit @ud)]
-::     ~[(feud new-size.req)]
-::   ::
+  =/  op  %key-pool-refill
+  =/  action=request:btc-rpc  [op new-size=*(unit @ud)]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-list-address-groupings  ^-  tang
   =/  op  %list-address-groupings
@@ -256,14 +260,12 @@
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-list-labels  ^-  tang
-
-  =/  action=request:btc-rpc  [%list-labels purpose=*(unit @t)]
-
-::     ~[(ferm purpose.req %s)]
-::   ::
+  =/  op  %list-labels
+  =/  action=request:btc-rpc  [op purpose=*(unit @t)]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
+::
 ++  test-list-lock-unspent  ^-  tang
   =/  op  %list-lock-unspent
   =/  action=request:btc-rpc  [op ~]
@@ -280,14 +282,10 @@
         include-watch-only=*(unit ?)
         address-filter=*(unit @t)
     ==
-::     :~  (feud minconf.req)
-::         (ferm include-empty.req %b)
-::         (ferm include-watch-only.req %b)
-::         (ferm address-filter.req %s)
-::     ==
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
+::
 ++  test-list-received-by-label  ^-  tang
   =/  op  %list-received-by-label
   =/  action=request:btc-rpc
@@ -296,13 +294,9 @@
         include-empty=*(unit ?)
         include-watch-only=*(unit ?)
     ==
-::     :~  (feud minconf.req)
-::         (ferm include-empty.req %b)
-::         (ferm include-watch-only.req %b)
-::     ==
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-lists-in-ceblock  ^-  tang
   =/  op  %lists-in-ceblock
@@ -313,14 +307,9 @@
         include-watch-only=*(unit ?)
         include-removed=*(unit ?)
     ==
-::     :~  (ferm blockhash.req %s)
-::         (feud target-confirmations.req)
-::         (ferm include-watch-only.req %b)
-::         (ferm include-removed.req %b)
-::     ==
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-list-transactions  ^-  tang
   =/  op  %list-transactions
@@ -331,18 +320,13 @@
         skip=*(unit @ud)
         include-watch-only=*(unit ?)
     ==
-::     :~  (ferm label.req %s)
-::         (feud count.req)
-::         (feud skip.req)
-::         (ferm include-watch-only.req %b)
-::     ==
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-list-unspent  ^-  tang
   =/  query-options  %-  some
-  :*  minimum-amount=*(unit @t)
+  :*  minimum-amount=*(unit @t)  ::  n+(scot %ta minimun-amount)
       maximum-amount=*(unit @t)
       maximum-count=*(unit @t)
       minimum-sum-amount=*(unit @t)
@@ -356,17 +340,9 @@
         include-unsafe=*(unit ?)
         query-options=query-options
     ==
-::     :~  (ferm minconf.req %s)
-::         (feud maxconf.req)
-::         (ferm addresses.req %a)
-::         (ferm include-unsafe.req %b)
-::         (feob query-options.req)
-::         :: ?~  query-options  ~
-::         :: o+(~(gas by *(map @t json)) u.query-options.req)
-::     ==
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-list-wallet-dir  ^-  tang
     =/  op  %list-wallet-dir
@@ -374,55 +350,43 @@
     %+  expect-eq
       !>  [op (method:btc-rpc:lib op) %list ~]
       !>  (request-to-rpc:btc-rpc:lib action)
-  ::
+::
 ++  test-list-wallets     ^-  tang
     =/  op  %list-wallets
     =/  action=request:btc-rpc  [op ~]
     %+  expect-eq
       !>  [op (method:btc-rpc:lib op) %list ~]
       !>  (request-to-rpc:btc-rpc:lib action)
-  ::
+::
 ++  test-load-wallet      ^-  tang
-  =/  action=request:btc-rpc  [%load-wallet filename=*@t]
-::     ~[s+filename.req]
-::   ::
+  =/  op  %load-wallet
+  =/  action=request:btc-rpc  [op filename=*@t]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-lock-unspent  ^-  tang
+  =/  op  %lock-unspent
   =/  action=request:btc-rpc
-    [%lock-unspent unlock=*? transactions=*(unit (list [txid=@t vout=@]))]
-
-::     :~  b+unlock.req
-::         ?~  transactions.req  ~
-::         o+(~(gas by *(map @t json)) u.transactions.req)
-::     ==
-::   ::
+    [op unlock=*? transactions=*(unit (list [txid=@t vout=@ud]))]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [b+&]~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-remove-pruned-funds  ^-  tang
-  =/  action=request:btc-rpc  [%remove-pruned-funds txid=*@t]
-
-::     ~[s+txid.req]
-::   ::
+  =/  op  %remove-pruned-funds
+  =/  action=request:btc-rpc  [op txid=*@t]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-rescan-blockchain  ^-  tang
+  =/  op  %rescan-blockchain
   =/  action=request:btc-rpc
-    [%rescan-blockchain start-height=*(unit @ud) stop-height=*(unit @ud)]
-
-::     :~  (feud start-height.req)
-::         (feud stop-height.req)
-::     ==
-::   ::
+    [op start-height=*(unit @ud) stop-height=*(unit @ud)]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-send-many  ^-  tang
   =/  op  %send-many
@@ -448,8 +412,8 @@
 ::     ==
 ::   ::
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-send-to-address  ^-  tang
   =/  op  %send-to-address
@@ -477,8 +441,8 @@
 ::     ==
 ::   ::
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-set-hd-seed   ^-  tang
     =/  op  %set-hd-seed
@@ -488,107 +452,107 @@
       !>  (request-to-rpc:btc-rpc:lib action)
   ::
 ++  test-set-label     ^-  tang
-  =/  action=request:btc-rpc  [%set-label address=*@t label=*@t]
-::     :~  s+address.req
-::         s+label.req
-::     ==
-::   ::
+  =/  op  %set-label
+  =/  action=request:btc-rpc  [op address=*@t label=*@t]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-set-tx-fee    ^-  tang
-  =/  action=request:btc-rpc  [%set-tx-fee amount=*@t]
-::     ~[s+amount.req]
-::   ::
+  =/  op  %set-tx-fee
+  =/  action=request:btc-rpc  [op amount=*@t]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-sign-message  ^-  tang
-  =/  action=request:btc-rpc  [%sign-message address=*@t message=*@t]
-::     :~  s+address.req
-::         s+message.req
-::     ==
-::   ::
+  =/  op  %sign-message
+  =/  action=request:btc-rpc  [op address=*@t message=*@t]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-sign-raw-transaction-with-wallet  ^-  tang
-  =/  prev-txs   %-  limo
+  =/  prev-txs   %-  some  %-  limo
     :~  txid=*@t
         vout=*@ud
         script-pub-key=*@t
         redeem-script=*@t
         witness-script=*@t
-        amount=*?(@ud @t)
+        amount=*@t
      ==
   =/  op  %sign-raw-transaction-with-wallet
   =/  action=request:btc-rpc
     :*  op
-        *@ux
+        *@t
         ~
         `%'ALL'
     ==
-::     :~  s+hex-string.req
-::         (feob prev-txs.req)
-::         :: ?~  prev-txs.req  ~
-::         :: o+(~(gas by *(map @t json)) u.prev-txs.req)
-::     ==
-::   ::
+:: :*  ['txid' s+a.txid]
+::     ['vout' n+(scot %ud a.vout)]
+::     ['scriptPubKey' s+a.script-pub-key]
+::     ['redeem-Script' s+a.redeem-script]
+::     ['witnessScript' s+a.witness-script]
+::     ['amount' n+(scot %ta a.amount)]
+:: ==
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'ALL']]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-unload-wallet  ^-  tang
-    =/  action=request:btc-rpc
-      [%unload-wallet wallet-name=*(unit @t)]
-::     ~[s+wallet-name.req]
-::   ::
+  =/  op  %unload-wallet
+  =/  action=request:btc-rpc
+    [op wallet-name=*(unit @t)]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
-++  test-wallet-create-fundedpsbt  ^-  tang
-  :: =/  action=request:btc-rpc
-  ::   :*  %wallet-create-fundedpsbt
-  ::       $=  inputs  %-  list
-  ::       =/  action=request:btc-rpc  :*  txid=*@t
-  ::           vout=*@ud
-  ::           sequence=*@ud
-  ::       ==
-  ::       ::  FIXME:
-  ::       ::  list of addressess and JUST one "data" key?
-  ::       ::
-  ::       outputs=(list (pair @t ?(@t @ud)))
-  ::       locktime=*(unit @ud)
-  ::       $=  options  %-  unit
-  ::       =/  action=request:btc-rpc  :*  change-address=*(unit @t)
-  ::           change-position=*(unit @ud)
-  ::           change-type=*(unit ?(%legacy %p2sh-segwit %bech32))
-  ::           include-watching=*(unit ?)
-  ::           lock-unspents=*(unit ?)
-  ::           fee-rate=*(unit @t)
-  ::           subtract-fee-from-outputs=*(unit (list @ud))
-  ::           replaceable=*(unit ?)
-  ::           conf-target=*(unit @t)
-  ::           =estimate-mode
-  ::       ==
-  ::       bip32derivs=*(unit ?)
-  ::   ==
-::     :~  a+inputs.req
-::         a+outputs.req
-::         n+(scot %ud locktime.req)
-::         (feob options.req)
-::         :: ?~  options.req  ~
-::         :: o+(~(gas by *(map @t json)) u.options.req)
-::         (ferm bip32derivs.req %b)
+:: ++  test-wallet-create-fundedpsbt  ^-  tang
+::   =/  op  %wallet-create-fundedpsbt
+::   =/  inputs  %-  limo
+::   :*  txid=*@t
+::       vout=*@ud
+::       sequence=*@ud
+::   ==
+::   =/  action=request:btc-rpc
+::     :*  op
+::         $=  inputs  %-  list
+::         =/  action=request:btc-rpc
+::         :*  txid=*@t
+::             vout=*@ud
+::             sequence=*@ud
+::         ==
+::         ::  FIXME:
+::         ::  list of addressess and JUST one "data" key?
+::         ::
+::         outputs=(list (pair @t ?(@t @ud)))
+::         locktime=*(unit @ud)
+::         $=  options  %-  unit
+::         =/  action=request:btc-rpc  :*  change-address=*(unit @t)
+::             change-position=*(unit @ud)
+::             change-type=*(unit ?(%legacy %p2sh-segwit %bech32))
+::             include-watching=*(unit ?)
+::             lock-unspents=*(unit ?)
+::             fee-rate=*(unit @t)
+::             subtract-fee-from-outputs=*(unit (list @ud))
+::             replaceable=*(unit ?)
+::             conf-target=*(unit @t)
+::             =estimate-mode
+::         ==
+::         bip32derivs=*(unit ?)
 ::     ==
-::   ::
-  %+  expect-eq
-    !>  &
-    !>  |
+:: ::     :~  a+inputs.req
+:: ::         a+outputs.req
+:: ::         n+(scot %ud locktime.req)
+:: ::         (feob options.req)
+:: ::         :: ?~  options.req  ~
+:: ::         :: o+(~(gas by *(map @t json)) u.options.req)
+:: ::         (ferm bip32derivs.req %b)
+:: ::     ==
+:: ::   ::
+::   %+  expect-eq
+::     !>  [op (method:btc-rpc:lib op) %list ~]
+::     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-wallet-lock  ^-  tang
   =/  op  %wallet-lock
@@ -598,26 +562,21 @@
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-wallet-passphrase  ^-  tang
+  =/  op  %wallet-passphrase
   =/  action=request:btc-rpc
-    [%wallet-passphrase passphrase=*@t timeout=*@ud]
-
-::     ~[s+passphrase.req s+timeout.req]
-::   ::
+    [op passphrase=*@t timeout=*@ud]
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'' n+(scot %ud *@ud)]]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-wallet-passphrase-change  ^-  tang
+  =/  op  %wallet-passphrase-change
   =/  action=request:btc-rpc
-    [%wallet-passphrase-change old-passphrase=*(unit @t) new-passphrase=*(unit @t)]
-
-::     :~  (ferm old-passphrase.req %s)
-::         (feud new-passphrase.req)
-::     ==
-::   ::
+    :+  op
+    old-passphrase=*(unit @t)  new-passphrase=*(unit @t)
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-wallet-process-psbt  ^-  tang
   =/  op  %wallet-process-psbt
@@ -628,15 +587,10 @@
         sig-hash-type=`%'ALL'
         bip32derivs=*(unit ?)
     ==
-::     :~  s+psbt.req
-::         (ferm sign.req %b)
-::         (ferm sig-hash-type.req %s)
-::     ==
-:: ::  ZMQ
-:: ::
   %+  expect-eq
-    !>  &
-    !>  |
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'ALL']]
+    !>  (request-to-rpc:btc-rpc:lib action)
+::  ZMQ
 ::
 ++  test-get-zmq-notifications  ^-  tang
     =/  op  %get-zmq-notifications
