@@ -79,8 +79,6 @@
       !>  (request-to-rpc:btc-rpc:lib action)
   ==
 ::
-::  Creates and loads a new wallet.
-::
 ++  test-create-wallet  ^-  tang
   =/  op  %create-wallet
   =/  action=request:btc-rpc
@@ -400,17 +398,17 @@
         conf-target=*(unit @ud)
         estimate-mode=*(unit @t)
     ==
-::     :~  s+dummy.req
-::         (feob (some amounts.req))
-::         (feud minconf.req)
-::         (ferm comment.req %t)
-::         (feob subtract-fee-from.req)
-::         :: ?~  subtract-fee-from.req  ~
-::         :: o+(~(gas by *(map @t json)) u.subtract-fee-from.req)
-::         (feud conf-target.req)
-::         (ferm estimate-mode.req %s)
-::     ==
-::   ::
+  ::     :~  s+dummy.req
+  ::         (feob (some amounts.req))
+  ::         (feud minconf.req)
+  ::         (ferm comment.req %t)
+  ::         (feob subtract-fee-from.req)
+  ::         :: ?~  subtract-fee-from.req  ~
+  ::         :: o+(~(gas by *(map @t json)) u.subtract-fee-from.req)
+  ::         (feud conf-target.req)
+  ::         (ferm estimate-mode.req %s)
+  ::     ==
+  ::   ::
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list [s+'']~]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -428,18 +426,18 @@
         conf-target=*(unit @ud)
         estimate-mode=*(unit @t)
     ==
-::     :~  s+address.req
-::         s+amount.req
-::         (ferm comment.req %s)
-::         (ferm comment-to.req %s)
-::         (feob subtract-fee-from.req)
-::         :: ?~  subtract-fee-from.req  ~
-::         :: o+(~(gas by *(map @t json)) u.subtract-fee-from.req)
-::         (ferm replaceable.req %b)
-::         (feud conf-target.req)
-::         (ferm estimate-mode.req %s)
-::     ==
-::   ::
+  ::     :~  s+address.req
+  ::         s+amount.req
+  ::         (ferm comment.req %s)
+  ::         (ferm comment-to.req %s)
+  ::         (feob subtract-fee-from.req)
+  ::         :: ?~  subtract-fee-from.req  ~
+  ::         :: o+(~(gas by *(map @t json)) u.subtract-fee-from.req)
+  ::         (ferm replaceable.req %b)
+  ::         (feud conf-target.req)
+  ::         (ferm estimate-mode.req %s)
+  ::     ==
+  ::   ::
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -488,13 +486,13 @@
         ~
         `%'ALL'
     ==
-:: :*  ['txid' s+a.txid]
-::     ['vout' n+(scot %ud a.vout)]
-::     ['scriptPubKey' s+a.script-pub-key]
-::     ['redeem-Script' s+a.redeem-script]
-::     ['witnessScript' s+a.witness-script]
-::     ['amount' n+(scot %ta a.amount)]
-:: ==
+  :: :*  ['txid' s+a.txid]
+  ::     ['vout' n+(scot %ud a.vout)]
+  ::     ['scriptPubKey' s+a.script-pub-key]
+  ::     ['redeem-Script' s+a.redeem-script]
+  ::     ['witnessScript' s+a.witness-script]
+  ::     ['amount' n+(scot %ta a.amount)]
+  :: ==
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'ALL']]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -598,5 +596,5 @@
     %+  expect-eq
       !>  [op (method:btc-rpc:lib op) %list ~]
       !>  (request-to-rpc:btc-rpc:lib action)
-  ::
+::
 --
