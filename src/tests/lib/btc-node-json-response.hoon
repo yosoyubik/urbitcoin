@@ -9,48 +9,43 @@
 :: =,  btc-rpc
 ::
 |%
-::  Others
-::
-:: ++  test-get-block-count  ^-  tang
-::   =/  op  %get-block-count
-::   =/  action=request:btc-rpc  [op ~]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
-:: ++  test-get-blockchain-info  ^-  tang
-::   =/  op  %get-blockchain-info
-::   =/  action=request:btc-rpc  [op ~]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-::
-::  Wallet
-::
 ++  test-abandon-transaction  ^-  tang
   =/  op  %abandon-transaction
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-abort-rescan  ^-  tang
   =/  op  %abort-rescan
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
-:: ++  test-add-multisig-address  ^-  tang
-::   =/  op  %add-multisig-address
-::   =/  action=request:btc-rpc  [op ~]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-
+++  test-add-multisig-address  ^-  tang
+  =/  op  %add-multisig-address
+  ::  e.g:
+  :: {
+  ::   "address":"multisigaddress",    (string) The value of the new multisig address.
+  ::   "redeemScript":"script"         (string) The string value of the hex-encoded redemption script.
+  :: }
+  ::
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    ^-  json
+    %-  pairs:enjs:format
+    :~  ['address' s+'23']
+        ['redeemScript' s+'23']
+    ==
+  =/  exp=response:btc-rpc  [op '23' '23']
+  %+  expect-eq
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
+::
 ++  test-backup-wallet  ^-  tang
   =/  op  %backup-wallet
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
@@ -67,7 +62,7 @@
   ::      "errors":  [ str... ] (json array of strings)
   ::    }
   =/  result=response:rpc:jstd
-    :+  %result  id=op
+    :+  %result  op
     ^-  json
     :-  %o  %-  ~(gas by *(map @t json))
     ^-  (list (pair @t json))
@@ -90,7 +85,7 @@
   ::      "warning":  <warning>,     (string)
   ::    }
   =/  result=response:rpc:jstd
-    :+  %result  id=op
+    :+  %result  op
     ^-  json
     :-  %o  %-  ~(gas by *(map @t json))
     ^-  (list (pair @t json))
@@ -103,7 +98,7 @@
 ::
 ++  test-dump-privkey  ^-  tang
   =/  op  %dump-privkey
-  =/  result=response:rpc:jstd  [%result id=op s+'23']
+  =/  result=response:rpc:jstd  [%result op s+'23']
   %+  expect-eq
     !>  [op '23']
     !>  (parse-response:btc-rpc:lib result)
@@ -118,7 +113,7 @@
   ::      "warning":  <warning>,     (string)
   ::    }
   =/  result=response:rpc:jstd
-    :+  %result  id=op
+    :+  %result  op
     ^-  json
     :-  %o  %-  ~(gas by *(map @t json))
     ^-  (list (pair @t json))
@@ -129,240 +124,700 @@
 ::
 ++  test-encrypt-wallet  ^-  tang
   =/  op  %encrypt-wallet
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
-:: ++  test-get-addresses-by-label  ^-  tang
-::   =/  op  %get-addresses-by-label
-::   =/  addr  '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
-::   =/  expected-res=response:btc-rpc
-::   [op [addr 'send']~]
-::   ::  e.g:
-::   ::   { (json object with addresses as keys)
-::   ::     "address": { (json object with information about address)
-::   ::       "purpose": "string" (string)  Purpose of address ("send" for sending address, "receive" for receiving address)
-::   ::     },...
-::   ::   }
-::   =/  result=response:rpc:jstd
-::     :+  %result  id=op
-::     ^-  json
-::     :-  %o  %-  ~(gas by *(map @t json))
-::     ^-  (list (pair @t json))
-::     :~  :-  addr
-::         :-  %o  %-  ~(gas by *(map @t json))
-::         ^-  (list (pair @t json))
-::         ['purpose' s+'send']~
-::     ==
-::   %+  expect-eq
-::     !>  expected-res
-::     !>  (parse-response:btc-rpc:lib result)
+++  test-get-addresses-by-label  ^-  tang
+  =/  op  %get-addresses-by-label
+  =/  addr  '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
+  ::  e.g:
+  ::   { (json object with addresses as keys)
+  ::     "address": { (json object with information about address)
+  ::       "purpose": "string" (string)  Purpose of address ("send" for sending address, "receive" for receiving address)
+  ::     },...
+  ::   }
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    %-  pairs:enjs:format
+      :~  :-  addr
+          %-  pairs:enjs:format
+            ['purpose' s+'send']~
+      ==
+  =/  exp=response:btc-rpc
+    ::  FIXME
+    ::  A list of pairs or a map breaks %sole... (?)
+    ::
+    :: [op (~(gas by *(map @t ?(%send %receive))) [addr %send]~)]
+    [op [addr %send]~]
+  %+  expect-eq
+  :: !>  exp
+  :: !>  (parse-response:btc-rpc:lib result)
+    !>  &
+    !>  &
 ::
-:: ++  test-get-address-info  ^-  tang
-::   =/  op  %get-address-info
-::   =/  action=request:btc-rpc  [op address=*@t]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list [s+'']~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
+++  test-get-address-info  ^-  tang
+  =/  op  %get-address-info
+  =/  addr  '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
+  ::  e.g:
+  :: {
+  ::      "address" : "address",        (string) The bitcoin address validated
+  ::      "scriptPubKey" : "hex",       (string) The hex-encoded scriptPubKey generated by the address
+  ::      "ismine" : true|false,        (boolean) If the address is yours or not
+  ::      "iswatchonly" : true|false,   (boolean) If the address is watchonly
+  ::      "solvable" : true|false,      (boolean) Whether we know how to spend coins sent to this address, ignoring the possible lack of private keys
+  ::      "desc" : "desc",            (string, optional) A descriptor for spending coins sent to this address (only when solvable)
+  ::      "isscript" : true|false,      (boolean) If the key is a script
+  ::      "ischange" : true|false,      (boolean) If the address was used for change output
+  ::      "iswitness" : true|false,     (boolean) If the address is a witness address
+  ::      "witness_version" : version   (numeric, optional) The version number of the witness program
+  ::      "witness_program" : "hex"     (string, optional) The hex value of the witness program
+  ::      "script" : "type"             (string, optional) The output script type. Only if "isscript" is true and the redeemscript is known. Possible types: nonstandard, pubkey, pubkeyhash, scripthash, multisig, nulldata, witness_v0_keyhash, witness_v0_scripthash, witness_unknown
+  ::      "hex" : "hex",                (string, optional) The redeemscript for the p2sh address
+  ::      "pubkeys"                     (string, optional) Array of pubkeys associated with the known redeemscript (only if "script" is "multisig")
+        ::     [
+        ::       "pubkey"
+        ::       ,...
+        ::     ]
+  ::      "sigsrequired" : xxxxx        (numeric, optional) Number of signatures required to spend multisig output (only if "script" is "multisig")
+  ::      "pubkey" : "publickeyhex",    (string, optional) The hex value of the raw public key, for single-key addresses (possibly embedded in P2SH or P2WSH)
+  ::      "embedded" : {...},           (object, optional) Information about the address embedded in P2SH or P2WSH, if relevant and known. It includes all getaddressinfo output fields for the embedded address, excluding metadata ("timestamp", "hdkeypath", "hdseedid") and relation to the wallet ("ismine", "iswatchonly").
+  ::      "iscompressed" : true|false,  (boolean, optional) If the pubkey is compressed
+  ::      "label" :  "label"         (string) The label associated with the address, "" is the default label
+  ::      "timestamp" : timestamp,      (number, optional) The creation time of the key if available in seconds since epoch (Jan 1 1970 GMT)
+  ::      "hdkeypath" : "keypath"       (string, optional) The HD keypath if the key is HD and available
+  ::      "hdseedid" : "<hash160>"      (string, optional) The Hash160 of the HD seed
+  ::      "hdmasterfingerprint" : "<hash160>" (string, optional) The fingperint of the master key.
+  ::      "labels"                      (object) Array of labels associated with the address.
+  ::        [{ (json object of label data)
+  ::             "name": "labelname" (string) The label
+  ::             "purpose": "string" (string) Purpose of address ("send" for sending address, "receive" for receiving address)
+  ::        },...
+  ::       ]
+  ::  }
+  ::
+  =/  label-result
+    =-  ['labels' [%a -]]
+    :~  %-  pairs:enjs:format
+        :~  ['name' s+'label1']
+            ['purpose' s+'send']
+    ==  ==
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    %-  pairs:enjs:format
+      :~  ['address' s+addr]
+          ['scriptPubKey' s+'23']
+          ['ismine' b+&]
+          ['iswatchonly' b+&]
+          ['solvable' b+&]
+          ['desc' s+'23']
+          ['isscript' b+&]
+          ['ischange' b+&]
+          ['iswitness' b+&]
+          ['witness_version' s+'23']
+          ['witness_program' s+'23']
+          ['script' s+'23']
+          ['hex' s+'23']
+          ['pubkeys' a+[s+'23']~]
+          ['sigsrequired' n+~.2]
+          ['pubkey' s+'23']
+          :-  'embedded'
+          %-  pairs:enjs:format
+            :~  ['scriptPubKey' s+'23']
+                ['solvable' b+&]
+                ['desc' s+'23']
+                ['isscript' b+&]
+                ['ischange' b+&]
+                ['iswitness' b+&]
+                ['witness_version' s+'23']
+                ['witness_program' s+'23']
+                ['script' s+'23']
+                ['hex' s+'23']
+                ['pubkeys' a+[s+'23']~]
+                ['sigsrequired' n+~.2]
+                ['pubkey' s+'23']
+                ['iscompressed' b+&]
+                ['label' s+'23']
+                ['hdmasterfingerprint' s+'23']
+                label-result
+            ==
+          ['iscompressed' b+&]
+          ['label' s+'23']
+          ['timestamp' s+'23']
+          ['hdkeypath' s+'23']
+          ['hdseedid' s+'23']
+          ['hdmasterfingerprint' s+'23']
+          label-result
+      ==
+  =/  embedded
+    :*  '23'  &  (some '23')  &  &  &
+        (some '23')  (some '23')  (some '23')  (some '23')
+        (some ['23']~)  (some 2)  (some '23')  (some &)
+        (some '23')  (some '23')  ['label1' %send]~
+    ==
+  =/  exp=response:btc-rpc
+    :*  op  addr  '23'  &  &  &  (some '23')  &  &  &
+        (some '23')  (some '23')  (some '23')  (some '23')
+        (some ['23']~)  (some 2)  (some '23')  (some embedded)
+        (some &)  (some '23')  (some '23')  (some '23')
+        (some '23')  (some '23')
+        ['label1' %send]~
+    ==
+  %+  expect-eq
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
+::
 ++  test-get-balance  ^-  tang
   =/  op  %get-balance
-  =/  result=response:rpc:jstd  [%result id=op s+'23']
+  =/  result=response:rpc:jstd  [%result op s+'23']
   %+  expect-eq
     !>  [op '23']
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-get-new-address  ^-  tang
   =/  op  %get-new-address
-  =/  result=response:rpc:jstd  [%result id=op s+'23']
+  =/  result=response:rpc:jstd  [%result op s+'23']
   %+  expect-eq
     !>  [op '23']
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-get-raw-change-address  ^-  tang
   =/  op  %get-raw-change-address
-  =/  result=response:rpc:jstd  [%result id=op s+'23']
+  =/  result=response:rpc:jstd  [%result op s+'23']
   %+  expect-eq
     !>  [op '23']
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-get-received-by-address  ^-  tang
   =/  op  %get-received-by-address
-  =/  result=response:rpc:jstd  [%result id=op s+'23']
+  =/  result=response:rpc:jstd  [%result op s+'23']
   %+  expect-eq
     !>  [op '23']
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-get-received-by-label  ^-  tang
   =/  op  %get-received-by-label
-  =/  result=response:rpc:jstd  [%result id=op s+'23']
+  =/  result=response:rpc:jstd  [%result op s+'23']
   %+  expect-eq
     !>  [op '23']
     !>  (parse-response:btc-rpc:lib result)
 ::
-:: ++  test-get-transaction  ^-  tang
-::   =/  op  %get-transaction
-::   =/  action  [op *@t *(unit ?)]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~[s+'']]
-::     !>  (request-to-rpc:btc-rpc:lib action)
+++  test-get-transaction  ^-  tang
+  =/  op  %get-transaction
+  ::  e.g:
+  :: {
+  ::   "amount" : x.xxx,        (numeric) The transaction amount in BTC
+  ::   "fee": x.xxx,            (numeric) The amount of the fee in BTC. This is negative and only available for the
+  ::                               'send' category of transactions.
+  ::   "confirmations" : n,     (numeric) The number of confirmations
+  ::   "blockhash" : "hash",  (string) The block hash
+  ::   "blockindex" : xx,       (numeric) The index of the transaction in the block that includes it
+  ::   "blocktime" : ttt,       (numeric) The time in seconds since epoch (1 Jan 1970 GMT)
+  ::   "txid" : "transactionid",   (string) The transaction id.
+  ::   "time" : ttt,            (numeric) The transaction time in seconds since epoch (1 Jan 1970 GMT)
+  ::   "timereceived" : ttt,    (numeric) The time received in seconds since epoch (1 Jan 1970 GMT)
+  ::   "bip125-replaceable": "yes|no|unknown",  (string) Whether this transaction could be replaced due to BIP125 (replace-by-fee);
+  ::                                                    may be unknown for unconfirmed transactions not in the mempool
+  ::   "details" : [
+  ::     {
+  ::       "address" : "address",          (string) The bitcoin address involved in the transaction
+  ::       "category" :                      (string) The transaction category.
+  ::                    "send"                  Transactions sent.
+  ::                    "receive"               Non-coinbase transactions received.
+  ::                    "generate"              Coinbase transactions received with more than 100 confirmations.
+  ::                    "immature"              Coinbase transactions received with 100 or fewer confirmations.
+  ::                    "orphan"                Orphaned coinbase transactions received.
+  ::       "amount" : x.xxx,                 (numeric) The amount in BTC
+  ::       "label" : "label",              (string) A comment for the address/transaction, if any
+  ::       "vout" : n,                       (numeric) the vout value
+  ::       "fee": x.xxx,                     (numeric) The amount of the fee in BTC. This is negative and only available for the
+  ::                                            'send' category of transactions.
+  ::       "abandoned": xxx                  (bool) 'true' if the transaction has been abandoned (inputs are respendable). Only available for the
+  ::                                            'send' category of transactions.
+  ::     }
+  ::     ,...
+  ::   ],
+  ::   "hex" : "data"         (string) Raw data for transaction
+  :: }
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    ^-  json
+    %-  pairs:enjs:format
+    :~  ['amount' s+'23']
+        ['fee' s+'23']
+        ['confirmations' n+~.23]
+        ['blockhash' s+'23']
+        ['blockindex' n+~.23]
+        ['blocktime' s+'23']
+        ['txid' s+'23']
+        ['time' s+'23']
+        ['timereceived' s+'23']
+        ['bip125-replaceable' s+'yes']
+        :-  'details'  ^-  json
+        :-  %a  ^-  (list json)
+        :~  %-  pairs:enjs:format
+            :~  ['address' s+'23']
+                ['category' s+'send']
+                ['amount' s+'23']
+                ['label' s+'23']
+                ['vout' n+~.23]
+                ['fee' s+'23']
+                ['abandoned' b+|]
+        ==  ==
+        ['hex' s+'23']
+    ==
+  =/  exp=response:btc-rpc
+    :*  op  '23'  '23'  23  '23'  23
+        '23'  '23'  '23'  '23'  %yes
+        ['23' %send '23' '23' 23 '23' %.n]~
+        '23'
+    ==
+  %+  expect-eq
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-get-unconfirmed-balance  ^-  tang
   =/  op  %get-unconfirmed-balance
-  =/  result=response:rpc:jstd  [%result id=op s+'99']
+  =/  result=response:rpc:jstd  [%result op s+'99']
   %+  expect-eq
     !>  [op '99']
     !>  (parse-response:btc-rpc:lib result)
 ::
-:: ++  test-get-wallet-info  ^-  tang
-::   =/  op  %get-wallet-info
-::   =/  action=request:btc-rpc  [op ~]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
+++  test-get-wallet-info  ^-  tang
+  =/  op  %get-wallet-info
+  ::  e.g:
+  ::    {
+  ::      "name":    <wallet_name>,  (string)
+  ::      "warning":  <warning>,     (string)
+  ::    }
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    %-  pairs:enjs:format
+      :~  ['walletname' s+'23']
+          ['walletversion' s+'23']
+          ['balance' s+'23']
+          ['unconfirmed_balance' s+'23']
+          ['immature_balance' s+'23']
+          ['txcount' s+'23']
+          ['keypoololdest' s+'23']
+          ['keypoolsize' s+'23']
+          ['keypool_size_hd_internal' s+'23']
+          ['unlocked_until' s+'23']
+          ['paytxfee' s+'23']
+          ['hdseedid' s+'23']
+          ['private_keys_enabled' b+&]
+      ==
+  =/  exp=response:btc-rpc
+    [op '23' '23' '23' '23' '23' '23' '23' '23' '23' '23' '23' (some '23') &]
+  %+  expect-eq
+      !>  exp
+      !>  (parse-response:btc-rpc:lib result)
+::
 ++  test-import-address  ^-  tang
   =/  op  %import-address
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
-:: ++  test-import-multi  ^-  tang
-::   =/  op  %import-multi
-::   =/  result=response:rpc:jstd  [%result id=op ~]
-::   %+  expect-eq
-::     !>  [op ~]
-::     !>  (parse-response:btc-rpc:lib result)
+++  test-import-multi  ^-  tang
+  =/  op  %import-multi
+  ::  e.g:
+  ::   [{"success": true},
+  ::    {"success": true,
+  ::     "warnings": ["Ignoring irrelevant private key"]},
+  ::     {"success": false, "error": {"code": -1, "message": "Internal Server Error"}
+  ::    },
+  ::    ...]
+  ::
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    ^-  json
+    :-  %a  ^-  (list json)
+    :~  %-  pairs:enjs:format
+        :~  ['success' b+|]
+            ['warnings' a+[s+'warning1']~]
+            :-  'errors'
+            %-  pairs:enjs:format
+            :~  ['error' s+'1']
+                ['message' s+'sms']
+            ==
+    ==  ==
+  =/  exp=response:btc-rpc
+    :-  op
+    [| (some ['warning1']~) (some ['1' 'sms'])]~
+  %+  expect-eq
+      !>  exp
+      !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-import-privkey  ^-  tang
   =/  op  %import-privkey
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-import-pruned-funds  ^-  tang
   =/  op  %import-pruned-funds
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-import-pubkey  ^-  tang
   =/  op  %import-pubkey
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-import-wallet  ^-  tang
   =/  op  %import-wallet
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-key-pool-refill  ^-  tang
   =/  op  %key-pool-refill
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
-:: ++  test-list-address-groupings  ^-  tang
-::   =/  op  %list-address-groupings
-::   =/  action=request:btc-rpc  [op ~]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
-:: ++  test-list-labels  ^-  tang
-::   =/  op  %list-labels
-::   =/  action=request:btc-rpc  [op purpose=*(unit @t)]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
-:: ++  test-list-lock-unspent  ^-  tang
-::   =/  op  %list-lock-unspent
-::   =/  action=request:btc-rpc  [op ~]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
-:: ++  test-list-received-by-address  ^-  tang
-::   =/  op  %list-received-by-address
-::   =/  action=request:btc-rpc
-::     :*  op
-::         minconf=*(unit @ud)
-::         include-empty=*(unit ?)
-::         include-watch-only=*(unit ?)
-::         address-filter=*(unit @t)
-::     ==
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
-:: ++  test-list-received-by-label  ^-  tang
-::   =/  op  %list-received-by-label
-::   =/  action=request:btc-rpc
-::     :*  op
-::         minconf=*(unit @ud)
-::         include-empty=*(unit ?)
-::         include-watch-only=*(unit ?)
-::     ==
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
-:: ++  test-lists-in-ceblock  ^-  tang
-::   =/  op  %lists-in-ceblock
-::   =/  action=request:btc-rpc
-::     :*  op
-::         blockhash=*(unit @t)
-::         target-confirmations=*(unit @ud)
-::         include-watch-only=*(unit ?)
-::         include-removed=*(unit ?)
-::     ==
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
-:: ++  test-list-transactions  ^-  tang
-::   =/  op  %list-transactions
-::   =/  action=request:btc-rpc
-::     :*  op
-::         label=*(unit @t)
-::         count=*(unit @ud)
-::         skip=*(unit @ud)
-::         include-watch-only=*(unit ?)
-::     ==
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
-:: ++  test-list-unspent  ^-  tang
-::   =/  query-options  %-  some
-::   :*  minimum-amount=*(unit @t)  ::  n+(scot %ta minimun-amount)
-::       maximum-amount=*(unit @t)
-::       maximum-count=*(unit @t)
-::       minimum-sum-amount=*(unit @t)
-::   ==
-::   =/  op  %list-unspent
-::   =/  action=request:btc-rpc
-::     :*  op
-::         minconf=*(unit @t)
-::         maxconf=*(unit @ud)
-::         addresses=*(unit (list @t))
-::         include-unsafe=*(unit ?)
-::         query-options=query-options
-::     ==
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
-:: ::
+++  test-list-address-groupings  ^-  tang
+  =/  op  %list-address-groupings
+  ::  e.g:
+  :: [
+  ::   [
+  ::     [
+  ::       "address",            (string) The bitcoin address
+  ::       amount,                 (numeric) The amount in BTC
+  ::       "label"               (string, optional) The label
+  ::     ]
+  ::     ,...
+  ::   ]
+  ::   ,...
+  :: ]
+  ::
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    :-  %a
+    [%a ~[s+'address' s+'amount' s+'label']]~
+  =/  exp=response:btc-rpc
+    [op [['address' 'amount' (some 'label')]~]~]
+  %+  expect-eq
+      !>  exp
+      !>  (parse-response:btc-rpc:lib result)
+::
+++  test-list-labels  ^-  tang
+  =/  op  %list-labels
+  =/  result=response:rpc:jstd
+    :+  %result   op
+    :-  %a  ^-  (list json)
+    ~[[s+'l1'] [s+'l2']]
+  =/  exp=response:btc-rpc  [op ~['l1' 'l2']]
+  %+  expect-eq
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
+::
+++  test-list-lock-unspent  ^-  tang
+  =/  op  %list-lock-unspent
+  ::  Result:
+  :: [
+  ::   {
+  ::     "txid" : "transactionid",     (string) The transaction id locked
+  ::     "vout" : n                      (numeric) The vout value
+  ::   }
+  ::   ,...
+  :: ]
+  =/  result=response:rpc:jstd
+    :+  %result   op
+    :-  %a  ^-  (list json)
+    :~  %-  pairs:enjs:format
+        ~[['txid' s+'23'] ['vout' n+~.23]]
+    ==
+  %+  expect-eq
+    !>  [op ['23' 23]~]
+    !>  (parse-response:btc-rpc:lib result)
+::
+++  test-list-received-by-address  ^-  tang
+  =/  op  %list-received-by-address
+  ::  e.g:
+  :: [
+  ::   {
+  ::     "involvesWatchonly" : true,        (bool) Only returned if imported addresses were involved in transaction
+  ::     "address" : "receivingaddress",  (string) The receiving address
+  ::     "amount" : x.xxx,                  (numeric) The total amount in BTC received by the address
+  ::     "confirmations" : n,               (numeric) The number of confirmations of the most recent transaction included
+  ::     "label" : "label",               (string) The label of the receiving address. The default label is "".
+  ::     "txids": [
+  ::        "txid",                         (string) The ids of transactions received with the address
+  ::        ...
+  ::     ]
+  ::   }
+  ::   ,...
+  :: ]
+  ::
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    :-  %a  ^-  (list json)
+    :~  %-  pairs:enjs:format
+        :~  ['involvesWatchonly' b+&]
+            ['address' s+'23']
+            ['amount' s+'23']
+            ['confirmations' n+~.23]
+            ['label' s+'23']
+            ['txids' a+[s+'23']~]
+    ==  ==
+  =/  exp=response:btc-rpc
+    [op [(some %&) '23' '23' 23 '23' ['23']~]~]
+  %+  expect-eq
+      !>  exp
+      !>  (parse-response:btc-rpc:lib result)
+::
+++  test-list-received-by-label  ^-  tang
+  =/  op  %list-received-by-label
+  ::  e.g:
+  :: [
+  ::   {
+  ::     "involvesWatchonly" : true,   (bool) Only returned if imported addresses were involved in transaction
+  ::     "amount" : x.xxx,             (numeric) The total amount received by addresses with this label
+  ::     "confirmations" : n,          (numeric) The number of confirmations of the most recent transaction included
+  ::     "label" : "label"           (string) The label of the receiving address. The default label is "".
+  ::   }
+  ::   ,...
+  :: ]
+  ::
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    :-  %a  ^-  (list json)
+    :~  %-  pairs:enjs:format
+        :~  ['involvesWatchonly' b+&]
+            ['amount' s+'23.23']
+            ['confirmations' n+~.23]
+            ['label' s+'23']
+    ==  ==
+  =/  exp=response:btc-rpc
+    [op [(some %&) '23.23' 23 '23']~]
+  %+  expect-eq
+      !>  exp
+      !>  (parse-response:btc-rpc:lib result)
+::
+++  test-lists-in-ceblock  ^-  tang
+  =/  op  %lists-in-ceblock
+  ::  e.g:
+  :: {
+  ::   "transactions": [
+  ::     "address":"address",    (string) The bitcoin address of the transaction.
+  ::     "category":               (string) The transaction category.
+  ::                 "send"                  Transactions sent.
+  ::                 "receive"               Non-coinbase transactions received.
+  ::                 "generate"              Coinbase transactions received with more than 100 confirmations.
+  ::                 "immature"              Coinbase transactions received with 100 or fewer confirmations.
+  ::                 "orphan"                Orphaned coinbase transactions received.
+  ::     "amount": x.xxx,          (numeric) The amount in BTC. This is negative for the 'send' category, and is positive
+  ::                                          for all other categories
+  ::     "vout" : n,               (numeric) the vout value
+  ::     "fee": x.xxx,             (numeric) The amount of the fee in BTC. This is negative and only available for the 'send' category of transactions.
+  ::     "confirmations": n,       (numeric) The number of confirmations for the transaction.
+  ::                                           When it's < 0, it means the transaction conflicted that many blocks ago.
+  ::     "blockhash": "hashvalue",     (string) The block hash containing the transaction.
+  ::     "blockindex": n,          (numeric) The index of the transaction in the block that includes it.
+  ::     "blocktime": xxx,         (numeric) The block time in seconds since epoch (1 Jan 1970 GMT).
+  ::     "txid": "transactionid",  (string) The transaction id.
+  ::     "time": xxx,              (numeric) The transaction time in seconds since epoch (Jan 1 1970 GMT).
+  ::     "timereceived": xxx,      (numeric) The time received in seconds since epoch (Jan 1 1970 GMT).
+  ::     "bip125-replaceable": "yes|no|unknown",  (string) Whether this transaction could be replaced due to BIP125 (replace-by-fee);
+  ::                                                    may be unknown for unconfirmed transactions not in the mempool
+  ::     "abandoned": xxx,         (bool) 'true' if the transaction has been abandoned (inputs are respendable). Only available for the 'send' category of transactions.
+  ::     "comment": "...",       (string) If a comment is associated with the transaction.
+  ::     "label" : "label"       (string) A comment for the address/transaction, if any
+  ::     "to": "...",            (string) If a comment to is associated with the transaction.
+  ::   ],
+  ::   "removed": [
+  ::     <structure is the same as "transactions" above, only present if include_removed=true>
+  ::     Note: transactions that were re-added in the active chain will appear as-is in this array, and may thus have a positive confirmation count.
+  ::   ],
+  ::   "lastblock": "lastblockhash"     (string) The hash of the block (target_confirmations-1) from the best block on the main chain. This is typically used to feed back into listsinceblock the next time you call it. So you would generally use a target_confirmations of say 6, so you will be continually re-notified of transactions until they've reached 6 confirmations plus any new ones
+  :: }
+  ::
+  =/  tx-response
+    :~  ['address' s+'23']
+        ['category' s+'send']
+        ['amount' s+'23.23']
+        ['label' s+'23']
+        ['vout' n+~.23]
+        ['fee' s+'23.23']
+        ['confirmations' n+~.23]
+        ['blockhash' s+'23']
+        ['blockindex' n+~.23]
+        ['blocktime' n+~.23]
+        ['txid' s+'23']
+        ['time' n+~.23]
+        ['timereceived' n+~.23]
+        ['bip125-replaceable' s+'yes']
+        ['abandoned' b+&]
+        ['comment' s+'23']
+        ['label' s+'23']
+        ['to' s+'23']
+    ==
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    %-  pairs:enjs:format
+      :~  =-  ['transactions' -]
+          ^-  json
+          :-  %a  ^-  (list json)
+          :~  %-  pairs:enjs:format  ^-  (list (pair @t json))
+              tx-response
+          ==
+          =-  ['removed' -]
+          [%a [(pairs:enjs:format tx-response)]~]
+          ['lastblock' s+'23']
+      ==
+  =/  exp-tx-response
+    :*  address='23'
+        category=%send
+        amount='23.23'
+        label='23'
+        vout=23
+        fee='23.23'
+        confirmations=23
+        blockhash='23'
+        blockindex=23
+        blocktime=23
+        txid='23'
+        time=23
+        time-received=23
+        bip125-replaceable=%yes
+        abandoned=&
+        comment='23'
+        label='23'
+        to='23'
+    ==
+  =/  exp=response:btc-rpc
+    :*  op
+        [exp-tx-response]~
+        (some [exp-tx-response]~)
+       '23'
+    ==
+  %+  expect-eq
+      !>  exp
+      !>  (parse-response:btc-rpc:lib result)
+::
+++  test-list-transactions  ^-  tang
+  =/  op  %list-transactions
+  ::  e.g:
+  :: [
+  ::   {
+  ::     "address":"address",    (string) The bitcoin address of the transaction.
+  ::     "category":               (string) The transaction category.
+  ::                 "send"                  Transactions sent.
+  ::                 "receive"               Non-coinbase transactions received.
+  ::                 "generate"              Coinbase transactions received with more than 100 confirmations.
+  ::                 "immature"              Coinbase transactions received with 100 or fewer confirmations.
+  ::                 "orphan"                Orphaned coinbase transactions received.
+  ::     "amount": x.xxx,          (numeric) The amount in BTC. This is negative for the 'send' category, and is positive
+  ::                                         for all other categories
+  ::     "label": "label",       (string) A comment for the address/transaction, if any
+  ::     "vout": n,                (numeric) the vout value
+  ::     "fee": x.xxx,             (numeric) The amount of the fee in BTC. This is negative and only available for the
+  ::                                          'send' category of transactions.
+  ::     "confirmations": n,       (numeric) The number of confirmations for the transaction. Negative confirmations indicate the
+  ::                                          transaction conflicts with the block chain
+  ::     "trusted": xxx,           (bool) Whether we consider the outputs of this unconfirmed transaction safe to spend.
+  ::     "blockhash": "hashvalue", (string) The block hash containing the transaction.
+  ::     "blockindex": n,          (numeric) The index of the transaction in the block that includes it.
+  ::     "blocktime": xxx,         (numeric) The block time in seconds since epoch (1 Jan 1970 GMT).
+  ::     "txid": "transactionid", (string) The transaction id.
+  ::     "time": xxx,              (numeric) The transaction time in seconds since epoch (midnight Jan 1 1970 GMT).
+  ::     "timereceived": xxx,      (numeric) The time received in seconds since epoch (midnight Jan 1 1970 GMT).
+  ::     "comment": "...",       (string) If a comment is associated with the transaction.
+  ::     "bip125-replaceable": "yes|no|unknown",  (string) Whether this transaction could be replaced due to BIP125 (replace-by-fee);
+  ::                                                      may be unknown for unconfirmed transactions not in the mempool
+  ::     "abandoned": xxx          (bool) 'true' if the transaction has been abandoned (inputs are respendable). Only available for the
+  ::                                          'send' category of transactions.
+  ::   }
+  ::
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    ^-  json
+    :-  %a  ^-  (list json)
+    :~  %-  pairs:enjs:format
+        :~  ['address' s+'23']
+            ['category' s+'send']
+            ['amount' s+'23']
+            ['label' s+'23']
+            ['vout' n+~.23]
+            ['fee' s+'23']
+            ['confirmations' n+~.23]
+            ['trusted' b+|]
+            ['blockhash' s+'23']
+            ['blockindex' n+~.23]
+            ['blocktime' s+'23']
+            ['txid' s+'23']
+            ['time' s+'23']
+            ['timereceived' s+'23']
+            ['comment' s+'23']
+            ['bip125-replaceable' s+'yes']
+            ['abandoned' b+|]
+    ==  ==
+  =/  exp=response:btc-rpc
+    :-  op
+    ['23' %send '23' '23' 23 '23' 23 %.n '23' 23 '23' '23' '23' '23' '23' %yes %.n]~
+  %+  expect-eq
+      !>  exp
+      !>  (parse-response:btc-rpc:lib result)
+::
+++  test-list-unspent  ^-  tang
+  =/  op  %list-unspent
+  ::  Result:
+  :: [                   (array of json object)
+  ::   {
+  ::     "txid" : "txid",          (string) the transaction id
+  ::     "vout" : n,               (numeric) the vout value
+  ::     "address" : "address",    (string) the bitcoin address
+  ::     "label" : "label",        (string) The associated label, or "" for the default label
+  ::     "scriptPubKey" : "key",   (string) the script key
+  ::     "amount" : x.xxx,         (numeric) the transaction output amount in BTC
+  ::     "confirmations" : n,      (numeric) The number of confirmations
+  ::     "redeemScript" : "script" (string) The redeemScript if scriptPubKey is P2SH
+  ::     "witnessScript" : "script" (string) witnessScript if the scriptPubKey is P2WSH or P2SH-P2WSH
+  ::     "spendable" : xxx,        (bool) Whether we have the private keys to spend this output
+  ::     "solvable" : xxx,         (bool) Whether we know how to spend this output, ignoring the lack of keys
+  ::     "desc" : xxx,             (string, only when solvable) A descriptor for spending this output
+  ::     "safe" : xxx              (bool) Whether this output is considered safe to spend. Unconfirmed transactions
+  ::                               from outside keys and unconfirmed replacement transactions are considered unsafe
+  ::                               and are not eligible for spending by fundrawtransaction and sendtoaddress.
+  ::   }
+  ::   ,...
+  :: ]
+  =/  result=response:rpc:jstd
+    :+  %result   op
+    :-  %a  ^-  (list json)
+    :~  %-  pairs:enjs:format
+        :~  ['txid' s+'23']
+            ['vout' s+'23']
+            ['address' s+'23']
+            ['label' s+'23']
+            ['scriptPubKey' s+'23']
+            ['amount' s+'23']
+            ['confirmations' n+~.23]
+            ['redeemScript' s+'23']
+            ['witnessScript' s+'23']
+            ['spendable' b+|]
+            ['solvable' b+|]
+            ['desc' s+'23']
+            ['safe' b+|]
+    ==  ==
+  =/  exp=response:btc-rpc
+    :-  op
+    ['23' '23' '23' '23' '23' '23' 23 '23' '23' %.n %.n (some '23') %.n]~
+  %+  expect-eq
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
+::
 ++  test-list-wallet-dir  ^-  tang
     =/  op  %list-wallet-dir
     =/  expected-res=response:btc-rpc
@@ -374,13 +829,14 @@
     ::       ]
     ::    }
     =/  result=response:rpc:jstd
-      :+  %result  id=op
+      :+  %result  op
       ^-  json
       :-  %o  %-  ~(gas by *(map @t json))
       ^-  (list (pair @t json))
       :~  :-  'wallets'
           :-  %a  ^-  (list json)
-          :~  o+(molt ['name' s+'test-wallet']~)
+          :~  %-  pairs:enjs:format
+              ['name' s+'test-wallet']~
       ==  ==
     %+  expect-eq
       !>  expected-res
@@ -403,7 +859,7 @@
   ::      "warning":  <warning>,     (string)
   ::    }
   =/  result=response:rpc:jstd
-    :+  %result  id=op
+    :+  %result  op
     ^-  json
     :-  %o  %-  ~(gas by *(map @t json))
     ^-  (list (pair @t json))
@@ -417,14 +873,14 @@
 ++  test-lock-unspent  ^-  tang
   =/  op  %lock-unspent
   =/  expected-res=response:btc-rpc  [op &]
-  =/  result=response:rpc:jstd  [%result id=op b+&]
+  =/  result=response:rpc:jstd  [%result op b+&]
   %+  expect-eq
     !>  expected-res
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-remove-pruned-funds  ^-  tang
   =/  op  %remove-pruned-funds
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
@@ -439,7 +895,7 @@
   ::      "warning":  <warning>,     (string)
   ::    }
   =/  result=response:rpc:jstd
-    :+  %result  id=op
+    :+  %result  op
     ^-  json
     :-  %o  %-  ~(gas by *(map @t json))
     ^-  (list (pair @t json))
@@ -452,144 +908,128 @@
 ::
 ++  test-send-many  ^-  tang
   =/  op  %send-many
-  =/  result=response:rpc:jstd  [%result id=op s+'99']
+  =/  result=response:rpc:jstd  [%result op s+'99']
   %+  expect-eq
     !>  [op '99']
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-send-to-address  ^-  tang
   =/  op  %send-to-address
-  =/  result=response:rpc:jstd  [%result id=op s+'99']
+  =/  result=response:rpc:jstd  [%result op s+'99']
   %+  expect-eq
     !>  [op '99']
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-set-hd-seed  ^-  tang
   =/  op  %set-hd-seed
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-set-label  ^-  tang
   =/  op  %set-label
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-set-tx-fee    ^-  tang
   =/  op  %set-tx-fee
-  =/  result=response:rpc:jstd  [%result id=op b+&]
+  =/  result=response:rpc:jstd  [%result op b+&]
   %+  expect-eq
     !>  [op &]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-sign-message  ^-  tang
   =/  op  %sign-message
-  =/  result=response:rpc:jstd  [%result id=op s+'99']
+  =/  result=response:rpc:jstd  [%result op s+'99']
   %+  expect-eq
     !>  [op '99']
     !>  (parse-response:btc-rpc:lib result)
 ::
-:: ++  test-sign-raw-transaction-with-wallet  ^-  tang
-::   =/  prev-txs   %-  some  %-  limo
-::     :~  txid=*@t
-::         vout=*@ud
-::         script-pub-key=*@t
-::         redeem-script=*@t
-::         witness-script=*@t
-::         amount=*@t
-::      ==
-::   =/  op  %sign-raw-transaction-with-wallet
-::   =/  action=request:btc-rpc
-::     :*  op
-::         *@t
-::         ~
-::         `%'ALL'
-::     ==
-::   :: :*  ['txid' s+a.txid]
-::   ::     ['vout' n+(scot %ud a.vout)]
-::   ::     ['scriptPubKey' s+a.script-pub-key]
-::   ::     ['redeem-Script' s+a.redeem-script]
-::   ::     ['witnessScript' s+a.witness-script]
-::   ::     ['amount' n+(scot %ta a.amount)]
-::   :: ==
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'ALL']]
-::     !>  (request-to-rpc:btc-rpc:lib action)
+++  test-sign-raw-transaction-with-wallet  ^-  tang
+  =/  op  %sign-raw-transaction-with-wallet
+  ::  e.g:
+  :: {
+  ::   "hex" : "value",                  (string) The hex-encoded raw transaction with signature(s)
+  ::   "complete" : true|false,          (boolean) If the transaction has a complete set of signatures
+  ::   "errors" : [                      (json array of objects) Script verification errors (if there are any)
+  ::     {
+  ::       "txid" : "hash",              (string) The hash of the referenced, previous transaction
+  ::       "vout" : n,                   (numeric) The index of the output to spent and used as input
+  ::       "scriptSig" : "hex",          (string) The hex-encoded signature script
+  ::       "sequence" : n,               (numeric) Script sequence number
+  ::       "error" : "text"              (string) Verification or signing error related to the input
+  ::     }
+  ::     ,...
+  ::   ]
+  :: }
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    ^-  json
+    %-  pairs:enjs:format
+    :~  ['hex' s+'34']
+        ['complete' b+|]
+        :-  'errors'  ^-  json
+        :-  %a  ^-  (list json)
+        :~  %-  pairs:enjs:format
+            :~  ['txid' s+'34']
+                ['vout' n+~.34]
+                ['scriptSig' s+'34']
+                ['sequence' n+~.34]
+                ['error' s+'34']
+    ==  ==  ==
+  =/  exp=response:btc-rpc
+    [op '34' | ['34' 34 '34' 34 '34']~]
+  %+  expect-eq
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-unload-wallet  ^-  tang
   =/  op  %unload-wallet
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
-:: ++  test-wallet-create-fundedpsbt  ^-  tang
-::   =/  op  %wallet-create-fundedpsbt
-::   =/  inputs  %-  limo
-::   :*  txid=*@t
-::       vout=*@ud
-::       sequence=*@ud
-::   ==
-::   =/  action=request:btc-rpc
-::     :*  op
-::         $=  inputs  %-  list
-::         =/  action=request:btc-rpc
-::         :*  txid=*@t
-::             vout=*@ud
-::             sequence=*@ud
-::         ==
-::         ::  FIXME:
-::         ::  list of addressess and JUST one "data" key?
-::         ::
-::         outputs=(list (pair @t ?(@t @ud)))
-::         locktime=*(unit @ud)
-::         $=  options  %-  unit
-::         =/  action=request:btc-rpc  :*  change-address=*(unit @t)
-::             change-position=*(unit @ud)
-::             change-type=*(unit ?(%legacy %p2sh-segwit %bech32))
-::             include-watching=*(unit ?)
-::             lock-unspents=*(unit ?)
-::             fee-rate=*(unit @t)
-::             subtract-fee-from-outputs=*(unit (list @ud))
-::             replaceable=*(unit ?)
-::             conf-target=*(unit @t)
-::             =estimate-mode
-::         ==
-::         bip32derivs=*(unit ?)
-::     ==
-:: ::     :~  a+inputs.req
-:: ::         a+outputs.req
-:: ::         n+(scot %ud locktime.req)
-:: ::         (feob options.req)
-:: ::         :: ?~  options.req  ~
-:: ::         :: o+(~(gas by *(map @t json)) u.options.req)
-:: ::         (ferm bip32derivs.req %b)
-:: ::     ==
-:: ::   ::
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
+++  test-wallet-create-fundedpsbt  ^-  tang
+  =/  op  %wallet-create-fundedpsbt
+  ::  e.g:
+  :: {
+  ::   "psbt": "value",        (string)  The resulting raw transaction (base64-encoded string)
+  ::   "fee":       n,         (numeric) Fee in BTC the resulting transaction pays
+  ::   "changepos": n          (numeric) The position of the added change output, or -1
+  :: }
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    %-  pairs:enjs:format
+    :~  ['psbt' s+'99']
+        ['fee' s+'20.1']
+        ['changepos' s+'-1']
+    ==
+  =/  exp=response:btc-rpc  [op '99' '20.1' '-1']
+  %+  expect-eq
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-wallet-lock  ^-  tang
   =/  op  %wallet-lock
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-wallet-passphrase  ^-  tang
   =/  op  %wallet-passphrase
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-wallet-passphrase-change  ^-  tang
   =/  op  %wallet-passphrase-change
-  =/  result=response:rpc:jstd  [%result id=op ~]
+  =/  result=response:rpc:jstd  [%result op ~]
   %+  expect-eq
     !>  [op ~]
     !>  (parse-response:btc-rpc:lib result)
@@ -604,7 +1044,7 @@
   ::   "complete" : true|false,   (boolean)
   :: }
   =/  result=response:rpc:jstd
-    :+  %result  id=op
+    :+  %result  op
     ^-  json
     :-  %o  %-  ~(gas by *(map @t json))
     ^-  (list (pair @t json))
@@ -617,11 +1057,24 @@
 ::
 :: ::  ZMQ
 :: ::
-:: ++  test-get-zmq-notifications  ^-  tang
-::     =/  op  %get-zmq-notifications
-::     =/  action=request:btc-rpc  [op ~]
-::     %+  expect-eq
-::       !>  [op (method:btc-rpc:lib op) %list ~]
-::       !>  (request-to-rpc:btc-rpc:lib action)
+++  test-get-zmq-notifications  ^-  tang
+  =/  op  %get-zmq-notifications
+  ::  e.g:
+  :: {
+  ::   "psbt" : "value",          (string) The base64-encoded
+  ::   "complete" : true|false,   (boolean)
+  :: }
+  =/  result=response:rpc:jstd
+    :+  %result  op
+    :-  %a  ^-  (list json)
+    :~  %-  pairs:enjs:format
+        :~  ['type' s+'23']
+            ['address' s+'23']
+            ['hwm' s+'23']
+    ==  ==
+  =/  exp=response:btc-rpc  [op ['23' '23' '23']~]
+  %+  expect-eq
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
 ::
 --

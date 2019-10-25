@@ -6,7 +6,7 @@
   ::  Utility core
   ::
   =+  |%
-      ::  FIXME: so... most of these things seem to be in +dejs-soft... replace!
+      ::  FIXME: so... most of these things seem to be in +dejs.. replace!
       ::
       ::  Ideally +fall would have worked here, but we need to supply
       ::  the type of json (%s, %b...) only when unit is non empty so
@@ -20,20 +20,6 @@
       ::
       ++  feud  |*(a=(unit) ?~(a ~ n+(scot %ud u.a)))
       ::
-      ::  Convertion from tuples to json object
-      ::
-      :: ++  feob
-      ::   |*  a=(unit (list (pair)))
-      ::   ?~  a  ~
-      ::   o+(~(gas by *(map)) u.a)
-      ::  From tuple to list
-      ::
-      :: ++  tuli
-      ::   |=  opts=^
-      ::   ?:  |(?=(@ -.opts) ?=(@ +.opts))
-      ::     [opts ~]
-      ::   [-.opts $(opts +.opts)]
-      ::
       ::  %method: Removes 'hep' (-) from a %tas producing
       ::  the RPC method to use in a call
       ::
@@ -44,6 +30,46 @@
         ^-  @t
         %+  scan  (scow %tas t)
           ((slug |=(a=[@ @t] (cat 3 a))) (star hep) alp)
+      ::
+      ::  json reparse that produces ~ when a key is undefined or
+      ::  unit of the value
+      ::
+      :: ++  un-dejs
+      ::   =>  |%  ++  grub  *
+      ::           ++  fist  $-((unit json) grub)
+      ::       --
+      ::   |%
+      ::   ++  ot
+      ::     |*  wer=(pole [cord fist])
+      ::     |=  jon=json
+      ::     ?>  ?=([%o *] jon)
+      ::     ((ot-raw wer) p.jon)
+      ::   ::
+      ::   ++  ot-raw
+      ::     |*  wer=(pole [cord fist])
+      ::     |=  jom=(map @t json)
+      ::     ?-    wer
+      ::         [[key=@t *] t=*]
+      ::       =>  .(wer [[* wit] *]=wer)
+      ::       =/  val=(unit json)  (~(get by jom) key.wer)
+      ::       :: =/  ten  ?~(val ~ (wit.wer u.val))
+      ::       :: =/  ten  (wit.wer u.val)
+      ::       =/  ten  (wit.wer val)
+      ::       :: ~&  [key.wer val ten]
+      ::       ?~(t.wer ten [ten ((ot-raw t.wer) jom)])
+      ::     ==
+        ::
+        :: ++  um
+        ::   |*  wit=fist
+        ::   |=  jon=(unit json)
+        ::   ?~(jon ~ (wit u.jon))
+        ::  This gates need to be redefined as wet, since otherwise
+        ::  cast the type of the json to ~ in cases like &, or ''
+        ::
+        :: ++  so  |*(jon=json ?>(?=([%s *] jon) p.jon))
+        :: ++  bo  |*(jon=json ?>(?=([%b *] jon) p.jon))
+        :: ++  no  |*(jon=json ?>(?=([%n *] jon) p.jon))
+        :: --
       ::
       ::  Base-58 parser
       ::
@@ -371,7 +397,6 @@
        ::
           ?~  amounts.req  ~
           :-  %a
-
           %+  turn  amounts.req
             |=  [addr=@t amount=@t]
             ^-  json
@@ -422,22 +447,20 @@
       ==
     ::
         %sign-raw-transaction-with-wallet
-      :~  ^-  json  s+hex-string.req
-        ::
-          ^-  json  ?~   prev-txs.req  ~
+      :~  s+hex-string.req
+          ?~   prev-txs.req  ~
           =*  txs  u.prev-txs.req
           :-  %a
-
-          %+  turn  txs
-            |=  a=tx
-              :-  %o  %-  ~(gas by *(map @t json))
+          %+  turn  ^-  (list tx-raw)  txs
+            |=  a=tx-raw
+              %-  pairs:enjs:format
               ^-  (list (pair @t json))
               :~  ['txid' s+txid.a]
                   ['vout' n+(scot %ud vout.a)]
                   ['scriptPubKey' s+script-pubkey.a]
-                  ['redeem-Script' s+redeem-script.a]
+                  ['redeemScript' s+redeem-script.a]
                   ['witnessScript' s+witness-script.a]
-                  ['amount' n+(scot %ta amount.a)]
+                  ['amount' n+(scot %tas amount.a)]
               ==
         ::
           (ferm sig-hash-type.req %s)
@@ -490,43 +513,36 @@
     ::
     ?>  ?=(%result -.res)
     ?+  id.res
-      ~|  [%unsupported-response id.res]
-      !!
+      ~|  [%unsupported-response id.res]  !!
+      ::
         %generate
       :-  id.res
       %.  res.res
       (ar (su hex))
-    ::
+      ::
         %get-block-count
       :-  id.res
       (ni res.res)
-    ::
-    ::  WALLET
-    ::
+      ::
+   ::  WALLET
+   ::
         %abandon-transaction
       [id.res ~]
-    ::
+      ::
         %abort-rescan
       [id.res ~]
-    ::
-      ::  TODO:
       ::
-      ::   %add-multisig-address
-      :: ~
+        %add-multisig-address
+      :-  id.res
+      %.  res.res
+      =-  (ot -)
+      :~  ['address' so]
+          ['redeemScript' so]
+      ==
       ::
         %backup-wallet
       [id.res ~]
       ::
-        ::  %bump-fee:
-        ::
-        ::  Result:
-        ::    {
-        ::      "txid":    "value",   (string)  The id of the new transaction
-        ::      "origfee":  n,         (numeric) Fee of the replaced transaction
-        ::      "fee":      n,         (numeric) Fee of the new transaction
-        ::      "errors":  [ str... ] (json array of strings) Errors encountered during processing (may be empty)
-        ::    }
-        ::
         %bump-fee
       :-  id.res
       %.  res.res
@@ -537,14 +553,6 @@
           ['errors' (ar so)]
       ==
       ::
-        ::  %create-wallet:
-        ::
-        ::  Result:
-        ::      {
-        ::        "name" :    <wallet_name>,        (string) The wallet name if created successfully. If the wallet was created using a full path, the wallet_name will be the full path.
-        ::        "warning" : <warning>,            (string) Warning message if wallet was not loaded cleanly.
-        ::      }
-        ::
         %create-wallet
       :-  id.res
       %.  res.res
@@ -555,18 +563,90 @@
       ::
         %dump-wallet
       :-  id.res
-      ((ot [filename+so]~) res.res)
+      %.  res.res
+      (ot [filename+so]~)
       ::
         %encrypt-wallet
       [id.res ~]
       ::
-      ::   %get-addresses-by-label
-      :: :-  id.res
-      :: %.  res.res
-      :: (op base-58 so)
+        %get-addresses-by-label
+      :-  id.res
+      =-  ~(tap by -)
+      %.  res.res
+      =-  (op base-58 -)
+      =-  (ot ['purpose' (cu - so)]~)
+        |=  t=@t
+        ^-  ?(%send %receive)
+        ?:  =(t 'send')  %send
+        ?:  =(t 'receive')  %receive
+        !!
       ::
-      ::   %get-address-info
-      :: [id.res ~]
+        %get-address-info
+      :-  id.res
+      %.  res.res
+      =-  (ou -)
+      :~  ['address' (un so)]
+          ['scriptPubKey' (un so)]
+          ['ismine' (un bo)]
+          ['iswatchonly' (un bo)]
+          ['solvable' (un bo)]
+          ['desc' (uf ~ (mu so))]
+          ['isscript' (un bo)]
+          ['ischange' (un bo)]
+          ['iswitness' (un bo)]
+          ['witness_version' (uf ~ (mu so))]
+          ['witness_program' (uf ~ (mu so))]
+          ['script' (uf ~ (mu so))]
+          ['hex' (uf ~ (mu so))]
+          ['pubkeys' (uf ~ (mu (ar so)))]
+          ['sigsrequired' (uf ~ (mu ni))]
+          ['pubkey' (uf ~ (mu so))]
+          =-  ['embedded' (uf ~ (mu -))]
+          =-  (ou -)
+          :~  ['scriptPubKey' (un so)]
+              ['solvable' (un bo)]
+              ['desc' (uf ~ (mu so))]
+              ['isscript' (un bo)]
+              ['ischange' (un bo)]
+              ['iswitness' (un bo)]
+              ['witness_version' (uf ~ (mu so))]
+              ['witness_program' (uf ~ (mu so))]
+              ['script' (uf ~ (mu so))]
+              ['hex' (uf ~ (mu so))]
+              ['pubkeys' (uf ~ (mu (ar so)))]
+              ['sigsrequired' (uf ~ (mu ni))]
+              ['pubkey' (uf ~ (mu so))]
+              ['iscompressed' (uf ~ (mu bo))]
+              ['label' (uf ~ (mu so))]
+              ['hdmasterfingerprint' (uf ~ (mu so))]
+              =-  ['labels' (un -)]
+              =-  (ar (ot -))
+              :~  ['name' so]
+                  =-  ['purpose' (cu - so)]
+                  |=  t=@t
+                  ^-  ?(%send %receive)
+                  ?:  =(t 'send')  %send
+                  ?:  =(t 'receive')  %receive
+                  !!
+              ==
+          ==
+          ['iscompressed' (uf ~ (mu bo))]
+          ['label' (uf ~ (mu so))]
+          ['timestamp' (uf ~ (mu so))]
+          ['hdkeypath' (uf ~ (mu so))]
+          ['hdseedid' (uf ~ (mu so))]
+          ['hdmasterfingerprint' (uf ~ (mu so))]
+          =-  ['labels' (un -)]
+          =-  (ar (ot -))
+          :~  ['name' so]
+              =-  ['purpose' (cu - so)]
+              |=  t=@t
+              ^-  ?(%send %receive)
+              ?:  =(t 'send')  %send
+              ?:  =(t 'receive')  %receive
+              !!
+          ==
+      ==
       ::
         %get-balance
       [id.res (so res.res)]
@@ -583,20 +663,94 @@
         %get-received-by-label
       [id.res (so res.res)]
       ::
-      ::   %get-transaction
-      :: [id.res ~]
+        %get-transaction
+      :-  id.res
+      %.  res.res
+      =-  (ot -)
+      :~  ['amount' so]
+          ['fee' so]
+          ['confirmations' ni]
+          ['blockhash' so]
+          ['blockindex' ni]
+          ['blocktime' so]
+          ['txid' so]
+          ['time' so]
+          ['timereceived' so]
+          :-  'bip125-replaceable'  =-  (cu - so)
+              ::  This would have been more elegant:
+              ::  ['bip125-replaceable' (cu term so)]
+              ::  but a term is not of type ?(%yes %no %unknown)
+              ::  so a manual convertion seems the only(?) way.
+              ::
+              |=  t=@t
+              ^-  ?(%yes %no %unknown)
+              ?:  =(t 'yes')  %yes
+              ?:  =(t 'no')  %no
+              ?:  =(t 'unknown')  %unknown
+              !!
+          =-  ['details' (ar (ot -))]
+          :~  ['address' so]
+              :-  'category'  =-  (cu - so)
+                  ::  see 'bip125-replaceable'
+                  ::
+                  |=  t=@t
+                  ^-  ?(%send %receive %generate %immature %orphan)
+                  ?:  =(t 'send')  %send
+                  ?:  =(t 'receive')  %receive
+                  ?:  =(t 'generate')  %generate
+                  ?:  =(t 'immature')  %immature
+                  ?:  =(t 'orphan')  %orphan
+                  !!
+              ['amount' so]
+              ['label' so]
+              ['vout' ni]
+              ['fee' so]
+              ['abandoned' bo]
+          ==
+          ['hex' so]
+      ==
+      ::
+        %list-wallets
+      :-  id.res
+      %.  res.res
+      (ar so)
       ::
         %get-unconfirmed-balance
       [id.res (so res.res)]
       ::
-      ::   %get-wallet-info
-      :: [id.res ~]
+        %get-wallet-info
+      :-  id.res
+      %.  res.res
+      =-  (ou -)
+      :~  ['walletname' (un so)]
+          ['walletversion' (un so)]
+          ['balance' (un so)]
+          ['unconfirmed_balance' (un so)]
+          ['immature_balance' (un so)]
+          ['txcount' (un so)]
+          ['keypoololdest' (un so)]
+          ['keypoolsize' (un so)]
+          ['keypool_size_hd_internal' (un so)]
+          ['unlocked_until' (un so)]
+          ['paytxfee' (un so)]
+          ['hdseedid' (uf ~ (mu so))]
+          ['private_keys_enabled' (un bo)]
+      ==
       ::
         %import-address
       [id.res ~]
       ::
-      ::   %import-multi
-      :: [id.res ~]
+        %import-multi
+      :-  id.res
+      %.  res.res
+      =-  (ar (ou -))
+      :~  ['success' (un bo)]
+          =-  ['warnings' (uf ~ -)]
+          (mu (ar so))
+          =-  ['errors' -]
+          =-  (uf ~ (mu -))
+          (ot ~[['error' so] ['message' so]])
+      ==
       ::
         %import-privkey
       [id.res ~]
@@ -613,36 +767,177 @@
         %key-pool-refill
       [id.res ~]
       ::
-      ::   %list-address-groupings
-      :: [id.res ~]
+        %list-address-groupings
+      :-  id.res
+      %.  res.res
+      =-  (ar (cu - (ar so)))
+        |=  l=(list @t)
+        :_  ~
+        ::  This could(?) be done without lark syntax
+        ::  it replaces the parsed list with a  list of
+        ::  triplet of two @t and a unit
+        ::
+        :*  `@t`-.l   `@t`+<.l
+            ?:  ?=([@t @t ~] l)    ~
+            ?.  ?=([@t @t @t ~] l)  !!
+            (some `@t`+>-.l)
+        ==
+      ::
+        %list-labels
+      :-  id.res
+      %.  res.res
+      (ar so)
       :: ::
-      ::   %list-labels
-      :: [id.res ~]
+        %list-lock-unspent
+      :-  id.res
+      %.  res.res
+      =-  (ar -)
+      (ot ~[['txid' so] ['vout' ni]])
       :: ::
-      ::   %list-lock-unspent
-      :: [id.res ~]
-      :: ::
-      ::   %list-received-by-address
-      :: [id.res ~]
-      :: ::
-      ::   %list-received-by-label
-      :: [id.res ~]
-      :: ::
-      ::   %lists-in-ceblock
-      :: [id.res ~]
-      :: ::
-      ::   %list-transactions
-      :: [id.res ~]
-      :: ::
-      ::   %list-unspent
-      :: [id.res ~]
+        %list-received-by-address
+      :-  id.res
+      %.  res.res
+      =-  (ar (ou -))
+      :~  :-  'involvesWatchonly'
+          =-  (uf ~ -)
+          =-  (cu - (mu bo))
+            |=  b=(unit ?)
+            ?~  b  ~
+            ?>(=(u.b &) (some %&))
+          ['address' (un so)]
+          ['amount' (un so)]
+          ['confirmations' (un ni)]
+          ['label' (un so)]
+          ['txids' (un (ar so))]
+      ==
+      ::
+        %list-received-by-label
+      :-  id.res
+      %.  res.res
+      =-  (ar (ou -))
+      :~  :-  'involvesWatchonly'
+          =-  (uf ~ (cu - (mu bo)))
+          |=  b=(unit ?)
+          ?~  b  ~
+          ?>(=(u.b &) (some %&))
+          ['amount' (un so)]
+          ['confirmations' (un ni)]
+          ['label' (un so)]
+      ==
+      ::
+        %lists-in-ceblock
+      =/  tx-response
+        :~  ['address' so]
+            :-  'category'
+            =-  (cu - so)
+              |=  t=@t
+              ^-  ?(%send %receive %generate %immature %orphan)
+              ?:  =(t 'send')  %send
+              ?:  =(t 'receive')  %receive
+              ?:  =(t 'generate')  %generate
+              ?:  =(t 'immature')  %immature
+              ?:  =(t 'orphan')  %orphan
+              !!
+            ['amount' so]
+            ['label' so]
+            ['vout' ni]
+            ['fee' so]
+            ['confirmations' ni]
+            ['blockhash' so]
+            ['blockindex' ni]
+            ['blocktime' ni]
+            ['txid' so]
+            ['time' ni]
+            ['timereceived' ni]
+            :-  'bip125-replaceable'
+            =-  (cu - so)
+              |=  t=@t
+              ^-  ?(%yes %no %unknown)
+              ?:  =(t 'yes')  %yes
+              ?:  =(t 'no')  %no
+              ?:  =(t 'unknown')  %unknown
+              !!
+            ['abandoned' bo]
+            ['comment' so]
+            ['label' so]
+            ['to' so]
+        ==
+      :-  id.res
+      %.  res.res
+      =-  (ou -)
+      :~  =-  ['transactions' (un -)]
+          (ar (ot tx-response))
+          ::
+          =-  ['removed' (un (mu -))]
+          (ar (ot tx-response))
+          ::
+          ['lastblock' (un so)]
+      ==
+      ::
+        %list-transactions
+      :-  id.res
+      %.  res.res
+      =-  (ar (ot -))
+      :~  ['address' so]
+          :-  'category'
+          =-  (cu - so)
+            |=  t=@t
+            ^-  ?(%send %receive %generate %immature %orphan)
+            ?:  =(t 'send')  %send
+            ?:  =(t 'receive')  %receive
+            ?:  =(t 'generate')  %generate
+            ?:  =(t 'immature')  %immature
+            ?:  =(t 'orphan')  %orphan
+            !!
+          ['amount' so]
+          ['label' so]
+          ['vout' ni]
+          ['fee' so]
+          ['confirmations' ni]
+          ['trusted' bo]
+          ['blockhash' so]
+          ['blockindex' ni]
+          ['blocktime' so]
+          ['txid' so]
+          ['time' so]
+          ['timereceived' so]
+          ['comment' so]
+          :-  'bip125-replaceable'
+          =-  (cu - so)
+            |=  t=@t
+            ^-  ?(%yes %no %unknown)
+            ?:  =(t 'yes')  %yes
+            ?:  =(t 'no')  %no
+            ?:  =(t 'unknown')  %unknown
+            !!
+          ['abandoned' bo]
+      ==
+      ::
+        %list-unspent
+      :-  id.res
+      %.  res.res
+      =-  (ar (ou -))
+      :~  ['txid' (un so)]
+          ['vout' (un so)]
+          ['address' (un so)]
+          ['label' (un so)]
+          ['scriptPubKey' (un so)]
+          ['amount' (un so)]
+          ['confirmations' (un ni)]
+          ['redeemScript' (un so)]
+          ['witnessScript' (un so)]
+          ['spendable' (un bo)]
+          ['solvable' (un bo)]
+          ['desc' (uf ~ (mu so))]
+          ['safe' (un bo)]
+      ==
     ::
         %list-wallet-dir
       :-  id.res
       %.  res.res
       =-  (ot -)
       =-  ['wallets' -]~
-      (ar (ot ['name' so]~))
+      (ar (ot [name+so]~))
     ::
         %list-wallets
       :-  id.res
@@ -686,14 +981,32 @@
         %sign-message
       [id.res (so res.res)]
     :: ::
-    ::   %sign-raw-transaction-with-wallet
-    :: [id.res ~]
+        %sign-raw-transaction-with-wallet
+      :-  id.res
+      %.  res.res
+      =-  (ot -)
+      :~  ['hex' so]
+          ['complete' bo]
+          :-  'errors'
+          =-  (ar (ot -))
+          :~  ['txid' so]
+              ['vout' ni]
+              ['scriptSig' so]
+              ['sequence' ni]
+              ['error' so]
+      ==  ==
     ::
         %unload-wallet
       [id.res ~]
     ::
-    ::   %wallet-create-fundedpsbt
-    :: [id.res ~]
+        %wallet-create-fundedpsbt
+      :-  id.res
+      %.  res.res
+      =-  (ot -)
+      :~  ['psbt' so]
+          ['fee' so]
+          ['changepos' so]
+      ==
     ::
         %wallet-lock
       [id.res ~]
@@ -714,7 +1027,14 @@
     ::
     ::  %zmq
     ::
-       :: %get-zmq-notifications
+       %get-zmq-notifications
+     :-  id.res
+     %.  res.res
+     =-  (ar (ot -))
+     :~  ['type' so]
+         ['address' so]
+         ['hwm' so]
+     ==
     ::
        :: [ %response
        ::   %finished

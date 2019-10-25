@@ -489,7 +489,7 @@
   :: :*  ['txid' s+a.txid]
   ::     ['vout' n+(scot %ud a.vout)]
   ::     ['scriptPubKey' s+a.script-pub-key]
-  ::     ['redeem-Script' s+a.redeem-script]
+  ::     ['redeemScript' s+a.redeem-script]
   ::     ['witnessScript' s+a.witness-script]
   ::     ['amount' n+(scot %ta a.amount)]
   :: ==
