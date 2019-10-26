@@ -58,17 +58,19 @@
   :: =/  out  *outbound-config:iris
   :: :_  this
   :: [ost.bol %request /[(scot %da now.bol)] req out]~
+  =/  addr     '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
+  =/  en-addr=@uc  (to-base58:btc-rpc:lib addr)
   =/  requests=(list btc-node-hook-action)
   :~  [%abandon-transaction 'XXXX']
       [%abort-rescan ~]
       [%backup-wallet 'XXXX']
       [%bump-fee 'XXXX' `[`'23' `'23' `& `%'ECONOMICAL']]
       [%create-wallet 'test-create-wallet' `| `|]
-      [%dump-privkey address=*@t]
+      [%dump-privkey en-addr]
       [%dump-wallet filename=*@t]
       [%encrypt-wallet passphrase=*@t]
       [%get-addresses-by-label label=*@t]
-      [%get-address-info address=*@t]
+      [%get-address-info en-addr]
       :*  %get-balance
           dummy=*(unit @t)
           minconf=*(unit @ud)
@@ -76,12 +78,12 @@
       ==
       [%get-new-address label=*(unit @t) address-type=*(unit @t)]
       [%get-raw-change-address address-type=*(unit @t)]
-      [%get-received-by-address address=*@t minconf=*@ud]
+      [%get-received-by-address en-addr minconf=*@ud]
       [%get-received-by-label *@t ~]
       [%get-transaction *@t *(unit ?)]
       [%get-unconfirmed-balance ~]
       [%get-wallet-info ~]
-      [%import-address address=*@t label=*(unit @t) rescan=*(unit ?) p2sh=*(unit ?)]
+      [%import-address en-addr label=*(unit @t) rescan=*(unit ?) p2sh=*(unit ?)]
       [%import-multi requests=~ options=~]
       [%import-privkey privkey=*@t label=*(unit @t) rescan=*(unit ?)]
       [%import-pruned-funds raw-transaction=*@t tx-out-proof=*@t]
@@ -143,7 +145,7 @@
           estimate-mode=*(unit @t)
       ==
       :*  %send-to-address
-          address=*@t
+          en-addr
           amount=*@t
           comment=*(unit @t)
           comment-to=*(unit @t)
@@ -153,9 +155,9 @@
           estimate-mode=*(unit @t)
       ==
       [%set-hd-seed ~]
-      [%set-label address=*@t label=*@t]
+      [%set-label en-addr label=*@t]
       [%set-tx-fee amount=*@t]
-      [%sign-message address=*@t message=*@t]
+      [%sign-message en-addr message=*@t]
       :: =/  prev-txs   %-  some  %-  limo
       ::   :~  txid=*@t
       ::       vout=*@ud

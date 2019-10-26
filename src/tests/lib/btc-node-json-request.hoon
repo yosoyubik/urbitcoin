@@ -1,12 +1,8 @@
 /-  *btc-node-hook
 /+  *test, lib=btc-node-json
 ::
-
-::
-/=  app  /:  /===/app/btc-node-hook
-             /!noun/
-::
-:: =,  btc-rpc
+=/  addr     '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
+=/  en-addr=@uc  (to-base58:btc-rpc:lib addr)
 ::
 |%
 ::  Others
@@ -24,7 +20,6 @@
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)
-::
 ::  Wallet
 ::
 ++  test-abandon-transaction  ^-  tang
@@ -90,9 +85,9 @@
 ::
 ++  test-dump-privkey  ^-  tang
   =/  op  %dump-privkey
-  =/  action=request:btc-rpc  [op address=*@t]
+  =/  action=request:btc-rpc  [op en-addr]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  [op (method:btc-rpc:lib op) %list [s+addr]~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-dump-wallet  ^-  tang
@@ -118,9 +113,9 @@
 ::
 ++  test-get-address-info  ^-  tang
   =/  op  %get-address-info
-  =/  action=request:btc-rpc  [op address=*@t]
+  =/  action=request:btc-rpc  [op en-addr]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  [op (method:btc-rpc:lib op) %list [s+addr]~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-get-balance  ^-  tang
@@ -150,9 +145,9 @@
 ++  test-get-received-by-address  ^-  tang
   =/  op  %get-received-by-address
   =/  action=request:btc-rpc
-    [op address=*@t minconf=*@ud]
+    [op en-addr minconf=*@ud]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+'' n+(scot %ud *@ud)]]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+addr n+(scot %ud *@ud)]]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-get-received-by-label  ^-  tang
@@ -186,9 +181,9 @@
 ++  test-import-address  ^-  tang
   =/  op  %import-address
   =/  action=request:btc-rpc
-    [op address=*@t label=*(unit @t) rescan=*(unit ?) p2sh=*(unit ?)]
+    [op en-addr label=*(unit @t) rescan=*(unit ?) p2sh=*(unit ?)]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  [op (method:btc-rpc:lib op) %list [s+addr]~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-import-multi  ^-  tang
@@ -394,7 +389,8 @@
         amounts=~
         minconf=*(unit @ud)
         comment=*(unit @t)
-        subtract-fee-from=*(unit (list address))
+        subtract-fee-from=*(unit (list @t))
+        :: subtract-fee-from=*(unit (list address))
         conf-target=*(unit @ud)
         estimate-mode=*(unit @t)
     ==
@@ -417,11 +413,12 @@
   =/  op  %send-to-address
   =/  action=request:btc-rpc
     :*  op
-        address=*@t
+        en-addr
         amount=*@t
         comment=*(unit @t)
         comment-to=*(unit @t)
-        subtract-fee-from=*(unit (list address))
+        subtract-fee-from=*(unit (list @t))
+        :: subtract-fee-from=*(unit (list address))
         replaceable=*(unit ?)
         conf-target=*(unit @ud)
         estimate-mode=*(unit @t)
@@ -439,7 +436,7 @@
   ::     ==
   ::   ::
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+addr s+'']]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-set-hd-seed   ^-  tang
@@ -451,9 +448,9 @@
   ::
 ++  test-set-label     ^-  tang
   =/  op  %set-label
-  =/  action=request:btc-rpc  [op address=*@t label=*@t]
+  =/  action=request:btc-rpc  [op en-addr label=*@t]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+addr s+'']]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-set-tx-fee    ^-  tang
@@ -465,9 +462,9 @@
 ::
 ++  test-sign-message  ^-  tang
   =/  op  %sign-message
-  =/  action=request:btc-rpc  [op address=*@t message=*@t]
+  =/  action=request:btc-rpc  [op en-addr message=*@t]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+addr s+'']]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-sign-raw-transaction-with-wallet  ^-  tang

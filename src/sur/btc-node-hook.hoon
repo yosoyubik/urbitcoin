@@ -1,5 +1,7 @@
 |%
-++  address  @ux
+::  %address: base58check encoded public key (20 bytes)
+::
+++  address  @uc
 ++  blockhash  @ux
 ::  Helper types
 ::
@@ -43,7 +45,7 @@
   ==
 ::
 +$  tx-response
-  $:  address=@t
+  $:  =address
       =category
       amount=@t
       label=@t
@@ -62,13 +64,14 @@
       label=@t
       to=@t
   ==
+::
 +$  btc-node-hook-action  request:btc-rpc
 ::
 ++  btc-rpc
   |%
   +$  request
     $%
-    ::  node management
+    ::  Node management
     ::
         [%generate blocks=@ud max-tries=(unit @ud)]
         [%get-blockchain-info ~]
@@ -76,7 +79,8 @@
     ::  chain state
     ::
         [%get-block-count ~]
-    ::  wallet management
+    ::  Wallet management
+    ::
         ::  %abandon-transaction: Mark in-wallet transaction as abandoned.
         ::
         ::    %txid: The transaction id
@@ -173,7 +177,7 @@
         ::  (Arguments:
         ::  (1. address    (string, required) The bitcoin address for the private key
         ::
-        [%dump-privkey address=@t]
+        [%dump-privkey =address]
         ::  Dumps all wallet keys in a human-readable format to a server-side file. This does not allow overwriting existing files.
         ::  (Imported scripts are included in the dumpfile, but corresponding BIP173 addresses, etc. may not be added automatically by importwallet.
         ::  (Note that if your wallet contains keys which are not derived from your HD seed (e.g. imported keys), these are not covered by
@@ -205,7 +209,7 @@
         ::  (Arguments:
         ::  (1. address    (string, required) The bitcoin address to get the information of.
         ::
-        [%get-address-info address=@t]
+        [%get-address-info =address]
         ::  Returns the total available balance.
         ::  (The available balance is what the wallet considers currently spendable, and is
         ::  (thus affected by options which limit spendability such as -spendzeroconfchange.
@@ -238,7 +242,7 @@
         ::  (1. address    (string, required) The bitcoin address for transactions.
         ::  (2. minconf    (numeric, optional, default=1) Only include transactions confirmed at least this many times.
         ::
-        [%get-received-by-address address=@t minconf=@ud]
+        [%get-received-by-address =address minconf=@ud]
         ::  Returns the total amount received by addresses with <label> in transactions with at least [minconf] confirmations.
         ::
         ::  (Arguments:
@@ -274,7 +278,7 @@
         ::  (3. rescan     (boolean, optional, default=true) Rescan the wallet for transactions
         ::  (4. p2sh       (boolean, optional, default=false) Add the P2SH version of the script as well
         ::
-        [%import-address address=@t label=(unit @t) rescan=(unit ?) p2sh=(unit ?)]
+        [%import-address =address label=(unit @t) rescan=(unit ?) p2sh=(unit ?)]
         ::  Import addresses/scripts (with private or public keys, redeem script (P2SH)), optionally rescanning the blockchain from the earliest creation time of the imported scripts. Requires a new wallet backup.
         ::
         ::  (If an address/script is imported without all of the private keys required to spend from that address, it will be watchonly. The 'watchonly' option must be set to true in this case or a warning will be returned.
@@ -561,10 +565,11 @@
         ::
         $:  %send-many
             dummy=%''
-            amounts=(list [address=@t amount=@t])
+            amounts=(list [=address amount=@t])
             minconf=(unit @ud)
             comment=(unit @t)
-            subtract-fee-from=(unit (list address))
+            subtract-fee-from=(unit (list @t))
+            :: subtract-fee-from=(unit (list address))
             conf-target=(unit @ud)
             estimate-mode=(unit @t)
         ==
@@ -588,11 +593,12 @@
         ::                             "CONSERVATIVE"
         ::
         $:  %send-to-address
-            address=@t
+            =address
             amount=@t
             comment=(unit @t)
             comment-to=(unit @t)
-            subtract-fee-from=(unit (list address))
+            subtract-fee-from=(unit (list @t))
+            :: subtract-fee-from=(unit (list address))
             replaceable=(unit ?)
             conf-target=(unit @ud)
             estimate-mode=(unit @t)
@@ -617,7 +623,7 @@
         ::  (1. address    (string, required) The bitcoin address to be associated with a label.
         ::  (2. label      (string, required) The label to assign to the address.
         ::
-        [%set-label address=@t label=@t]
+        [%set-label =address label=@t]
         ::  Set the transaction fee per kB for this wallet. Overrides the global -paytxfee command line parameter.
         ::
         ::  (Arguments:
@@ -633,7 +639,7 @@
         ::  (Result:
         :: "signature"          (string) The signature of the message encoded in base 64
         ::
-        [%sign-message address=@t message=@t]
+        [%sign-message =address message=@t]
         ::  Sign inputs for raw transaction (serialized, hex-encoded).
         ::  (The second optional argument (may be null) is an array of previous transaction outputs that
         ::  (this transaction depends on but may not yet be in the block chain.
@@ -832,7 +838,7 @@
         ::   "redeemScript":"script"         (string) The string value of the hex-encoded redemption script.
         :: }
         ::
-        [%add-multisig-address address=@t redeem-script=@t]
+        [%add-multisig-address =address redeem-script=@t]
         [%backup-wallet ~]
         ::
         ::  %bump-fee:
@@ -877,9 +883,9 @@
             ::  A list of pairs or a map breaks %sole... (?)
             ::
             $=  addresses  %-  list
-            [address=@t purpose=?(%send %receive)]
+            [=address purpose=?(%send %receive)]
             :: %+  map
-            ::   address=@t
+            ::   =address
             ::   purpose=?(%send %receive)
         ==
         ::
@@ -923,7 +929,7 @@
         ::  }
         ::
         $:  %get-address-info
-            address=@t
+            =address
             script-pubkey=@t
             is-mine=?
             is-watchonly=?
@@ -976,11 +982,11 @@
         ::  %get-new-address
         ::  "address"    (string) The new bitcoin address
         ::
-        [%get-new-address address=@t]
+        [%get-new-address =address]
         ::  %get-raw-change-address
         ::  "address"    (string) The new bitcoin address
         ::
-        [%get-raw-change-address address=@t]
+        [%get-raw-change-address =address]
         ::  %get-received-by-address
         ::  "amount"    The total amount in BTC received for this wallet.
         ::
@@ -1039,7 +1045,7 @@
             time-received=@t
             =bip125-replaceable
             $=  details  %-  list
-            $:  address=@t
+            $:  =address
                 =category
                 amount=@t
                 label=@t
@@ -1133,7 +1139,7 @@
         ::
         $:  %list-address-groupings
            $=  address  %-  list
-           (list [address=@t amount=@t label=(unit @t)])
+           (list [=address amount=@t label=(unit @t)])
         ==
         ::
         [%list-labels labels=(list @t)]
@@ -1169,7 +1175,7 @@
         ::
         $:  %list-received-by-address  %-  list
             $:  involves-watch-only=(unit %&)
-                address=@t
+                =address
                 amount=@t
                 confirmations=@ud
                 label=@t
@@ -1276,7 +1282,7 @@
         ::
         ::
         $:  %list-transactions  %-  list
-            $:  address=@t
+            $:  =address
                 =category
                 amount=@t
                 label=@t
@@ -1322,7 +1328,7 @@
         $=  txs  %-  list
             $:  txid=@t
                 vout=@t
-                address=@t
+                =address
                 label=@t
                 script-pubkey=@t
                 amount=@t
@@ -1475,7 +1481,7 @@
         ::
         $:  %get-zmq-notifications  %-  list
             $:  type=@t
-                address=@t
+                =address
                 hwm=@t
         ==  ==
     ==

@@ -31,6 +31,20 @@
         %+  scan  (scow %tas t)
           ((slug |=(a=[@ @t] (cat 3 a))) (star hep) alp)
       ::
+      ++  groups
+        |=  l=(list @t)
+        :_  ~
+        ::  This could(?) be done without lark syntax
+        ::  it replaces the parsed list with a  list of
+        ::  triplet of two @t and a unit
+        ::
+        =/  addr=@ux  (rash -.l fim:ag)
+        :*  `@uc`addr  `@t`+<.l
+            ?:  ?=([@t @t ~] l)    ~
+            ?.  ?=([@t @t @t ~] l)  !!
+            (some `@t`+>-.l)
+        ==
+      ::
       ::  json reparse that produces ~ when a key is undefined or
       ::  unit of the value
       ::
@@ -73,6 +87,7 @@
       ::
       ::  Base-58 parser
       ::
+      ::
       ++  base-58
         =-  (bass 58 (plus -))
         ;~  pose
@@ -83,6 +98,21 @@
           (cook |=(a=@ (sub a 65)) (shim 'm' 'z'))
           (cook |=(a=@ (sub a 49)) (shim '1' '9'))
         ==
+      ::
+      ::  Validates base58check encoded addresess
+      ::  e.g:
+      ::  '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy'
+      ::  is
+      ::  0c3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
+      ::
+      ++  to-base58
+        |=  a=@t
+        `@uc`(rash a fim:ag)
+      ::
+      ++  from-base58
+        |=  a=@uc
+        ^-  @t
+        (rsh 4 1 (scot %uc a))
       --
   |%
   ++  request-to-rpc
@@ -160,7 +190,7 @@
       ==
     ::
         %dump-privkey
-      ~[s+address.req]
+      ~[s+(from-base58 address.req)]
     ::
         %dump-wallet
       ~[s+filename.req]
@@ -172,7 +202,7 @@
       ~[s+label.req]
     ::
         %get-address-info
-      ~[s+address.req]
+      ~[s+(from-base58 address.req)]
     ::
         %get-balance
 
@@ -190,7 +220,7 @@
       ~[(ferm address-type.req %s)]
     ::
         %get-received-by-address
-      ~[s+address.req n+(scot %ud minconf.req)]
+      ~[s+(from-base58 address.req) n+(scot %ud minconf.req)]
     ::
         %get-received-by-label
       ~[s+label.req (feud minconf.req)]
@@ -205,7 +235,7 @@
       ~
     ::
         %import-address
-      :~  s+address.req
+      :~  s+(from-base58 address.req)
           (ferm label.req %s)
           (ferm rescan.req %b)
           (ferm p2sh.req %b)
@@ -398,11 +428,11 @@
           ?~  amounts.req  ~
           :-  %a
           %+  turn  amounts.req
-            |=  [addr=@t amount=@t]
+            |=  [addr=@uc amount=@t]
             ^-  json
             :-  %o  %-  ~(gas by *(map @t json))
             ^-  (list (pair @t json))
-            [addr n+(scot %ta amount)]~
+            [(from-base58 addr) n+(scot %ta amount)]~
         ::
           (feud minconf.req)
         ::
@@ -418,7 +448,7 @@
       ==
     ::
         %send-to-address
-      :~  s+address.req
+      :~  s+(from-base58 address.req)
           s+amount.req
           (ferm comment.req %s)
           (ferm comment-to.req %s)
@@ -434,7 +464,7 @@
       ~
     ::
         %set-label
-      :~  s+address.req
+      :~  s+(from-base58 address.req)
           s+label.req
       ==
     ::
@@ -442,7 +472,7 @@
       ~[s+amount.req]
     ::
         %sign-message
-      :~  s+address.req
+      :~  s+(from-base58 address.req)
           s+message.req
       ==
     ::
@@ -536,7 +566,9 @@
       :-  id.res
       %.  res.res
       =-  (ot -)
-      :~  ['address' so]
+      :~  :-  'address'
+          =-  (cu - (su fim:ag))
+          |=(a=@ux `@uc`a)
           ['redeemScript' so]
       ==
       ::
@@ -585,7 +617,10 @@
       :-  id.res
       %.  res.res
       =-  (ou -)
-      :~  ['address' (un so)]
+      :~  ::['address' (un so)]
+          =-  ['address' (un -)]
+          =-  (cu - (su fim:ag))
+          |=(a=@ux `@uc`a)
           ['scriptPubKey' (un so)]
           ['ismine' (un bo)]
           ['iswatchonly' (un bo)]
@@ -649,19 +684,34 @@
       ==
       ::
         %get-balance
-      [id.res (so res.res)]
+      :-  id.res
+      (so res.res)
       ::
         %get-new-address
-      [id.res (so res.res)]
+      :-  id.res
+      ::  FIXME: there should be a better way for this(?)
+      ::  hex -> @ -> @uc (base58check)
+      ::
+      :: ^-  @uc  ^-  @
+      %.  res.res
+      :: (su fim:ag)
+      =-  (cu - (su fim:ag))
+      |=(a=@ux `@uc`a)
       ::
         %get-raw-change-address
-      [id.res (so res.res)]
+      :-  id.res
+      :: (so res.res)
+      %.  res.res
+      =-  (cu - (su fim:ag))
+      |=(a=@ux `@uc`a)
       ::
         %get-received-by-address
-      [id.res (so res.res)]
+      :-  id.res
+      (so res.res)
       ::
         %get-received-by-label
-      [id.res (so res.res)]
+      :-  id.res
+      (so res.res)
       ::
         %get-transaction
       :-  id.res
@@ -689,7 +739,9 @@
               ?:  =(t 'unknown')  %unknown
               !!
           =-  ['details' (ar (ot -))]
-          :~  ['address' so]
+          :~  :-  'address'
+              =-  (cu - (su fim:ag))
+              |=(a=@ux `@uc`a)
               :-  'category'  =-  (cu - so)
                   ::  see 'bip125-replaceable'
                   ::
@@ -770,30 +822,20 @@
         %list-address-groupings
       :-  id.res
       %.  res.res
-      =-  (ar (cu - (ar so)))
-        |=  l=(list @t)
-        :_  ~
-        ::  This could(?) be done without lark syntax
-        ::  it replaces the parsed list with a  list of
-        ::  triplet of two @t and a unit
-        ::
-        :*  `@t`-.l   `@t`+<.l
-            ?:  ?=([@t @t ~] l)    ~
-            ?.  ?=([@t @t @t ~] l)  !!
-            (some `@t`+>-.l)
-        ==
+      =-  (ar -)
+      (cu groups (ar so))
       ::
         %list-labels
       :-  id.res
       %.  res.res
       (ar so)
-      :: ::
+      ::
         %list-lock-unspent
       :-  id.res
       %.  res.res
       =-  (ar -)
       (ot ~[['txid' so] ['vout' ni]])
-      :: ::
+      ::
         %list-received-by-address
       :-  id.res
       %.  res.res
@@ -804,7 +846,10 @@
             |=  b=(unit ?)
             ?~  b  ~
             ?>(=(u.b &) (some %&))
-          ['address' (un so)]
+          ::['address' (un so)]
+          =-  ['address' (un -)]
+          =-  (cu - (su fim:ag))
+          |=(a=@ux `@uc`a)
           ['amount' (un so)]
           ['confirmations' (un ni)]
           ['label' (un so)]
@@ -827,7 +872,9 @@
       ::
         %lists-in-ceblock
       =/  tx-response
-        :~  ['address' so]
+        :~  :-  'address'
+            =-  (cu - (su fim:ag))
+            |=(a=@ux `@uc`a)
             :-  'category'
             =-  (cu - so)
               |=  t=@t
@@ -878,7 +925,9 @@
       :-  id.res
       %.  res.res
       =-  (ar (ot -))
-      :~  ['address' so]
+      :~  :-  'address'
+          =-  (cu - (su fim:ag))
+          |=(a=@ux `@uc`a)
           :-  'category'
           =-  (cu - so)
             |=  t=@t
@@ -919,7 +968,10 @@
       =-  (ar (ou -))
       :~  ['txid' (un so)]
           ['vout' (un so)]
-          ['address' (un so)]
+          :: ['address' (un so)]
+          =-  ['address' (un -)]
+          =-  (cu - (su fim:ag))
+          |=(a=@ux `@uc`a)
           ['label' (un so)]
           ['scriptPubKey' (un so)]
           ['amount' (un so)]
@@ -1032,7 +1084,9 @@
      %.  res.res
      =-  (ar (ot -))
      :~  ['type' so]
-         ['address' so]
+         :-  'address'
+         =-  (cu - (su fim:ag))
+         |=(a=@ux `@uc`a)
          ['hwm' so]
      ==
     ::
