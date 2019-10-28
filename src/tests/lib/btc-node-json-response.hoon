@@ -1,14 +1,17 @@
 /-  *btc-node-hook
 /+  *test, lib=btc-node-json
 ::
-::
 /=  app  /:  /===/app/btc-node-hook
              /!noun/
 ::
 =/  addr     '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
 =/  en-addr=@uc  (to-base58:btc-rpc:lib addr)
 ::
+=,  format
+::
 |%
+::  Wallet
+::
 ++  test-abandon-transaction  ^-  tang
   =/  op  %abandon-transaction
   =/  result=response:rpc:jstd  [%result op ~]
@@ -34,10 +37,10 @@
   =/  result=response:rpc:jstd
     :+  %result  op
     ^-  json
-    %-  pairs:enjs:format
-    :~  ['address' s+addr]
-        ['redeemScript' s+'23']
-    ==
+    %-  pairs:enjs
+      :~  ['address' s+addr]
+          ['redeemScript' s+'23']
+      ==
   =/  exp=response:btc-rpc  [op en-addr '23']
   %+  expect-eq
     !>  exp
@@ -53,7 +56,7 @@
 ++  test-bump-fee  ^-  tang
   =/  op  %bump-fee
   =/  expected-res=response:btc-rpc
-    [op txid='23' orig-fee='23' fee='23' errors=['23']~]
+    [op txid=0x23 orig-fee='23' fee='23' errors=['23']~]
   ::  e.g:
   ::    {
   ::      "txid":    "value",   (string)
@@ -64,7 +67,7 @@
   =/  result=response:rpc:jstd
     :+  %result  op
     ^-  json
-    :-  %o  %-  ~(gas by *(map @t json))
+    %-  pairs:enjs
     ^-  (list (pair @t json))
     :~  ['txid' s+'23']
         ['origfee' n+~.23]
@@ -139,22 +142,15 @@
   ::   }
   =/  result=response:rpc:jstd
     :+  %result  op
-    %-  pairs:enjs:format
+    %-  pairs:enjs
       :~  :-  addr
-          %-  pairs:enjs:format
+          %-  pairs:enjs
             ['purpose' s+'send']~
       ==
-  =/  exp=response:btc-rpc
-    ::  FIXME
-    ::  A list of pairs or a map breaks %sole... (?)
-    ::
-    :: [op (~(gas by *(map @t ?(%send %receive))) [addr %send]~)]
-    [op [en-addr %send]~]
+  =/  exp=response:btc-rpc  [op [en-addr %send]~]
   %+  expect-eq
-  :: !>  exp
-  :: !>  (parse-response:btc-rpc:lib result)
-    !>  &
-    !>  &
+    !>  exp
+    !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-get-address-info  ^-  tang
   =/  op  %get-address-info
@@ -197,13 +193,13 @@
   ::
   =/  label-result
     =-  ['labels' [%a -]]
-    :~  %-  pairs:enjs:format
+    :~  %-  pairs:enjs
         :~  ['name' s+'label1']
             ['purpose' s+'send']
     ==  ==
   =/  result=response:rpc:jstd
     :+  %result  op
-    %-  pairs:enjs:format
+    %-  pairs:enjs
       :~  ['address' s+addr]
           ['scriptPubKey' s+'23']
           ['ismine' b+&]
@@ -221,7 +217,7 @@
           ['sigsrequired' n+~.2]
           ['pubkey' s+'23']
           :-  'embedded'
-          %-  pairs:enjs:format
+          %-  pairs:enjs
             :~  ['scriptPubKey' s+'23']
                 ['solvable' b+&]
                 ['desc' s+'23']
@@ -249,17 +245,17 @@
           label-result
       ==
   =/  embedded
-    :*  '23'  &  (some '23')  &  &  &
-        (some '23')  (some '23')  (some '23')  (some '23')
-        (some ['23']~)  (some 2)  (some '23')  (some &)
-        (some '23')  (some '23')  ['label1' %send]~
+    :*  0x23  &  (some '23')  &  &  &
+        (some '23')  (some 0x23)  (some 0x23)  (some 0x23)
+        (some [0x23]~)  (some 2)  (some 0x23)  (some &)
+        (some '23')  (some 0x23)  ['label1' %send]~
     ==
   =/  exp=response:btc-rpc
-    :*  op  en-addr  '23'  &  &  &  (some '23')  &  &  &
-        (some '23')  (some '23')  (some '23')  (some '23')
-        (some ['23']~)  (some 2)  (some '23')  (some embedded)
+    :*  op  en-addr  0x23  &  &  &  (some '23')  &  &  &
+        (some '23')  (some 0x23)  (some '23')  (some 0x23)
+        (some [0x23]~)  (some 2)  (some 0x23)  (some embedded)
         (some &)  (some '23')  (some '23')  (some '23')
-        (some '23')  (some '23')
+        (some 0x23)  (some 0x23)
         ['label1' %send]~
     ==
   %+  expect-eq
@@ -341,7 +337,7 @@
   =/  result=response:rpc:jstd
     :+  %result  op
     ^-  json
-    %-  pairs:enjs:format
+    %-  pairs:enjs
     :~  ['amount' s+'23']
         ['fee' s+'23']
         ['confirmations' n+~.23]
@@ -354,7 +350,7 @@
         ['bip125-replaceable' s+'yes']
         :-  'details'  ^-  json
         :-  %a  ^-  (list json)
-        :~  %-  pairs:enjs:format
+        :~  %-  pairs:enjs
             :~  ['address' s+addr]
                 ['category' s+'send']
                 ['amount' s+'23']
@@ -366,10 +362,10 @@
         ['hex' s+'23']
     ==
   =/  exp=response:btc-rpc
-    :*  op  '23'  '23'  23  '23'  23
-        '23'  '23'  '23'  '23'  %yes
+    :*  op  '23'  '23'  23  0x23  23
+        '23'  0x23  '23'  '23'  %yes
         [en-addr %send '23' '23' 23 '23' %.n]~
-        '23'
+        0x23
     ==
   %+  expect-eq
     !>  exp
@@ -391,7 +387,7 @@
   ::    }
   =/  result=response:rpc:jstd
     :+  %result  op
-    %-  pairs:enjs:format
+    %-  pairs:enjs
       :~  ['walletname' s+'23']
           ['walletversion' s+'23']
           ['balance' s+'23']
@@ -433,11 +429,11 @@
     :+  %result  op
     ^-  json
     :-  %a  ^-  (list json)
-    :~  %-  pairs:enjs:format
+    :~  %-  pairs:enjs
         :~  ['success' b+|]
             ['warnings' a+[s+'warning1']~]
             :-  'errors'
-            %-  pairs:enjs:format
+            %-  pairs:enjs
             :~  ['error' s+'1']
                 ['message' s+'sms']
             ==
@@ -533,11 +529,11 @@
   =/  result=response:rpc:jstd
     :+  %result   op
     :-  %a  ^-  (list json)
-    :~  %-  pairs:enjs:format
+    :~  %-  pairs:enjs
         ~[['txid' s+'23'] ['vout' n+~.23]]
     ==
   %+  expect-eq
-    !>  [op ['23' 23]~]
+    !>  [op [0x23 23]~]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-list-received-by-address  ^-  tang
@@ -561,7 +557,7 @@
   =/  result=response:rpc:jstd
     :+  %result  op
     :-  %a  ^-  (list json)
-    :~  %-  pairs:enjs:format
+    :~  %-  pairs:enjs
         :~  ['involvesWatchonly' b+&]
             ['address' s+addr]
             ['amount' s+'23']
@@ -570,7 +566,7 @@
             ['txids' a+[s+'23']~]
     ==  ==
   =/  exp=response:btc-rpc
-    [op [(some %&) en-addr '23' 23 '23' ['23']~]~]
+    [op [(some %&) en-addr '23' 23 '23' [0x23]~]~]
   %+  expect-eq
       !>  exp
       !>  (parse-response:btc-rpc:lib result)
@@ -591,7 +587,7 @@
   =/  result=response:rpc:jstd
     :+  %result  op
     :-  %a  ^-  (list json)
-    :~  %-  pairs:enjs:format
+    :~  %-  pairs:enjs
         :~  ['involvesWatchonly' b+&]
             ['amount' s+'23.23']
             ['confirmations' n+~.23]
@@ -663,15 +659,15 @@
     ==
   =/  result=response:rpc:jstd
     :+  %result  op
-    %-  pairs:enjs:format
+    %-  pairs:enjs
       :~  =-  ['transactions' -]
           ^-  json
           :-  %a  ^-  (list json)
-          :~  %-  pairs:enjs:format  ^-  (list (pair @t json))
+          :~  %-  pairs:enjs  ^-  (list (pair @t json))
               tx-response
           ==
           =-  ['removed' -]
-          [%a [(pairs:enjs:format tx-response)]~]
+          [%a [(pairs:enjs tx-response)]~]
           ['lastblock' s+'23']
       ==
   =/  exp-tx-response
@@ -682,10 +678,10 @@
         vout=23
         fee='23.23'
         confirmations=23
-        blockhash='23'
+        blockhash=0x23
         blockindex=23
         blocktime=23
-        txid='23'
+        txid=0x23
         time=23
         time-received=23
         bip125-replaceable=%yes
@@ -698,7 +694,7 @@
     :*  op
         [exp-tx-response]~
         (some [exp-tx-response]~)
-       '23'
+       0x23
     ==
   %+  expect-eq
       !>  exp
@@ -742,7 +738,7 @@
     :+  %result  op
     ^-  json
     :-  %a  ^-  (list json)
-    :~  %-  pairs:enjs:format
+    :~  %-  pairs:enjs
         :~  ['address' s+addr]
             ['category' s+'send']
             ['amount' s+'23']
@@ -763,7 +759,10 @@
     ==  ==
   =/  exp=response:btc-rpc
     :-  op
-    [en-addr %send '23' '23' 23 '23' 23 %.n '23' 23 '23' '23' '23' '23' '23' %yes %.n]~
+    :_  ~
+    :*  en-addr  %send  '23'  '23'  23  '23'  23  %.n
+        0x23  23  '23'  0x23  '23'  '23'  '23'  %yes  %.n
+    ==
   %+  expect-eq
       !>  exp
       !>  (parse-response:btc-rpc:lib result)
@@ -794,7 +793,7 @@
   =/  result=response:rpc:jstd
     :+  %result   op
     :-  %a  ^-  (list json)
-    :~  %-  pairs:enjs:format
+    :~  %-  pairs:enjs
         :~  ['txid' s+'23']
             ['vout' s+'23']
             ['address' s+addr]
@@ -811,7 +810,7 @@
     ==  ==
   =/  exp=response:btc-rpc
     :-  op
-    ['23' '23' en-addr '23' '23' '23' 23 '23' '23' %.n %.n (some '23') %.n]~
+    [0x23 '23' en-addr '23' 0x23 '23' 23 0x23 0x23 %.n %.n (some '23') %.n]~
   %+  expect-eq
     !>  exp
     !>  (parse-response:btc-rpc:lib result)
@@ -833,7 +832,7 @@
       ^-  (list (pair @t json))
       :~  :-  'wallets'
           :-  %a  ^-  (list json)
-          :~  %-  pairs:enjs:format
+          :~  %-  pairs:enjs
               ['name' s+'test-wallet']~
       ==  ==
     %+  expect-eq
@@ -908,14 +907,14 @@
   =/  op  %send-many
   =/  result=response:rpc:jstd  [%result op s+'99']
   %+  expect-eq
-    !>  [op '99']
+    !>  [op 0x99]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-send-to-address  ^-  tang
   =/  op  %send-to-address
   =/  result=response:rpc:jstd  [%result op s+'99']
   %+  expect-eq
-    !>  [op '99']
+    !>  [op 0x99]
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-set-hd-seed  ^-  tang
@@ -966,12 +965,12 @@
   =/  result=response:rpc:jstd
     :+  %result  op
     ^-  json
-    %-  pairs:enjs:format
+    %-  pairs:enjs
     :~  ['hex' s+'34']
         ['complete' b+|]
         :-  'errors'  ^-  json
         :-  %a  ^-  (list json)
-        :~  %-  pairs:enjs:format
+        :~  %-  pairs:enjs
             :~  ['txid' s+'34']
                 ['vout' n+~.34]
                 ['scriptSig' s+'34']
@@ -979,7 +978,7 @@
                 ['error' s+'34']
     ==  ==  ==
   =/  exp=response:btc-rpc
-    [op '34' | ['34' 34 '34' 34 '34']~]
+    [op 0x34 | [0x34 34 0x34 34 '34']~]
   %+  expect-eq
     !>  exp
     !>  (parse-response:btc-rpc:lib result)
@@ -1001,7 +1000,7 @@
   :: }
   =/  result=response:rpc:jstd
     :+  %result  op
-    %-  pairs:enjs:format
+    %-  pairs:enjs
     :~  ['psbt' s+'99']
         ['fee' s+'20.1']
         ['changepos' s+'-1']
@@ -1052,9 +1051,8 @@
   %+  expect-eq
     !>  expected-res
     !>  (parse-response:btc-rpc:lib result)
+::  ZMQ
 ::
-:: ::  ZMQ
-:: ::
 ++  test-get-zmq-notifications  ^-  tang
   =/  op  %get-zmq-notifications
   ::  e.g:
@@ -1065,7 +1063,7 @@
   =/  result=response:rpc:jstd
     :+  %result  op
     :-  %a  ^-  (list json)
-    :~  %-  pairs:enjs:format
+    :~  %-  pairs:enjs
         :~  ['type' s+'23']
             ['address' s+addr]
             ['hwm' s+'23']

@@ -6,8 +6,6 @@
   ::  Utility core
   ::
   =+  |%
-      ::  FIXME: so... most of these things seem to be in +dejs.. replace!
-      ::
       ::  Ideally +fall would have worked here, but we need to supply
       ::  the type of json (%s, %b...) only when unit is non empty so
       ::  this is like a reverse +bond (applied to the non-null case)
@@ -16,12 +14,14 @@
       ++  ferm  |*([a=(unit) t=term] ?~(a ~ t^u.a))
       ::
       ::  We want to make sure that numbers are numbers (@ud) but JSON
-      ::  defines numbers as @ta, so we need to do a convertion.
+      ::  defines numbers as @ta, so we need to do a re-parse
       ::
       ++  feud  |*(a=(unit) ?~(a ~ n+(scot %ud u.a)))
       ::
-      ::  %method: Removes 'hep' (-) from a %tas producing
-      ::  the RPC method to use in a call
+      ++  feta  |*(a=(unit) ?~(a ~ n+(scot %ta u.a)))
+      ::  %method:
+      ::  Removes 'hep' (-) from a %tas producing the RPC
+      ::   method to use in a call
       ::
       ::  (e.g. %add-multisig-address -> 'addmultisigaddress')
       ::
@@ -31,11 +31,51 @@
         %+  scan  (scow %tas t)
           ((slug |=(a=[@ @t] (cat 3 a))) (star hep) alp)
       ::
+      ++  bip125
+        ::  This would have been more elegant:
+        ::  ['bip125-replaceable' (cu term so)]
+        ::  but a term is not of type ?(%yes %no %unknown)
+        ::  so a manual convertion seems the only(?) way.
+        ::
+        |=  t=@t
+        ^-  ?(%yes %no %unknown)
+        ?:  =(t 'yes')
+          %yes
+        ?:  =(t 'no')
+          %no
+        ?:  =(t 'unknown')  !!
+        %unknown
+      ::
+      ++  purpose
+        |=  t=@t
+        ^-  ?(%send %receive)
+        ?:  =(t 'send')
+          %send
+        ?.  =(t 'receive')  !!
+        %receive
+      ::
+      ++  category
+        |=  t=@t
+        ^-  ?(%send %receive %generate %immature %orphan)
+        ?:  =(t 'send')
+          %send
+        ?:  =(t 'receive')
+          %receive
+        ?:  =(t 'generate')
+          %generate
+        ?:  =(t 'immature')
+          %immature
+        ?.  =(t 'orphan')  !!
+        %orphan
+      ::  %groups
+      ::
+      ::  Used in %list-address-groupings
+      ::
       ++  groups
         |=  l=(list @t)
         :_  ~
-        ::  This could(?) be done without lark syntax
-        ::  it replaces the parsed list with a  list of
+        ::  TODO: This could(?) be done without lark syntax
+        ::  It replaces the parsed list with a  list of
         ::  triplet of two @t and a unit
         ::
         =/  addr=@ux  (rash -.l fim:ag)
@@ -45,59 +85,28 @@
             (some `@t`+>-.l)
         ==
       ::
-      ::  json reparse that produces ~ when a key is undefined or
-      ::  unit of the value
-      ::
-      :: ++  un-dejs
-      ::   =>  |%  ++  grub  *
-      ::           ++  fist  $-((unit json) grub)
-      ::       --
-      ::   |%
-      ::   ++  ot
-      ::     |*  wer=(pole [cord fist])
-      ::     |=  jon=json
-      ::     ?>  ?=([%o *] jon)
-      ::     ((ot-raw wer) p.jon)
-      ::   ::
-      ::   ++  ot-raw
-      ::     |*  wer=(pole [cord fist])
-      ::     |=  jom=(map @t json)
-      ::     ?-    wer
-      ::         [[key=@t *] t=*]
-      ::       =>  .(wer [[* wit] *]=wer)
-      ::       =/  val=(unit json)  (~(get by jom) key.wer)
-      ::       :: =/  ten  ?~(val ~ (wit.wer u.val))
-      ::       :: =/  ten  (wit.wer u.val)
-      ::       =/  ten  (wit.wer val)
-      ::       :: ~&  [key.wer val ten]
-      ::       ?~(t.wer ten [ten ((ot-raw t.wer) jom)])
-      ::     ==
-        ::
-        :: ++  um
-        ::   |*  wit=fist
-        ::   |=  jon=(unit json)
-        ::   ?~(jon ~ (wit u.jon))
-        ::  This gates need to be redefined as wet, since otherwise
-        ::  cast the type of the json to ~ in cases like &, or ''
-        ::
-        :: ++  so  |*(jon=json ?>(?=([%s *] jon) p.jon))
-        :: ++  bo  |*(jon=json ?>(?=([%b *] jon) p.jon))
-        :: ++  no  |*(jon=json ?>(?=([%n *] jon) p.jon))
-        :: --
-      ::
       ::  Base-58 parser
+      ::    We could have used this base-58 parser from %zuse, that produces
+      ::    a raw atom.
       ::
+      ::  But it seems that it has some issues,
       ::
-      ++  base-58
-        =-  (bass 58 (plus -))
-        ;~  pose
-          (cook |=(a=@ (sub a 56)) (shim 'A' 'H'))
-          (cook |=(a=@ (sub a 57)) (shim 'J' 'N'))
-          (cook |=(a=@ (sub a 58)) (shim 'P' 'Z'))
-          (cook |=(a=@ (sub a 64)) (shim 'a' 'k'))
-          (cook |=(a=@ (sub a 65)) (shim 'm' 'z'))
-          (cook |=(a=@ (sub a 49)) (shim '1' '9'))
-        ==
+      ::          ++  base-58
+      ::            =-  (bass 58 (plus -))
+      ::            ;~  pose
+      ::               (cook |=(a=@ (sub a 56)) (shim 'A' 'H'))
+      ::               (cook |=(a=@ (sub a 57)) (shim 'J' 'N'))
+      ::               (cook |=(a=@ (sub a 58)) (shim 'P' 'Z'))
+      ::               (cook |=(a=@ (sub a 64)) (shim 'a' 'k'))
+      ::               (cook |=(a=@ (sub a 65)) (shim 'm' 'z'))
+      ::               (cook |=(a=@ (sub a 49)) (shim '1' '9'))
+      ::            ==
+      ::
+      ::  compared to +fim:ag, with the extra cast as seen bellow,
+      ::    because it returns @ux:
+      ::
+      ::        =-  (cu - (su fim:ag))
+      ::        |=(a=@ux `@uc`a)
       ::
       ::  Validates base58check encoded addresess
       ::  e.g:
@@ -106,13 +115,41 @@
       ::  0c3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
       ::
       ++  to-base58
-        |=  a=@t
-        `@uc`(rash a fim:ag)
+        |=  c=@t
+        `@uc`(rash c fim:ag)
       ::
-      ++  from-base58
-        |=  a=@uc
+      ++  base58-to-cord
+        |=  b=@uc
         ^-  @t
-        (rsh 4 1 (scot %uc a))
+        ::  Removes leading 0c
+        ::
+        (rsh 4 1 (scot %uc b))
+      ::
+      ++  hex-to-cord
+        |=  h=@ux
+        ^-  @t
+        ::  Removes leading 0x
+        ::
+        =-  (rsh 4 1 -)
+        ::  Removes .
+        ::
+        %+  scan  (scow %ux h)
+          ((slug |=(a=[@ @t] (cat 3 a))) (star dot) alp)
+      ::
+      ++  to-hex
+        |=  c=@t
+        ::  Parse hexadecimal to atom
+        ::
+        =-  `@ux`(rash - hex)
+        ::  Group by 4-size block
+        ::
+        =-  (rsh 4 1 -)
+        ::  Add leading 00
+        ::
+        (lsh 4 1 c)
+      ::
+      ++  ux-to-base
+        |=(h=@ux `@uc`h)
       --
   |%
   ++  request-to-rpc
@@ -124,12 +161,12 @@
     ::
     =-  (skip - |=(a=json =(~ a)))
     ^-  (list json)
-    ?+   -.req  ~|([%unsupported-request -.req] !!)
+    ?+    -.req  ~|([%unsupported-request -.req] !!)
     ::
         %generate
       :-  (numb blocks.req)
       ?~  max-tries.req
-      ~
+        ~
       [(numb u.max-tries.req) ~]
     ::
         %get-block-count
@@ -141,46 +178,38 @@
     ::  Wallet
     ::
         %abandon-transaction
-      ~[s+txid.req]
+      ~[s+(hex-to-cord txid.req)]
     ::
         %abort-rescan
       ~
     ::
-      ::  FIXME
-      ::   %add-multisig-address
-      :: :~  s+name.req
-      ::     n+n-required.req
-      ::     ::  TODO: parse list of @ux
-      ::     :: keys.req=(list @ux)
-      ::     (ferm label.req %s)
-      ::     (ferm address-type.req %s)
-      :: ==
+        %add-multisig-address
+      :~  n+(scot %ud n-required.req)
+          :-  %a
+          %+  turn  keys.req
+            |=  a=@uc
+            s+(base58-to-cord a)
+          (ferm label.req %s)
+          s+address-type.req
+      ==
     ::
         %backup-wallet
       ~[s+destination.req]
     ::
         %bump-fee
-      :~  s+txid.req
+      :~  s+(hex-to-cord txid.req)
           ?~  options.req  ~
           =*  opts  u.options.req
-          :-  %o  %-  ~(gas by *(map @t json))
-          ^-  (list (pair @t json))
-          ::  Excludes ~ elements
-          ::
-          =-  (murn - same)
-          ^-  (list (unit (pair @t json)))
-          :~  ?~  conf-target.opts  ~
-              `['confTarget' s+u.conf-target.opts]
+          %-  pairs:enjs
+            ::  Excludes ~ elements
             ::
-              ?~  total-fee.opts  ~
-              `['totalFee' s+u.total-fee.opts]
-            ::
-              ?~  replaceable.opts  ~
-              `['replaceable' b+u.replaceable.opts]
-            ::
-              ?~  estimate-mode.opts  ~
-              `['estimate_mode' s+u.estimate-mode.opts]
-          ==
+            =-  (skip - |=([@t a=json] =(a ~)))
+            ^-  (list (pair @t json))
+            :~  ['confTarget' (ferm conf-target.opts %s)]
+                ['totalFee' (ferm total-fee.opts %s)]
+                ['replaceable' (ferm replaceable.opts %b)]
+                ['estimate_mode' (ferm estimate-mode.opts %s)]
+            ==
       ==
     ::
         %create-wallet
@@ -190,7 +219,7 @@
       ==
     ::
         %dump-privkey
-      ~[s+(from-base58 address.req)]
+      ~[s+(base58-to-cord address.req)]
     ::
         %dump-wallet
       ~[s+filename.req]
@@ -202,10 +231,9 @@
       ~[s+label.req]
     ::
         %get-address-info
-      ~[s+(from-base58 address.req)]
+      ~[s+(base58-to-cord address.req)]
     ::
         %get-balance
-
       :~  (ferm dummy.req %s)
           (feud minconf.req)
           (ferm include-watch-only.req %b)
@@ -220,13 +248,13 @@
       ~[(ferm address-type.req %s)]
     ::
         %get-received-by-address
-      ~[s+(from-base58 address.req) n+(scot %ud minconf.req)]
+      ~[s+(base58-to-cord address.req) n+(scot %ud minconf.req)]
     ::
         %get-received-by-label
       ~[s+label.req (feud minconf.req)]
     ::
         %get-transaction
-      ~[s+txid.req (ferm include-watch-only.req %b)]
+      ~[s+(hex-to-cord txid.req) (ferm include-watch-only.req %b)]
     ::
         %get-unconfirmed-balance
       ~
@@ -235,7 +263,7 @@
       ~
     ::
         %import-address
-      :~  s+(from-base58 address.req)
+      :~  s+(base58-to-cord address.req)
           (ferm label.req %s)
           (ferm rescan.req %b)
           (ferm p2sh.req %b)
@@ -247,54 +275,62 @@
           :-  %a
           %+  turn  reqs
             |=  r=import-request
-            :-  %o  %-  ~(gas by *(map @t json))
-            ^-  (list (pair @t json))
-            ::  Exclude nulls
-            ::
-            =-  (skip - |=([@t a=json] =(a ~)))
-            ^-  (list (pair @t json))
-            :~  ['desc' s+desc.r]
+            %-  pairs:enjs
+              ::  Exclude nulls
               ::
-                ['scriptPubKey' s+script-pubkey.r]
-              ::
-                :-  'timestamp'
-                ?:  ?=(%now timestamp.r)
-                  s+timestamp.r
-                s+(scot %da timestamp.r)
-              ::
-                ['redeemScript' s+redeem-script.r]
-              ::
-                ['witnessScript' s+witness-script.r]
-              ::
-                :-  'pubkeys'
-                ?~  pub-keys.r  ~
-                :-  %a
-                %+  turn   ^-((list @t) u.pub-keys.r)
-                  |=(a=@t s+a)
-              ::
-                :-  'keys'
-                ?~  keys.r  ~
-                a+(turn u.keys.r |=(a=@t s+a))
-              ::
-                :-  'range'
-                =+  range.r
-                ?@  -
-                  n+(scot %ud -)
-                a+~[n+(scot %ud -<) n+(scot %ud ->)]
-              ::
-                ['internal' b+internal.r]
-              ::
-                ['watchonly' b+watchonly.r]
-              ::
-                ['label' s+label.r]
-              ::
-                ['keypool' b+keypool.r]
-              ::
-            ==
+              =-  (skip - |=([@t a=json] =(a ~)))
+              ^-  (list (pair @t json))
+              :~  ['desc' s+desc.r]
+                ::
+                  :-  'scriptPubKey'
+                  =*  scri  script-pubkey.r
+                  ?-   -.scri
+                      %script
+                    ^-  json
+                    [%s s.scri]
+                    ::
+                      %address
+                    %-  pairs:enjs
+                      ['address' s+(base58-to-cord a.script-pubkey.r)]~
+                  ==
+                ::
+                  :-  'timestamp'
+                  ?:  ?=(%now timestamp.r)
+                    s+timestamp.r
+                  s+(scot %da timestamp.r)
+                ::
+                  ['redeemScript' s+redeem-script.r]
+                ::
+                  ['witnessScript' s+witness-script.r]
+                ::
+                  :-  'pubkeys'
+                  ?~  pub-keys.r  ~
+                  :-  %a
+                  %+  turn   ^-((list @t) u.pub-keys.r)
+                    |=(a=@t s+a)
+                ::
+                  :-  'keys'
+                  ?~  keys.r  ~
+                  a+(turn u.keys.r |=(a=@t s+a))
+                ::
+                  :-  'range'
+                  =+  range.r
+                  ?@  -
+                    n+(scot %ud -)
+                  a+~[n+(scot %ud -<) n+(scot %ud ->)]
+                ::
+                  ['internal' b+internal.r]
+                ::
+                  ['watchonly' b+watchonly.r]
+                ::
+                  ['label' s+label.r]
+                ::
+                  ['keypool' b+keypool.r]
+                ::
+              ==
           ?~  options.req  ~
-          :-  %o  %-  ~(gas by *(map @t json))
-          ^-  (list (pair @t json))
-          ['rescan' b+u.options.req]~
+          %-  pairs:enjs
+            ['rescan' b+u.options.req]~
       ==
     ::
         %import-privkey
@@ -343,7 +379,8 @@
       ==
     ::
         %lists-in-ceblock
-      :~  (ferm blockhash.req %s)
+      :~  ?~  blockhash.req  ~
+          s+(hex-to-cord u.blockhash.req)
           (feud target-confirmations.req)
           (ferm include-watch-only.req %b)
           (ferm include-removed.req %b)
@@ -361,7 +398,6 @@
         ::
           (feud maxconf.req)
         ::
-          :: (ferm addresses.req %a)
           ?~  addresses.req  ~
           =*  addrs  u.addresses.req
           a+(turn addrs |=(a=@t s+a))
@@ -372,23 +408,16 @@
           =*  opts  u.query-options.req
           ::  Remove null parameters
           ::
-          =-  ?~(- ~ o+(~(gas by *(map @t json)) -))
+          =-  ?~(- ~ (pairs:enjs -))
           ^-  (list (pair @t json))
           ::  Excludes ~ elements
           ::
-          =-  (murn - same)
-          ^-  (list (unit (pair @t json)))
-          :~  ?~  minimum-amount.opts  ~
-              `['minimumAmount' n+(scot %ta u.minimum-amount.opts)]
-            ::
-              ?~  maximum-amount.opts  ~
-              `['maximumAmount' n+(scot %ta u.maximum-amount.opts)]
-            ::
-              ?~  maximum-count.opts  ~
-              `['minimumCount' n+(scot %ta u.maximum-count.opts)]
-            ::
-              ?~  minimum-sum-amount.opts  ~
-              `['minimumSumAmount' n+(scot %ta u.minimum-sum-amount.opts)]
+          =-  (skip - |=([@t a=json] =(a ~)))
+          ^-  (list (pair @t json))
+          :~  ['minimumAmount' (feta minimum-amount.opts)]
+              ['maximumAmount' (feta maximum-amount.opts)]
+              ['minimumCount' (feta maximum-count.opts)]
+              ['minimumSumAmount' (feta minimum-sum-amount.opts)]
           ==
       ==
     ::
@@ -406,16 +435,15 @@
           =-  ?~(- ~ %a^-)
           ?~  transactions.req  ~
           =*  opts  u.transactions.req
-
           %+  turn   opts
-            |=  [t=@t v=@ud]
-            =-  ?~(- ~ o+(~(gas by *(map @t json)) -))
+            |=  [t=@ux v=@ud]
+            =-  ?~(- ~ (pairs:enjs -))
             ^-  (list (pair @t json))
-            ~[['txid' s+t] ['vout' n+(scot %ud v)]]
+            ~[['txid' s+(hex-to-cord t)] ['vout' n+(scot %ud v)]]
       ==
     ::
         %remove-pruned-funds
-      ~[s+txid.req]
+      ~[s+(hex-to-cord txid.req)]
     ::
         %rescan-blockchain
       :~  (feud start-height.req)
@@ -424,15 +452,14 @@
     ::
         %send-many
       :~  s+dummy.req
-       ::
+        ::
           ?~  amounts.req  ~
           :-  %a
           %+  turn  amounts.req
             |=  [addr=@uc amount=@t]
             ^-  json
-            :-  %o  %-  ~(gas by *(map @t json))
-            ^-  (list (pair @t json))
-            [(from-base58 addr) n+(scot %ta amount)]~
+            %-  pairs:enjs
+              [(base58-to-cord addr) n+(scot %ta amount)]~
         ::
           (feud minconf.req)
         ::
@@ -448,7 +475,7 @@
       ==
     ::
         %send-to-address
-      :~  s+(from-base58 address.req)
+      :~  s+(base58-to-cord address.req)
           s+amount.req
           (ferm comment.req %s)
           (ferm comment-to.req %s)
@@ -464,7 +491,7 @@
       ~
     ::
         %set-label
-      :~  s+(from-base58 address.req)
+      :~  s+(base58-to-cord address.req)
           s+label.req
       ==
     ::
@@ -472,24 +499,23 @@
       ~[s+amount.req]
     ::
         %sign-message
-      :~  s+(from-base58 address.req)
+      :~  s+(base58-to-cord address.req)
           s+message.req
       ==
     ::
         %sign-raw-transaction-with-wallet
-      :~  s+hex-string.req
+      :~  s+(hex-to-cord hex-string.req)
           ?~   prev-txs.req  ~
           =*  txs  u.prev-txs.req
           :-  %a
           %+  turn  ^-  (list tx-raw)  txs
             |=  a=tx-raw
-              %-  pairs:enjs:format
-              ^-  (list (pair @t json))
-              :~  ['txid' s+txid.a]
+            %-  pairs:enjs
+              :~  ['txid' s+(hex-to-cord txid.a)]
                   ['vout' n+(scot %ud vout.a)]
-                  ['scriptPubKey' s+script-pubkey.a]
-                  ['redeemScript' s+redeem-script.a]
-                  ['witnessScript' s+witness-script.a]
+                  ['scriptPubKey' s+(hex-to-cord script-pubkey.a)]
+                  ['redeemScript' s+(hex-to-cord redeem-script.a)]
+                  ['witnessScript' s+(hex-to-cord witness-script.a)]
                   ['amount' n+(scot %tas amount.a)]
               ==
         ::
@@ -499,15 +525,55 @@
         %unload-wallet
       ~[(ferm wallet-name.req %s)]
     ::
-      ::   %wallet-create-fundedpsbt
-      :: :~  a+inputs.req
-      ::     a+outputs.req
-      ::     n+(scot %ud locktime.req)
-      ::     (feob options.req)
-      ::     :: ?~  options.req  ~
-      ::     :: o+(~(gas by *(map @t json)) u.options.req)
-      ::     (ferm bip32derivs.req %b)
-      :: ==
+        %wallet-create-fundedpsbt
+      :~  :-  %a
+          %+  turn  inputs.req
+            |=  [txid=@ux vout=@ud sequence=@ud]
+            ^-  json
+            %-  pairs:enjs
+              :~  ['txid' s+(hex-to-cord txid)]
+                  ['vout' n+(scot %ud vout)]
+                  ['sequence' n+(scot %ud sequence)]
+              ==
+        ::
+          =*  out  outputs.req
+          :-  %a
+          %+  weld
+            :_  ~
+            %-  pairs:enjs
+              [-.data.out s+(scot %ux +.data.out)]~
+            %+  turn  addresses.out
+              |=  [=address amount=@t]
+              ^-  json
+              %-  pairs:enjs
+                :~  ['address' s+(base58-to-cord address)]
+                    ['amount' s+amount]
+                ==
+        ::
+          (feud locktime.req)
+        ::
+          ?~  options.req  ~
+          =*  opts  u.options.req
+          =-  (pairs:enjs -)
+          =-  (skip - |=([@t a=json] =(a ~)))
+          ^-  (list (pair @t json))
+          :~  :-  'changeAddress'
+              ?~  change-address.opts  ~
+              s+(base58-to-cord u.change-address.opts)
+              ['changePosition' (feud change-position.opts)]
+              ['change-type' (ferm change-type.opts %s)]
+              ['includeWatching' (ferm include-watching.opts %b)]
+              ['lockUnspents' (ferm lock-unspents.opts %b)]
+              ['feeRate' (ferm fee-rate.opts %s)]
+              :-  'subtractFeeFromOutputs'
+              ?~  subtract-fee-from-outputs.opts  ~
+              a+(turn u.subtract-fee-from-outputs.opts numb:enjs)
+              ['replaceable' (ferm replaceable.opts %b)]
+              ['conf-target' (feud conf-target.opts)]
+              ['estimate-mode' (ferm estimate-mode.opts %s)]
+          ==
+          (ferm bip32derivs.req %b)
+      ==
     ::
         %wallet-lock
       ~
@@ -542,86 +608,82 @@
     ::  ignores (%error, %fails and %batch)
     ::
     ?>  ?=(%result -.res)
-    ?+  id.res
-      ~|  [%unsupported-response id.res]  !!
-      ::
+    ?+    id.res  ~|  [%unsupported-response id.res]  !!
+    ::
         %generate
       :-  id.res
       %.  res.res
       (ar (su hex))
-      ::
+    ::
         %get-block-count
       :-  id.res
       (ni res.res)
-      ::
-   ::  WALLET
-   ::
+    ::
+    ::  Wallet
+    ::
         %abandon-transaction
       [id.res ~]
-      ::
+    ::
         %abort-rescan
       [id.res ~]
-      ::
+    ::
         %add-multisig-address
       :-  id.res
       %.  res.res
       =-  (ot -)
       :~  :-  'address'
-          =-  (cu - (su fim:ag))
-          |=(a=@ux `@uc`a)
+          (cu ux-to-base (su fim:ag))
           ['redeemScript' so]
       ==
-      ::
+    ::
         %backup-wallet
       [id.res ~]
-      ::
+    ::
         %bump-fee
       :-  id.res
       %.  res.res
       =-  (ot -)
-      :~  ['txid' so]
+      :~  ['txid' (cu to-hex so)]
           ['origfee' no]
           ['fee' no]
           ['errors' (ar so)]
       ==
-      ::
+    ::
         %create-wallet
       :-  id.res
       %.  res.res
       (ot ~[name+so warning+so])
-      ::
+    ::
         %dump-privkey
       [id.res (so res.res)]
-      ::
+    ::
         %dump-wallet
       :-  id.res
       %.  res.res
       (ot [filename+so]~)
-      ::
+    ::
         %encrypt-wallet
       [id.res ~]
-      ::
+    ::
         %get-addresses-by-label
       :-  id.res
+      ::  Transforms the keys encoded as @ux to @uc
+      ::
+      =-  %+  turn  -
+        |*  [k=@ux v=*]
+        [`@uc`k v]
       =-  ~(tap by -)
       %.  res.res
-      =-  (op base-58 -)
-      =-  (ot ['purpose' (cu - so)]~)
-        |=  t=@t
-        ^-  ?(%send %receive)
-        ?:  =(t 'send')  %send
-        ?:  =(t 'receive')  %receive
-        !!
-      ::
+      =-  (op fim:ag -)
+      (ot ['purpose' (cu purpose so)]~)
+    ::
         %get-address-info
       :-  id.res
       %.  res.res
       =-  (ou -)
-      :~  ::['address' (un so)]
-          =-  ['address' (un -)]
-          =-  (cu - (su fim:ag))
-          |=(a=@ux `@uc`a)
-          ['scriptPubKey' (un so)]
+      :~  =-  ['address' (un -)]
+          (cu ux-to-base (su fim:ag))
+          ['scriptPubKey' (un (cu to-hex so))]
           ['ismine' (un bo)]
           ['iswatchonly' (un bo)]
           ['solvable' (un bo)]
@@ -630,63 +692,53 @@
           ['ischange' (un bo)]
           ['iswitness' (un bo)]
           ['witness_version' (uf ~ (mu so))]
-          ['witness_program' (uf ~ (mu so))]
+          ['witness_program' (uf ~ (mu (cu to-hex so)))]
           ['script' (uf ~ (mu so))]
-          ['hex' (uf ~ (mu so))]
-          ['pubkeys' (uf ~ (mu (ar so)))]
+          ['hex' (uf ~ (mu (cu to-hex so)))]
+          ['pubkeys' (uf ~ (mu (ar (cu to-hex so))))]
           ['sigsrequired' (uf ~ (mu ni))]
-          ['pubkey' (uf ~ (mu so))]
+          ['pubkey' (uf ~ (mu (cu to-hex so)))]
           =-  ['embedded' (uf ~ (mu -))]
           =-  (ou -)
-          :~  ['scriptPubKey' (un so)]
+          :~  ['scriptPubKey' (un (cu to-hex so))]
               ['solvable' (un bo)]
               ['desc' (uf ~ (mu so))]
               ['isscript' (un bo)]
               ['ischange' (un bo)]
               ['iswitness' (un bo)]
               ['witness_version' (uf ~ (mu so))]
-              ['witness_program' (uf ~ (mu so))]
-              ['script' (uf ~ (mu so))]
-              ['hex' (uf ~ (mu so))]
-              ['pubkeys' (uf ~ (mu (ar so)))]
+              ['witness_program' (uf ~ (mu (cu to-hex so)))]
+              ['script' (uf ~ (mu (cu to-hex so)))]
+              ['hex' (uf ~ (mu (cu to-hex so)))]
+              ['pubkeys' (uf ~ (mu (ar (cu to-hex so))))]
               ['sigsrequired' (uf ~ (mu ni))]
-              ['pubkey' (uf ~ (mu so))]
+              ['pubkey' (uf ~ (mu (cu to-hex so)))]
               ['iscompressed' (uf ~ (mu bo))]
               ['label' (uf ~ (mu so))]
-              ['hdmasterfingerprint' (uf ~ (mu so))]
+              ['hdmasterfingerprint' (uf ~ (mu (cu to-hex so)))]
               =-  ['labels' (un -)]
               =-  (ar (ot -))
               :~  ['name' so]
-                  =-  ['purpose' (cu - so)]
-                  |=  t=@t
-                  ^-  ?(%send %receive)
-                  ?:  =(t 'send')  %send
-                  ?:  =(t 'receive')  %receive
-                  !!
+                  ['purpose' (cu purpose so)]
               ==
           ==
           ['iscompressed' (uf ~ (mu bo))]
           ['label' (uf ~ (mu so))]
           ['timestamp' (uf ~ (mu so))]
           ['hdkeypath' (uf ~ (mu so))]
-          ['hdseedid' (uf ~ (mu so))]
-          ['hdmasterfingerprint' (uf ~ (mu so))]
+          ['hdseedid' (uf ~ (mu (cu to-hex so)))]
+          ['hdmasterfingerprint' (uf ~ (mu (cu to-hex so)))]
           =-  ['labels' (un -)]
           =-  (ar (ot -))
           :~  ['name' so]
-              =-  ['purpose' (cu - so)]
-              |=  t=@t
-              ^-  ?(%send %receive)
-              ?:  =(t 'send')  %send
-              ?:  =(t 'receive')  %receive
-              !!
+              ['purpose' (cu purpose so)]
           ==
       ==
       ::
         %get-balance
       :-  id.res
       (so res.res)
-      ::
+    ::
         %get-new-address
       :-  id.res
       ::  FIXME: there should be a better way for this(?)
@@ -695,24 +747,22 @@
       :: ^-  @uc  ^-  @
       %.  res.res
       :: (su fim:ag)
-      =-  (cu - (su fim:ag))
-      |=(a=@ux `@uc`a)
-      ::
+      (cu ux-to-base (su fim:ag))
+    ::
         %get-raw-change-address
       :-  id.res
       :: (so res.res)
       %.  res.res
-      =-  (cu - (su fim:ag))
-      |=(a=@ux `@uc`a)
-      ::
+      (cu ux-to-base (su fim:ag))
+    ::
         %get-received-by-address
       :-  id.res
       (so res.res)
-      ::
+    ::
         %get-received-by-label
       :-  id.res
       (so res.res)
-      ::
+    ::
         %get-transaction
       :-  id.res
       %.  res.res
@@ -720,56 +770,34 @@
       :~  ['amount' so]
           ['fee' so]
           ['confirmations' ni]
-          ['blockhash' so]
+          ['blockhash' (cu to-hex so)]
           ['blockindex' ni]
           ['blocktime' so]
-          ['txid' so]
+          ['txid' (cu to-hex so)]
           ['time' so]
           ['timereceived' so]
-          :-  'bip125-replaceable'  =-  (cu - so)
-              ::  This would have been more elegant:
-              ::  ['bip125-replaceable' (cu term so)]
-              ::  but a term is not of type ?(%yes %no %unknown)
-              ::  so a manual convertion seems the only(?) way.
-              ::
-              |=  t=@t
-              ^-  ?(%yes %no %unknown)
-              ?:  =(t 'yes')  %yes
-              ?:  =(t 'no')  %no
-              ?:  =(t 'unknown')  %unknown
-              !!
+          ['bip125-replaceable' (cu bip125 so)]
           =-  ['details' (ar (ot -))]
           :~  :-  'address'
-              =-  (cu - (su fim:ag))
-              |=(a=@ux `@uc`a)
-              :-  'category'  =-  (cu - so)
-                  ::  see 'bip125-replaceable'
-                  ::
-                  |=  t=@t
-                  ^-  ?(%send %receive %generate %immature %orphan)
-                  ?:  =(t 'send')  %send
-                  ?:  =(t 'receive')  %receive
-                  ?:  =(t 'generate')  %generate
-                  ?:  =(t 'immature')  %immature
-                  ?:  =(t 'orphan')  %orphan
-                  !!
+              (cu ux-to-base (su fim:ag))
+              ['category' (cu category so)]
               ['amount' so]
               ['label' so]
               ['vout' ni]
               ['fee' so]
               ['abandoned' bo]
           ==
-          ['hex' so]
+          ['hex' (cu to-hex so)]
       ==
-      ::
+    ::
         %list-wallets
       :-  id.res
       %.  res.res
       (ar so)
-      ::
+    ::
         %get-unconfirmed-balance
       [id.res (so res.res)]
-      ::
+    ::
         %get-wallet-info
       :-  id.res
       %.  res.res
@@ -788,10 +816,10 @@
           ['hdseedid' (uf ~ (mu so))]
           ['private_keys_enabled' (un bo)]
       ==
-      ::
+    ::
         %import-address
       [id.res ~]
-      ::
+    ::
         %import-multi
       :-  id.res
       %.  res.res
@@ -803,39 +831,39 @@
           =-  (uf ~ (mu -))
           (ot ~[['error' so] ['message' so]])
       ==
-      ::
+    ::
         %import-privkey
       [id.res ~]
-      ::
+    ::
         %import-pruned-funds
       [id.res ~]
-      ::
+    ::
         %import-pubkey
       [id.res ~]
-      ::
+    ::
         %import-wallet
       [id.res ~]
-      ::
+    ::
         %key-pool-refill
       [id.res ~]
-      ::
+    ::
         %list-address-groupings
       :-  id.res
       %.  res.res
       =-  (ar -)
       (cu groups (ar so))
-      ::
+    ::
         %list-labels
       :-  id.res
       %.  res.res
       (ar so)
-      ::
+    ::
         %list-lock-unspent
       :-  id.res
       %.  res.res
       =-  (ar -)
-      (ot ~[['txid' so] ['vout' ni]])
-      ::
+      (ot ~[['txid' (cu to-hex so)] ['vout' ni]])
+    ::
         %list-received-by-address
       :-  id.res
       %.  res.res
@@ -846,16 +874,14 @@
             |=  b=(unit ?)
             ?~  b  ~
             ?>(=(u.b &) (some %&))
-          ::['address' (un so)]
           =-  ['address' (un -)]
-          =-  (cu - (su fim:ag))
-          |=(a=@ux `@uc`a)
+          (cu ux-to-base (su fim:ag))
           ['amount' (un so)]
           ['confirmations' (un ni)]
           ['label' (un so)]
-          ['txids' (un (ar so))]
+          ['txids' (un (ar (cu to-hex so)))]
       ==
-      ::
+    ::
         %list-received-by-label
       :-  id.res
       %.  res.res
@@ -869,41 +895,24 @@
           ['confirmations' (un ni)]
           ['label' (un so)]
       ==
-      ::
+    ::
         %lists-in-ceblock
       =/  tx-response
         :~  :-  'address'
-            =-  (cu - (su fim:ag))
-            |=(a=@ux `@uc`a)
-            :-  'category'
-            =-  (cu - so)
-              |=  t=@t
-              ^-  ?(%send %receive %generate %immature %orphan)
-              ?:  =(t 'send')  %send
-              ?:  =(t 'receive')  %receive
-              ?:  =(t 'generate')  %generate
-              ?:  =(t 'immature')  %immature
-              ?:  =(t 'orphan')  %orphan
-              !!
+            (cu ux-to-base (su fim:ag))
+            ['category' (cu category so)]
             ['amount' so]
             ['label' so]
             ['vout' ni]
             ['fee' so]
             ['confirmations' ni]
-            ['blockhash' so]
+            ['blockhash' (cu to-hex so)]
             ['blockindex' ni]
             ['blocktime' ni]
-            ['txid' so]
+            ['txid' (cu to-hex so)]
             ['time' ni]
             ['timereceived' ni]
-            :-  'bip125-replaceable'
-            =-  (cu - so)
-              |=  t=@t
-              ^-  ?(%yes %no %unknown)
-              ?:  =(t 'yes')  %yes
-              ?:  =(t 'no')  %no
-              ?:  =(t 'unknown')  %unknown
-              !!
+            ['bip125-replaceable' (cu bip125 so)]
             ['abandoned' bo]
             ['comment' so]
             ['label' so]
@@ -918,66 +927,47 @@
           =-  ['removed' (un (mu -))]
           (ar (ot tx-response))
           ::
-          ['lastblock' (un so)]
+          ['lastblock' (un (cu to-hex so))]
       ==
-      ::
+    ::
         %list-transactions
       :-  id.res
       %.  res.res
       =-  (ar (ot -))
       :~  :-  'address'
-          =-  (cu - (su fim:ag))
-          |=(a=@ux `@uc`a)
-          :-  'category'
-          =-  (cu - so)
-            |=  t=@t
-            ^-  ?(%send %receive %generate %immature %orphan)
-            ?:  =(t 'send')  %send
-            ?:  =(t 'receive')  %receive
-            ?:  =(t 'generate')  %generate
-            ?:  =(t 'immature')  %immature
-            ?:  =(t 'orphan')  %orphan
-            !!
+          (cu ux-to-base (su fim:ag))
+          ['category' (cu category so)]
           ['amount' so]
           ['label' so]
           ['vout' ni]
           ['fee' so]
           ['confirmations' ni]
           ['trusted' bo]
-          ['blockhash' so]
+          ['blockhash' (cu to-hex so)]
           ['blockindex' ni]
           ['blocktime' so]
-          ['txid' so]
+          ['txid' (cu to-hex so)]
           ['time' so]
           ['timereceived' so]
           ['comment' so]
-          :-  'bip125-replaceable'
-          =-  (cu - so)
-            |=  t=@t
-            ^-  ?(%yes %no %unknown)
-            ?:  =(t 'yes')  %yes
-            ?:  =(t 'no')  %no
-            ?:  =(t 'unknown')  %unknown
-            !!
+          ['bip125-replaceable' (cu bip125 so)]
           ['abandoned' bo]
       ==
-      ::
+    ::
         %list-unspent
       :-  id.res
       %.  res.res
       =-  (ar (ou -))
-      :~  ['txid' (un so)]
+      :~  ['txid' (un (cu to-hex so))]
           ['vout' (un so)]
-          :: ['address' (un so)]
           =-  ['address' (un -)]
-          =-  (cu - (su fim:ag))
-          |=(a=@ux `@uc`a)
+          (cu ux-to-base (su fim:ag))
           ['label' (un so)]
-          ['scriptPubKey' (un so)]
+          ['scriptPubKey' (un (cu to-hex so))]
           ['amount' (un so)]
           ['confirmations' (un ni)]
-          ['redeemScript' (un so)]
-          ['witnessScript' (un so)]
+          ['redeemScript' (un (cu to-hex so))]
+          ['witnessScript' (un (cu to-hex so))]
           ['spendable' (un bo)]
           ['solvable' (un bo)]
           ['desc' (uf ~ (mu so))]
@@ -1016,10 +1006,14 @@
       ==
     ::
         %send-many
-      [id.res (so res.res)]
+      :-  id.res
+      %.  res.res
+      (cu to-hex so)
     ::
         %send-to-address
-      [id.res (so res.res)]
+      :-  id.res
+      %.  res.res
+      (cu to-hex so)
     ::
         %set-hd-seed
       [id.res ~]
@@ -1032,18 +1026,18 @@
     ::
         %sign-message
       [id.res (so res.res)]
-    :: ::
+    ::
         %sign-raw-transaction-with-wallet
       :-  id.res
       %.  res.res
       =-  (ot -)
-      :~  ['hex' so]
+      :~  ['hex' (cu to-hex so)]
           ['complete' bo]
           :-  'errors'
           =-  (ar (ot -))
-          :~  ['txid' so]
+          :~  ['txid' (cu to-hex so)]
               ['vout' ni]
-              ['scriptSig' so]
+              ['scriptSig' (cu to-hex so)]
               ['sequence' ni]
               ['error' so]
       ==  ==
@@ -1085,1308 +1079,10 @@
      =-  (ar (ot -))
      :~  ['type' so]
          :-  'address'
-         =-  (cu - (su fim:ag))
-         |=(a=@ux `@uc`a)
+         (cu ux-to-base (su fim:ag))
          ['hwm' so]
      ==
     ::
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='158']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=158
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"abort-rescan"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='159']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=159
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"backup-wallet"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='154']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=154
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"bump-fee"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='111']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=111
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-4,"message":"Wallet test-create-wal\/
-       ::           let already exists."},"id":"create-wallet"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='158']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=158
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"dump-privkey"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='157']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=157
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"dump-wallet"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='160']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=160
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"encrypt-wallet"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='168']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=168
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-addresses-by-label"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='162']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=162
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-address-info"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='165']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=165
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"abandon-transaction"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='157']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=157
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-balance"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='161']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=161
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-new-address"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='168']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=168
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-raw-change-address"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='169']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=169
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-received-by-address"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='167']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=167
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-received-by-label"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='161']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=161
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-transaction"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='169']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=169
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-unconfirmed-balance"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='161']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=161
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"get-wallet-info"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='160']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=160
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"import-address"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='158']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=158
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"import-multi"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='160']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=160
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"import-privkey"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='165']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=165
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"import-pruned-funds"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='159']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=159
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"import-pubkey"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='159']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=159
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"import-wallet"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='161']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=161
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"key-pool-refill"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='168']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=168
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"list-address-groupings"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='157']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=157
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"list-labels"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='163']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=163
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"list-lock-unspent"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='170']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=170
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"list-received-by-address"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='168']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=168
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"list-received-by-label"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='162']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=162
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"lists-in-ceblock"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='163']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=163
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"list-transactions"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='158']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=158
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"list-unspent"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=200
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='70']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=70
-       ::           q
-       ::         \/'{"result":["","test-create-wallet"],"error":null,"id":"list-wallets\/
-       ::           "}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='161']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=161
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-4,"message":"Wallet file verificati\/
-       ::           on failed: Error loading wallet . Duplicate -wallet filename specifi
-       ::           ed."},"id":"load-wallet"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='158']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=158
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"lock-unspent"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='165']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=165
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"remove-pruned-funds"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='163']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=163
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"rescan-blockchain"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='155']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=155
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"send-many"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='161']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=161
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"send-to-address"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='157']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=157
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"set-hd-seed"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='155']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=155
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"set-label"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='156']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=156
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"set-tx-fee"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='158']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=158
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"sign-message"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='178']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=178
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"sign-raw-transaction-with-wallet"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='108']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=108
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-1,"message":"JSON value is not a st\/
-       ::           ring as expected"},"id":"unload-wallet"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='157']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=157
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"wallet-lock"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='163']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=163
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"wallet-passphrase"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='170']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=170
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"wallet-passphrase-change"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=500
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='165']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=165
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-19,"message":"Wallet file not speci\/
-       ::           fied (must request wallet RPC through /wallet/<filename> uri-path)."
-       ::           },"id":"wallet-process-psbt"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=404
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='98']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=98
-       ::           q
-       ::         \/'{"result":null,"error":{"code":-32601,"message":"Method not found"}\/
-       ::           ,"id":"get-zmq-notifications"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-       :: [ %response
-       ::   %finished
-       ::     response-header
-       ::   [ status-code=200
-       ::       headers
-       ::     ~[
-       ::       [key='content-type' value='application/json']
-       ::       [key='date' value='Thu, 17 Oct 2019 07:39:17 GMT']
-       ::       [key='content-length' value='151']
-       ::     ]
-       ::   ]
-       ::     full-file
-       ::   [ ~
-       ::     [ type='application/json'
-       ::         data
-       ::       [ p=151
-       ::           q
-       ::         \/'{"result":{"wallets":[{"name":"test-wallet-2"},{"name":""},{"name":\/
-       ::           "test-wallet"},{"name":"test-create-wallet"}]},"error":null,"id":"li
-       ::           st-wallet-dir"}\0a'
-       ::         \/                                                                    \/
-       ::       ]
-       ::     ]
-       ::   ]
-       :: ]
-
     ==
   --
 --

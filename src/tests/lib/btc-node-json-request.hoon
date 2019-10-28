@@ -1,8 +1,12 @@
 /-  *btc-node-hook
 /+  *test, lib=btc-node-json
 ::
-=/  addr     '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
-=/  en-addr=@uc  (to-base58:btc-rpc:lib addr)
+=/  en-addr=@uc  0c1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA
+=/  addr=@t      (base58-to-cord:btc-rpc:lib en-addr)
+=/  en-txid=@ux  0x1234.1234
+=/  txid=@t      (hex-to-cord:btc-rpc:lib en-txid)
+::
+=,  format
 ::
 |%
 ::  Others
@@ -24,9 +28,9 @@
 ::
 ++  test-abandon-transaction  ^-  tang
   =/  op  %abandon-transaction
-  =/  action=request:btc-rpc  [op 'XXXX']
+  =/  action=request:btc-rpc  [op en-txid]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list [s+'XXXX']~]
+    !>  [op (method:btc-rpc:lib op) %list [s+txid]~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-abort-rescan  ^-  tang
@@ -36,12 +40,16 @@
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
-:: ++  test-add-multisig-address  ^-  tang
-::   =/  op  %add-multisig-address
-::   =/  action=request:btc-rpc  [op ~]
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
+++  test-add-multisig-address  ^-  tang
+  =/  op  %add-multisig-address
+  =/  action=request:btc-rpc
+    [op 2 [en-addr]~ ~ %bech32]
+  =/  exp
+    :^  op   (method:btc-rpc:lib op)   %list
+    ~[n+~.2 a+[s+addr]~ s+'bech32']
+  %+  expect-eq
+    !>  exp
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-backup-wallet  ^-  tang
   =/  op  %backup-wallet
@@ -53,24 +61,25 @@
 ++  test-bump-fee  ^-  tang
   =/  op  %bump-fee
   ;:  weld
-    =/  action=request:btc-rpc  [op 'XXXX' ~]
+    =/  action=request:btc-rpc  [op en-txid ~]
     %+  expect-eq
-      !>  [op (method:btc-rpc:lib op) %list [s+'XXXX']~]
+      !>  [op (method:btc-rpc:lib op) %list [s+txid]~]
       !>  (request-to-rpc:btc-rpc:lib action)
   ::
     =/  action=request:btc-rpc
-      [op 'XXXX' `[`'23' `'23' `& `%'ECONOMICAL']]
-    %+  expect-eq
-      !>  :^  op   (method:btc-rpc:lib op)  %list
-          :~  s+'XXXX'
+      [op en-txid `[`'23' `'23' `& `%'ECONOMICAL']]
+    =/  exp
+      :^  op   (method:btc-rpc:lib op)  %list
+          :~  s+txid
               ^-  json
-              :-  %o  %-  ~(gas by *(map @t json))
-              ^-  (list (pair @t json))
+              =-  (pairs:enjs -)
               :~  ['confTarget' s+'23']
                   ['totalFee' s+'23']
                   ['replaceable' b+&]
                   ['estimate_mode' s+'ECONOMICAL']
           ==  ==
+    %+  expect-eq
+      !>  exp
       !>  (request-to-rpc:btc-rpc:lib action)
   ==
 ::
@@ -129,7 +138,7 @@
 ++  test-get-new-address  ^-  tang
   =/  op  %get-new-address
   =/  action=request:btc-rpc
-    [op label=*(unit @t) address-type=*(unit @t)]
+    [op label=*(unit @t) address-type=*(unit address-type)]
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -137,7 +146,7 @@
 ++  test-get-raw-change-address  ^-  tang
   =/  op  %get-raw-change-address
   =/  action=request:btc-rpc
-    [op address-type=*(unit @t)]
+    [op address-type=*(unit address-type)]
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -159,9 +168,9 @@
 ::
 ++  test-get-transaction  ^-  tang
   =/  op  %get-transaction
-  =/  action  [op *@t *(unit ?)]
+  =/  action  [op en-txid *(unit ?)]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+'']]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+txid]]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-get-unconfirmed-balance  ^-  tang
@@ -295,7 +304,7 @@
   =/  op  %lists-in-ceblock
   =/  action=request:btc-rpc
     :*  op
-        blockhash=*(unit @t)
+        blockhash=*(unit @ux)
         target-confirmations=*(unit @ud)
         include-watch-only=*(unit ?)
         include-removed=*(unit ?)
@@ -361,16 +370,16 @@
 ++  test-lock-unspent  ^-  tang
   =/  op  %lock-unspent
   =/  action=request:btc-rpc
-    [op unlock=*? transactions=*(unit (list [txid=@t vout=@ud]))]
+    [op unlock=*? transactions=*(unit (list [txid=@ux vout=@ud]))]
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list [b+&]~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-remove-pruned-funds  ^-  tang
   =/  op  %remove-pruned-funds
-  =/  action=request:btc-rpc  [op txid=*@t]
+  =/  action=request:btc-rpc  [op txid=en-txid]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  [op (method:btc-rpc:lib op) %list [s+txid]~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-rescan-blockchain  ^-  tang
@@ -423,18 +432,6 @@
         conf-target=*(unit @ud)
         estimate-mode=*(unit @t)
     ==
-  ::     :~  s+address.req
-  ::         s+amount.req
-  ::         (ferm comment.req %s)
-  ::         (ferm comment-to.req %s)
-  ::         (feob subtract-fee-from.req)
-  ::         :: ?~  subtract-fee-from.req  ~
-  ::         :: o+(~(gas by *(map @t json)) u.subtract-fee-from.req)
-  ::         (ferm replaceable.req %b)
-  ::         (feud conf-target.req)
-  ::         (ferm estimate-mode.req %s)
-  ::     ==
-  ::   ::
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~[s+addr s+'']]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -479,7 +476,7 @@
   =/  op  %sign-raw-transaction-with-wallet
   =/  action=request:btc-rpc
     :*  op
-        *@t
+        en-txid
         ~
         `%'ALL'
     ==
@@ -491,7 +488,7 @@
   ::     ['amount' n+(scot %ta a.amount)]
   :: ==
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'ALL']]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+txid s+'ALL']]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-unload-wallet  ^-  tang
@@ -502,52 +499,53 @@
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
-:: ++  test-wallet-create-fundedpsbt  ^-  tang
-::   =/  op  %wallet-create-fundedpsbt
-::   =/  inputs  %-  limo
-::   :*  txid=*@t
-::       vout=*@ud
-::       sequence=*@ud
-::   ==
-::   =/  action=request:btc-rpc
-::     :*  op
-::         $=  inputs  %-  list
-::         =/  action=request:btc-rpc
-::         :*  txid=*@t
-::             vout=*@ud
-::             sequence=*@ud
-::         ==
-::         ::  FIXME:
-::         ::  list of addressess and JUST one "data" key?
-::         ::
-::         outputs=(list (pair @t ?(@t @ud)))
-::         locktime=*(unit @ud)
-::         $=  options  %-  unit
-::         =/  action=request:btc-rpc  :*  change-address=*(unit @t)
-::             change-position=*(unit @ud)
-::             change-type=*(unit ?(%legacy %p2sh-segwit %bech32))
-::             include-watching=*(unit ?)
-::             lock-unspents=*(unit ?)
-::             fee-rate=*(unit @t)
-::             subtract-fee-from-outputs=*(unit (list @ud))
-::             replaceable=*(unit ?)
-::             conf-target=*(unit @t)
-::             =estimate-mode
-::         ==
-::         bip32derivs=*(unit ?)
-::     ==
-:: ::     :~  a+inputs.req
-:: ::         a+outputs.req
-:: ::         n+(scot %ud locktime.req)
-:: ::         (feob options.req)
-:: ::         :: ?~  options.req  ~
-:: ::         :: o+(~(gas by *(map @t json)) u.options.req)
-:: ::         (ferm bip32derivs.req %b)
-:: ::     ==
-:: ::   ::
-::   %+  expect-eq
-::     !>  [op (method:btc-rpc:lib op) %list ~]
-::     !>  (request-to-rpc:btc-rpc:lib action)
+++  test-wallet-create-fundedpsbt  ^-  tang
+  =/  op  %wallet-create-fundedpsbt
+  =/  action=request:btc-rpc
+    :*  op
+        [en-txid 2 2]~
+        :-  [%data *@ux]
+        [en-addr '23.23']~
+        `23
+        %-  some
+          :*  change-address=`en-addr
+              change-position=`23
+              change-type=`%bech32
+              include-watching=`&
+              lock-unspents=`&
+              fee-rate=`'23'
+              subtract-fee-from-outputs=`[23]~
+              replaceable=`&
+              conf-target=`23
+              `%'UNSET'
+          ==
+        `&
+    ==
+  =/  exp=(list json)
+    :~  =-  a+[(pairs:enjs -)]~
+        ~[['txid' s+txid] ['vout' n+~.2] ['sequence' n+~.2]]
+        :-  %a
+        :~  (pairs:enjs ['data' s+'0x0']~)
+            (pairs:enjs ~[['address' s+addr] ['amount' s+'23.23']])
+        ==
+        n+~.23
+        =-  (pairs:enjs -)
+        :~  ['changeAddress' s+addr]
+            ['changePosition' n+~.23]
+            ['change-type' s+'bech32']
+            ['includeWatching' b+&]
+            ['lockUnspents' b+&]
+            ['feeRate' s+'23']
+            ['subtractFeeFromOutputs' a+[n+~.23]~]
+            ['replaceable' b+&]
+            ['conf-target' n+~.23]
+            ['estimate-mode' s+'UNSET']
+        ==
+        b+&
+    ==
+  %+  expect-eq
+    !>  [op (method:btc-rpc:lib op) %list exp]
+    !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-wallet-lock  ^-  tang
   =/  op  %wallet-lock

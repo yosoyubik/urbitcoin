@@ -18,8 +18,11 @@
 ::
 +$  import-request
   $:  desc=@t
-      script-pubkey=@t
-      timestamp=?(@da %'now')
+      $=  script-pubkey
+      $%  [%script s=@t]
+          [%address a=@uc]
+      ==
+      timestamp=?(@da %now)
       redeem-script=@t
       witness-script=@t
       pub-keys=(unit (list @t))
@@ -33,14 +36,16 @@
 ::
 +$  category  ?(%send %receive %generate %immature %orphan)
 ::
++$  address-type  ?(%legacy %p2sh-segwit %bech32)
+::
 +$  bip125-replaceable  ?(%yes %no %unknown)
 ::
 +$  tx-raw
-  $:  txid=@t
+  $:  txid=@ux
       vout=@ud
-      script-pubkey=@t
-      redeem-script=@t
-      witness-script=@t
+      script-pubkey=@ux
+      redeem-script=@ux
+      witness-script=@ux
       amount=@t
   ==
 ::
@@ -52,10 +57,10 @@
       vout=@ud
       fee=@t
       confirmations=@ud
-      blockhash=@t
+      blockhash=@ux
       blockindex=@ud
       blocktime=@ud
-      txid=@t
+      txid=@ux
       time=@ud
       time-received=@ud
       =bip125-replaceable
@@ -71,26 +76,27 @@
   |%
   +$  request
     $%
-    ::  Node management
+    ::  Control
+    ::
+        [%help command=(unit @t)]
+    ::  Generating
     ::
         [%generate blocks=@ud max-tries=(unit @ud)]
         [%get-blockchain-info ~]
-        ::
-    ::  chain state
+    ::  Blockchain
     ::
         [%get-block-count ~]
-    ::  Wallet management
+    ::  Wallet
     ::
         ::  %abandon-transaction: Mark in-wallet transaction as abandoned.
         ::
         ::    %txid: The transaction id
         ::
-        [%abandon-transaction txid=@t]
+        [%abandon-transaction txid=@ux]
         ::  %abort-rescan: Stops current wallet rescan triggered by an
         ::  RPC call, e.g. by an importprivkey call.
         ::
         [%abort-rescan ~]
-        ::
         ::
         :: %add-multisig-address:
         ::    Add a nrequired-to-sign multisignature address
@@ -108,11 +114,12 @@
         ::  - %label: A label to assign the addresses to.
         ::  - %address-type: The address type to use.
         ::    Options are "legacy", "p2sh-segwit", and "bech32".
+        ::
         $:  %add-multisig-address
             n-required=@ud
-            keys=(list @ux)
+            keys=(list address)
             label=(unit @t)
-            address-type=(unit @t)
+            =address-type
         ==
         ::  %backupwallet:
         ::    Safely copies current wallet file to destination.
@@ -153,12 +160,12 @@
         ::      }
         ::
         $:  %bump-fee
-            txid=@t
+            txid=@ux
             $=  options  %-  unit
             $:  conf-target=(unit @t)
                 total-fee=(unit @t)
                 replaceable=(unit ?)
-                estimate-mode=(unit ?(%'ECONOMICAL' %'CONSERVATIVE' %'UNSET'))
+                =estimate-mode
             ==
         ==
         ::  %create-wallet: Creates and loads a new wallet.
@@ -228,14 +235,14 @@
         ::  (1. label           (string, optional, default="") The label name for the address to be linked to. It can also be set to the empty string "" to represent the default label. The label does not need to exist, it will be created if there is no label by the given name.
         ::  (2. address-type    (string, optional, default=set by -addresstype) The address type to use. Options are "legacy", "p2sh-segwit", and "bech32".
         ::
-        [%get-new-address label=(unit @t) address-type=(unit @t)]
+        [%get-new-address label=(unit @t) address-type=(unit address-type)]
         ::  Returns a new Bitcoin address, for receiving change.
         ::  (This is for use with raw transactions, NOT normal use.
         ::
         ::  (Arguments:
         ::  (1. address-type    (string, optional, default=set by -changetype) The address type to use. Options are "legacy", "p2sh-segwit", and "bech32".
         ::
-        [%get-raw-change-address address-type=(unit @t)]
+        [%get-raw-change-address address-type=(unit address-type)]
         ::  Returns the total amount received by the given address in transactions with at least minconf confirmations.
         ::
         ::  (Arguments:
@@ -256,7 +263,7 @@
         ::  (1. txid                 (string, required) The transaction id
         ::  (2. include-watch-only    (boolean, optional, default=false) Whether to include watch-only addresses in balance calculation and details[]
         ::
-        [%get-transaction txid=@t include-watch-only=(unit ?)]
+        [%get-transaction txid=@ux include-watch-only=(unit ?)]
         ::  Returns the server's total unconfirmed balance
         ::
         [%get-unconfirmed-balance ~]
@@ -323,20 +330,7 @@
         ::      }
         ::
         $:  %import-multi
-            $=  requests  %-  list
-            $:  desc=@t
-                script-pubkey=@t
-                timestamp=?(@da %'now')
-                redeem-script=@t
-                witness-script=@t
-                pub-keys=(unit (list @t))
-                keys=(unit (list @t))
-                range=?(@ud [@ud @ud])
-                internal=?
-                watchonly=?
-                label=@t
-                keypool=?
-            ==
+            requests=(list import-request)
             options=(unit rescan=?)
         ==
         ::  Adds a private key (as returned by dumpprivkey) to your wallet. Requires a new wallet backup.
@@ -434,7 +428,7 @@
         ::                            (not guaranteed to work on pruned nodes)
         ::
         $:  %lists-in-ceblock
-            blockhash=(unit @t)
+            blockhash=(unit blockhash)
             target-confirmations=(unit @ud)
             include-watch-only=(unit ?)
             include-removed=(unit ?)
@@ -524,13 +518,13 @@
         ::        ...
         ::      ]
         ::
-        [%lock-unspent unlock=? transactions=(unit (list [txid=@t vout=@ud]))]
+        [%lock-unspent unlock=? transactions=(unit (list [txid=@ux vout=@ud]))]
         ::  Deletes the specified transaction from the wallet. Meant for use with pruned wallets and as a companion to importprunedfunds. This will affect wallet balances.
         ::
         ::  (Arguments:
         ::  (1. txid    (string, required) The hex-encoded id of the transaction you are deleting
         ::
-        [%remove-pruned-funds txid=@t]
+        [%remove-pruned-funds txid=@ux]
         ::  Rescan the local blockchain for wallet related transactions.
         ::
         ::  (Arguments:
@@ -667,15 +661,16 @@
         ::                                     "SINGLE|ANYONECANPAY"
         ::
         $:  %sign-raw-transaction-with-wallet
-           hex-string=@t
-           $=  prev-txs  %-  unit  %-  list
-           $:  txid=@t
-               vout=@ud
-               script-pubkey=@t
-               redeem-script=@t
-               witness-script=@t
-               amount=@t
-           ==
+           hex-string=@ux
+           prev-txs=(unit (list tx-raw))
+           :: $=  prev-txs  %-  unit  %-  list
+           :: $:  txid=@ux
+           ::     vout=@ud
+           ::     script-pubkey=@ux
+           ::     redeem-script=@ux
+           ::     witness-script=@ux
+           ::     amount=@t
+           :: ==
            =sig-hash-type
         ==
         ::  Unloads the wallet referenced by the request endpoint otherwise unloads the wallet specified in the argument.
@@ -745,25 +740,25 @@
         ::
         $:  %wallet-create-fundedpsbt
             $=  inputs  %-  list
-            $:  txid=@t
+            $:  txid=@ux
                 vout=@ud
-                sequencet=@ud
+                sequence=@ud
             ==
-            ::  FIXME:
-            ::  list of addressess and JUST one "data" key?
-            ::
-            outputs=(list (pair @t ?(@t @ud)))
+            $=  outputs
+            $:  data=[%data @ux]
+                addresses=(list [=address amount=@t])
+            ==
             locktime=(unit @ud)
             $=  options  %-  unit
-            $:  change-address=(unit @t)
+            $:  change-address=(unit @uc)
                 change-position=(unit @ud)
-                change-type=(unit ?(%legacy %p2sh-segwit %bech32))
+                change-type=(unit address-type)
                 include-watching=(unit ?)
                 lock-unspents=(unit ?)
                 fee-rate=(unit @t)
                 subtract-fee-from-outputs=(unit (list @ud))
                 replaceable=(unit ?)
-                conf-target=(unit @t)
+                conf-target=(unit @ud)
                 =estimate-mode
             ==
             bip32derivs=(unit ?)
@@ -818,18 +813,18 @@
         ::  Returns information about the active ZeroMQ notifications.
         ::
         [%get-zmq-notifications ~]
-       ::
     ==
   ::
   +$  response
-    $%  ::  Others
-        ::
+    $%
+    ::  Generating
+    ::
         [%generate blocks=(list blockhash)]
         [%get-block-count count=@ud]
-        ::  Wallet
+    ::  Wallet
+    ::
         [%abandon-transaction ~]
         [%abort-rescan ~]
-        ::
         ::  %add-multisig-address
         ::
         ::  Result:
@@ -840,7 +835,6 @@
         ::
         [%add-multisig-address =address redeem-script=@t]
         [%backup-wallet ~]
-        ::
         ::  %bump-fee:
         ::
         ::  Result:
@@ -851,8 +845,7 @@
         ::      "errors":  [ str... ] (json array of strings) Errors encountered during processing (may be empty)
         ::    }
         ::
-        [%bump-fee txid=@t orig-fee=@t fee=@t errors=(list @t)]
-        ::
+        [%bump-fee txid=@ux orig-fee=@t fee=@t errors=(list @t)]
         ::  %create-wallet:
         ::
         ::  Result:
@@ -862,6 +855,7 @@
         ::      }
         ::
         [%create-wallet name=@t warning=@t]
+        ::  %dump-privkey
         ::
         ::  Result:
         :: "key"                (string) The private key
@@ -879,14 +873,8 @@
         ::        },...
         ::      }
         $:  %get-addresses-by-label
-            ::  FIXME
-            ::  A list of pairs or a map breaks %sole... (?)
-            ::
             $=  addresses  %-  list
             [=address purpose=?(%send %receive)]
-            :: %+  map
-            ::   =address
-            ::   purpose=?(%send %receive)
         ==
         ::
         ::  %get-address-info:
@@ -930,7 +918,7 @@
         ::
         $:  %get-address-info
             =address
-            script-pubkey=@t
+            script-pubkey=@ux
             is-mine=?
             is-watchonly=?
             solvable=?
@@ -939,37 +927,37 @@
             is-change=?
             is-witness=?
             witness-version=(unit @t)
-            witness-program=(unit @t)
+            witness-program=(unit @ux)
             script=(unit @t)
-            hex=(unit @t)
-            pubkeys=(unit (list @t))
+            hex=(unit @ux)
+            pubkeys=(unit (list @ux))
             sigs-required=(unit @ud)
-            pubkey=(unit @t)
+            pubkey=(unit @ux)
             $=  embedded  %-  unit
-            $:  script-pubkey=@t
+            $:  script-pubkey=@ux
                 solvable=?
                 desc=(unit @t)
                 is-script=?
                 is-change=?
                 is-witness=?
                 witness-version=(unit @t)
-                witness-program=(unit @t)
-                script=(unit @t)
-                hex=(unit @t)
-                pubkeys=(unit (list @t))
+                witness-program=(unit @ux)
+                script=(unit @ux)
+                hex=(unit @ux)
+                pubkeys=(unit (list @ux))
                 sigs-required=(unit @ud)
-                pubkey=(unit @t)
+                pubkey=(unit @ux)
                 is-compressed=(unit ?)
                 label=(unit @t)
-                hd-master-finger-print=(unit @t)
+                hd-master-finger-print=(unit @ux)
                 labels=(list [name=@t purpose=?(%send %receive)])
             ==
             is-compressed=(unit ?)
             label=(unit @t)
             timestamp=(unit @t)
             hd-key-path=(unit @t)
-            hd-seed-id=(unit @t)
-            hd-master-finger-print=(unit @t)
+            hd-seed-id=(unit @ux)
+            hd-master-finger-print=(unit @ux)
             labels=(list [name=@t purpose=?(%send %receive)])
         ==
         ::  %get-balance
@@ -1037,10 +1025,10 @@
             amount=@t
             fee=@t
             confirmations=@ud
-            blockhash=@t
+            blockhash=@ux
             blockindex=@ud
             blocktime=@t
-            txid=@t
+            txid=@ux
             time=@t
             time-received=@t
             =bip125-replaceable
@@ -1053,7 +1041,7 @@
                 fee=@t
                 abandoned=?
             ==
-            hex=@t
+            hex=@ux
         ==
         ::
         ::  Returns the server's total unconfirmed balance
@@ -1153,7 +1141,7 @@
         ::   ,...
         :: ]
         ::
-        [%list-lock-unspent outputs=(list [txid=@t vout=@ud])]
+        [%list-lock-unspent outputs=(list [txid=@ux vout=@ud])]
         ::
         ::  %list-received-by-address
         ::
@@ -1179,7 +1167,7 @@
                 amount=@t
                 confirmations=@ud
                 label=@t
-                txids=(list @t)
+                txids=(list @ux)
         ==  ==
         ::
         ::  %list-received-by-label
@@ -1243,7 +1231,7 @@
         $:  %lists-in-ceblock
             transactions=(list tx-response)
             removed=(unit (list tx-response))
-            lastblock=@t
+            lastblock=@ux
         ==
         ::
         ::  %list-transactions
@@ -1290,10 +1278,10 @@
                 fee=@t
                 confirmations=@ud
                 trusted=?
-                blockhash=@t
+                blockhash=@ux
                 blockindex=@ud
                 blocktime=@t
-                txid=@t
+                txid=@ux
                 time=@t
                 time-received=@t
                 comment=@t
@@ -1326,15 +1314,15 @@
         :: ]
         $:  %list-unspent
         $=  txs  %-  list
-            $:  txid=@t
+            $:  txid=@ux
                 vout=@t
                 =address
                 label=@t
-                script-pubkey=@t
+                script-pubkey=@ux
                 amount=@t
                 confirmations=@ud
-                redeem-script=@t
-                witness-script=@t
+                redeem-script=@ux
+                witness-script=@ux
                 spendable=?
                 solvable=?
                 desc=(unit @t)
@@ -1390,13 +1378,13 @@
         :: "txid"                   (string) The transaction id for the send. Only 1 transaction is created regardless of
         ::                                     the number of addresses.
         ::
-        [%send-many txid=@t]
+        [%send-many txid=@ux]
         ::
         ::  Result:
         :: "txid"                   (string) The transaction id for the send. Only 1 transaction is created regardless of
         ::
         ::
-        [%send-to-address txid=@t]
+        [%send-to-address txid=@ux]
         ::
         [%set-hd-seed ~]
         ::
@@ -1428,12 +1416,12 @@
         ::   ]
         :: }
         $:  %sign-raw-transaction-with-wallet
-            hex=@t
+            hex=@ux
             complete=?
             $=  errors  %-  list
-            $:  txid=@t
+            $:  txid=@ux
                 vout=@ud
-                script-sig=@t
+                script-sig=@ux
                 sequence=@ud
                 error=@t
         ==  ==
@@ -1465,8 +1453,6 @@
         :: }
         ::
         [%wallet-process-psbt psbt=@t complete=?]
-        ::
-        ::
         ::  ZMQ
         ::
         ::  Result:
