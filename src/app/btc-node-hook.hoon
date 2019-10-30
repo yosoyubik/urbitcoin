@@ -17,7 +17,6 @@
 +$  state-zero
   $:  endpoint=@t
       headers=header-list:http
-      params=json
   ==
 --
 ::
@@ -43,22 +42,20 @@
 ++  poke-noun
   |=  act=btc-node-hook-action
   ^-  (quip move _this)
-  ::  THIS WORKS!
   =/  body=request:rpc:jstd
     (request-to-rpc:btc-rpc:lib act)
-  :: ~&  poking+body
   =/  req=request:http
     :*  %'POST'
         endpoint
         headers
         %-  some
           %-  as-octt:mimes:html
-          (en-json:html (request-to-json:rpc:jstd body))
+            (en-json:html (request-to-json:rpc:jstd body))
     ==
   =/  out  *outbound-config:iris
   :_  this
   [ost.bol %request /[(scot %da now.bol)] req out]~
-
+  ::
   :: =/  en-addr=@uc  0c1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA
   :: =/  addr=@t      (base58-to-cord:btc-rpc:lib en-addr)
   :: =/  en-txid=@ux  0x1234.1234
@@ -221,19 +218,89 @@
   ::
   ?.  ?=(%finished -.response)
     [~ this]
-  :: TODO: decode the JSON-RPC response and poke the btc-node-store
-  :: with the returned data
-  =*  status  status-code.response-header.response
+  =*  status    status-code.response-header.response
   ::  Only (FOR NOW) parse successful responses
   ::
-  ?:  =(status 200)
-      ~&  response+response
-      [~ this]
-  [~ this]
+  =/  hit=httr:eyre
+    (to-httr:iris response-header.response full-file.response)
+  =/  rpc-resp=response:rpc:jstd  (httr-to-rpc-response hit)
+  ?.  =(%result -.rpc-resp)
+    ~&  +.rpc-resp
+    [~ this]
+  ::
+  =/  btc-resp=response:btc-rpc
+    (parse-response:btc-rpc:lib rpc-resp)
+  ?+    -.btc-resp  ~|  [%unsupported-response -.btc-resp]  !!
+      %create-wallet
+    =/  btc-store-req=btc-node-store-action
+      :+  %add-wallet   name.btc-resp
+      ?:(=('' warning.btc-resp) ~ (some warning.btc-resp))
+    :_  this
+    [(btc-node-store-poke /store btc-store-req)]~
+  ::
+      %get-address-info
+    ~&  [%address-info +.btc-resp]
+    [~ this]
+  ::
+      %get-balance
+    ~&  [%wallet-balance +.btc-resp]
+    [~ this]
+  ::
+      %list-wallets
+    ~&  [%remote-wallets +.btc-resp]
+    :_  this
+    [(btc-node-store-poke /list [%list-wallets ~])]~
+  ::
+      %list-transactions
+    ~&  [%transactions +.btc-resp]
+    [~ this]
+  ::
+  ==
+::
+::  From:
+::  https://github.com/urbit/arvo/pull/973/commits/be296f6897ca6c96225d844912d7e92ea93ea75a#diff-32b4dc798ca3aa3aa5c9fbd963627d4eR1941
+::
+++  httr-to-rpc-response
+  |=  hit=httr:eyre
+  ^-  response:rpc:jstd
+  ~|  hit
+  ?.  ?=($2 (div p.hit 100))
+    fail+hit
+  =/  a=json  (need (de-json:html q:(need r.hit)))
+  =,  dejs-soft:format
+  ^-  response:rpc:jstd
+  =;  dere
+    =+  res=((ar dere) a)
+    ?~  res  (need (dere a))
+    [%batch u.res]
+  |=  a=json
+  ^-  (unit response:rpc:jstd)
+  =/  res=(unit [@t json])
+    ::  TODO  breaks when no id present
+    ::
+    ((ot id+so result+some ~) a)
+    ::  TODO: Modify to use dejs instead of dejs-soft
+    ::
+    :: %.  a
+    :: =-  (ou -)
+    :: :~  ['id' (uf ~ (mu so))]
+    ::     ['result' some]
+    :: ==
+  ?^  res  `[%result u.res]
+  ~|  a
+  :+  ~  %error  %-  need
+  ((ot id+so error+(ot code+no message+so ~) ~) a)
 ::
 ++  btc-node-store-poke
   |=  [pax=path act=btc-node-store-action]
   ^-  move
-  [ost.bol %poke pax [our.bol %btc-node-store] [%btc-node-store-action act]]
+  ::  TODO: implement +coup arm
+  ::
+  :*  ost.bol
+      %poke
+      pax
+      [our.bol %btc-node-store]
+      [%btc-node-store-action act]
+  ==
 ::
 --

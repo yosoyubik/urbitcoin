@@ -13,12 +13,11 @@
       ::
       ++  ferm  |*([a=(unit) t=term] ?~(a ~ t^u.a))
       ::
-      ::  We want to make sure that numbers are numbers (@ud) but JSON
+      ::  We want to make sure that numbers are @ud but JSON
       ::  defines numbers as @ta, so we need to do a re-parse
       ::
       ++  feud  |*(a=(unit) ?~(a ~ n+(scot %ud u.a)))
       ::
-      ++  feta  |*(a=(unit) ?~(a ~ n+(scot %ta u.a)))
       ::  %method:
       ::  Removes 'hep' (-) from a %tas producing the RPC
       ::   method to use in a call
@@ -38,7 +37,7 @@
         ::  so a manual convertion seems the only(?) way.
         ::
         |=  t=@t
-        ^-  ?(%yes %no %unknown)
+        ^-  bip125-replaceable
         ?:  =(t 'yes')
           %yes
         ?:  =(t 'no')
@@ -48,7 +47,7 @@
       ::
       ++  purpose
         |=  t=@t
-        ^-  ?(%send %receive)
+        ^-  ^purpose
         ?:  =(t 'send')
           %send
         ?.  =(t 'receive')  !!
@@ -56,7 +55,7 @@
       ::
       ++  category
         |=  t=@t
-        ^-  ?(%send %receive %generate %immature %orphan)
+        ^-  ^category
         ?:  =(t 'send')
           %send
         ?:  =(t 'receive')
@@ -67,7 +66,6 @@
           %immature
         ?.  =(t 'orphan')  !!
         %orphan
-      ::  %groups
       ::
       ::  Used in %list-address-groupings
       ::
@@ -91,7 +89,7 @@
       ::
       ::  But it seems that it has some issues,
       ::
-      ::          ++  base-58
+      ::          ++  de-base-58
       ::            =-  (bass 58 (plus -))
       ::            ;~  pose
       ::               (cook |=(a=@ (sub a 56)) (shim 'A' 'H'))
@@ -101,17 +99,15 @@
       ::               (cook |=(a=@ (sub a 65)) (shim 'm' 'z'))
       ::               (cook |=(a=@ (sub a 49)) (shim '1' '9'))
       ::            ==
+      ::  > `@uc`(de-base58:mimes:html "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy")
+      ::  0cG2DwD87dhp91wdcrWHsNFcYvRbfLvUbcxDFvwtN
       ::
       ::  compared to +fim:ag, with the extra cast as seen bellow,
       ::    because it returns @ux:
       ::
-      ::        =-  (cu - (su fim:ag))
-      ::        |=(a=@ux `@uc`a)
-      ::
-      ::  Validates base58check encoded addresess
-      ::  e.g:
-      ::  '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy'
-      ::  is
+      ::  > %.  s+'3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy'  =,  dejs:format
+      ::    =-  (cu - (su fim:ag))
+      ::    |=(a=@ux `@uc`a)
       ::  0c3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
       ::
       ++  to-base58
@@ -206,7 +202,7 @@
             =-  (skip - |=([@t a=json] =(a ~)))
             ^-  (list (pair @t json))
             :~  ['confTarget' (ferm conf-target.opts %s)]
-                ['totalFee' (ferm total-fee.opts %s)]
+                ['totalFee' (ferm total-fee.opts %n)]
                 ['replaceable' (ferm replaceable.opts %b)]
                 ['estimate_mode' (ferm estimate-mode.opts %s)]
             ==
@@ -286,9 +282,8 @@
                   =*  scri  script-pubkey.r
                   ?-   -.scri
                       %script
-                    ^-  json
                     [%s s.scri]
-                    ::
+                  ::
                       %address
                     %-  pairs:enjs
                       ['address' s+(base58-to-cord a.script-pubkey.r)]~
@@ -304,9 +299,9 @@
                   ['witnessScript' s+witness-script.r]
                 ::
                   :-  'pubkeys'
-                  ?~  pub-keys.r  ~
+                  ?~  pubkeys.r  ~
                   :-  %a
-                  %+  turn   ^-((list @t) u.pub-keys.r)
+                  %+  turn   ^-((list @t) u.pubkeys.r)
                     |=(a=@t s+a)
                 ::
                   :-  'keys'
@@ -345,7 +340,7 @@
       ==
     ::
         %import-pubkey
-      :~  s+pubkey.req
+      :~  s+(hex-to-cord pubkey.req)
           (ferm label.req %s)
           (ferm rescan.req %b)
       ==
@@ -414,10 +409,10 @@
           ::
           =-  (skip - |=([@t a=json] =(a ~)))
           ^-  (list (pair @t json))
-          :~  ['minimumAmount' (feta minimum-amount.opts)]
-              ['maximumAmount' (feta maximum-amount.opts)]
-              ['minimumCount' (feta maximum-count.opts)]
-              ['minimumSumAmount' (feta minimum-sum-amount.opts)]
+          :~  ['minimumAmount' (ferm minimum-amount.opts %n)]
+              ['maximumAmount' (ferm maximum-amount.opts %n)]
+              ['minimumCount' (ferm maximum-count.opts %n)]
+              ['minimumSumAmount' (ferm minimum-sum-amount.opts %n)]
           ==
       ==
     ::
@@ -459,7 +454,7 @@
             |=  [addr=@uc amount=@t]
             ^-  json
             %-  pairs:enjs
-              [(base58-to-cord addr) n+(scot %ta amount)]~
+              [(base58-to-cord addr) n+amount]~
         ::
           (feud minconf.req)
         ::
@@ -467,7 +462,7 @@
         ::
           ?~  subtract-fee-from.req  ~
           =*  addrs  u.subtract-fee-from.req
-          a+(turn addrs |=(a=@t s+a))
+          a+(turn addrs |=(a=address s+(base58-to-cord a)))
         ::
           (feud conf-target.req)
         ::
@@ -476,12 +471,10 @@
     ::
         %send-to-address
       :~  s+(base58-to-cord address.req)
-          s+amount.req
+          n+amount.req
           (ferm comment.req %s)
           (ferm comment-to.req %s)
-          ?~  subtract-fee-from.req  ~
-          =*  addrs  u.subtract-fee-from.req
-          a+(turn addrs |=(a=@t s+a))
+          (ferm subtract-fee-from-amount.req %b)
           (ferm replaceable.req %b)
           (feud conf-target.req)
           (ferm estimate-mode.req %s)
@@ -516,7 +509,7 @@
                   ['scriptPubKey' s+(hex-to-cord script-pubkey.a)]
                   ['redeemScript' s+(hex-to-cord redeem-script.a)]
                   ['witnessScript' s+(hex-to-cord witness-script.a)]
-                  ['amount' n+(scot %tas amount.a)]
+                  ['amount' n+amount.a]
               ==
         ::
           (ferm sig-hash-type.req %s)
@@ -547,7 +540,7 @@
               ^-  json
               %-  pairs:enjs
                 :~  ['address' s+(base58-to-cord address)]
-                    ['amount' s+amount]
+                    ['amount' n+amount]
                 ==
         ::
           (feud locktime.req)
@@ -564,7 +557,7 @@
               ['change-type' (ferm change-type.opts %s)]
               ['includeWatching' (ferm include-watching.opts %b)]
               ['lockUnspents' (ferm lock-unspents.opts %b)]
-              ['feeRate' (ferm fee-rate.opts %s)]
+              ['feeRate' (ferm fee-rate.opts %n)]
               :-  'subtractFeeFromOutputs'
               ?~  subtract-fee-from-outputs.opts  ~
               a+(turn u.subtract-fee-from-outputs.opts numb:enjs)
@@ -737,21 +730,15 @@
       ::
         %get-balance
       :-  id.res
-      (so res.res)
+      (no res.res)
     ::
         %get-new-address
       :-  id.res
-      ::  FIXME: there should be a better way for this(?)
-      ::  hex -> @ -> @uc (base58check)
-      ::
-      :: ^-  @uc  ^-  @
       %.  res.res
-      :: (su fim:ag)
       (cu ux-to-base (su fim:ag))
     ::
         %get-raw-change-address
       :-  id.res
-      :: (so res.res)
       %.  res.res
       (cu ux-to-base (su fim:ag))
     ::
@@ -767,24 +754,24 @@
       :-  id.res
       %.  res.res
       =-  (ot -)
-      :~  ['amount' so]
-          ['fee' so]
+      :~  ['amount' no]
+          ['fee' no]
           ['confirmations' ni]
           ['blockhash' (cu to-hex so)]
           ['blockindex' ni]
-          ['blocktime' so]
+          ['blocktime' ni]
           ['txid' (cu to-hex so)]
-          ['time' so]
-          ['timereceived' so]
+          ['time' ni]
+          ['timereceived' ni]
           ['bip125-replaceable' (cu bip125 so)]
           =-  ['details' (ar (ot -))]
           :~  :-  'address'
               (cu ux-to-base (su fim:ag))
               ['category' (cu category so)]
-              ['amount' so]
+              ['amount' no]
               ['label' so]
               ['vout' ni]
-              ['fee' so]
+              ['fee' no]
               ['abandoned' bo]
           ==
           ['hex' (cu to-hex so)]
@@ -803,17 +790,17 @@
       %.  res.res
       =-  (ou -)
       :~  ['walletname' (un so)]
-          ['walletversion' (un so)]
-          ['balance' (un so)]
-          ['unconfirmed_balance' (un so)]
-          ['immature_balance' (un so)]
-          ['txcount' (un so)]
-          ['keypoololdest' (un so)]
-          ['keypoolsize' (un so)]
-          ['keypool_size_hd_internal' (un so)]
+          ['walletversion' (un ni)]
+          ['balance' (un no)]
+          ['unconfirmed_balance' (un no)]
+          ['immature_balance' (un no)]
+          ['txcount' (un ni)]
+          ['keypoololdest' (un ni)]
+          ['keypoolsize' (un ni)]
+          ['keypool_size_hd_internal' (un ni)]
           ['unlocked_until' (un so)]
-          ['paytxfee' (un so)]
-          ['hdseedid' (uf ~ (mu so))]
+          ['paytxfee' (un no)]
+          ['hdseedid' (uf ~ (mu (cu to-hex so)))]
           ['private_keys_enabled' (un bo)]
       ==
     ::
@@ -876,7 +863,7 @@
             ?>(=(u.b &) (some %&))
           =-  ['address' (un -)]
           (cu ux-to-base (su fim:ag))
-          ['amount' (un so)]
+          ['amount' (un no)]
           ['confirmations' (un ni)]
           ['label' (un so)]
           ['txids' (un (ar (cu to-hex so)))]
@@ -891,7 +878,7 @@
           |=  b=(unit ?)
           ?~  b  ~
           ?>(=(u.b &) (some %&))
-          ['amount' (un so)]
+          ['amount' (un no)]
           ['confirmations' (un ni)]
           ['label' (un so)]
       ==
@@ -901,10 +888,10 @@
         :~  :-  'address'
             (cu ux-to-base (su fim:ag))
             ['category' (cu category so)]
-            ['amount' so]
+            ['amount' no]
             ['label' so]
             ['vout' ni]
-            ['fee' so]
+            ['fee' no]
             ['confirmations' ni]
             ['blockhash' (cu to-hex so)]
             ['blockindex' ni]
@@ -937,18 +924,18 @@
       :~  :-  'address'
           (cu ux-to-base (su fim:ag))
           ['category' (cu category so)]
-          ['amount' so]
+          ['amount' no]
           ['label' so]
           ['vout' ni]
-          ['fee' so]
+          ['fee' no]
           ['confirmations' ni]
           ['trusted' bo]
           ['blockhash' (cu to-hex so)]
           ['blockindex' ni]
-          ['blocktime' so]
+          ['blocktime' ni]
           ['txid' (cu to-hex so)]
-          ['time' so]
-          ['timereceived' so]
+          ['time' ni]
+          ['timereceived' ni]
           ['comment' so]
           ['bip125-replaceable' (cu bip125 so)]
           ['abandoned' bo]
@@ -959,12 +946,12 @@
       %.  res.res
       =-  (ar (ou -))
       :~  ['txid' (un (cu to-hex so))]
-          ['vout' (un so)]
+          ['vout' (un ni)]
           =-  ['address' (un -)]
           (cu ux-to-base (su fim:ag))
           ['label' (un so)]
           ['scriptPubKey' (un (cu to-hex so))]
-          ['amount' (un so)]
+          ['amount' (un no)]
           ['confirmations' (un ni)]
           ['redeemScript' (un (cu to-hex so))]
           ['witnessScript' (un (cu to-hex so))]
@@ -1050,8 +1037,13 @@
       %.  res.res
       =-  (ot -)
       :~  ['psbt' so]
-          ['fee' so]
-          ['changepos' so]
+          ['fee' no]
+          =-  ['changepos' (cu - no)]
+          |=  a=@t
+          ^-  ?(@ud %'-1')
+          ?:  =(a '-1')
+            %'-1'
+          (rash a dem)
       ==
     ::
         %wallet-lock
@@ -1080,7 +1072,7 @@
      :~  ['type' so]
          :-  'address'
          (cu ux-to-base (su fim:ag))
-         ['hwm' so]
+         ['hwm' ni]
      ==
     ::
     ==

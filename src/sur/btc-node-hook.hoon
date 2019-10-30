@@ -20,12 +20,12 @@
   $:  desc=@t
       $=  script-pubkey
       $%  [%script s=@t]
-          [%address a=@uc]
+          [%address a=address]
       ==
       timestamp=?(@da %now)
       redeem-script=@t
       witness-script=@t
-      pub-keys=(unit (list @t))
+      pubkeys=(unit (list @t))
       keys=(unit (list @t))
       range=?(@ud [@ud @ud])
       internal=?
@@ -35,6 +35,8 @@
   ==
 ::
 +$  category  ?(%send %receive %generate %immature %orphan)
+::
++$  purpose  ?(%send %receive)
 ::
 +$  address-type  ?(%legacy %p2sh-segwit %bech32)
 ::
@@ -362,7 +364,7 @@
         ::  (2. label     (string, optional, default="") An optional label
         ::  (3. rescan    (boolean, optional, default=true) Rescan the wallet for transactions
         ::
-        [%import-pubkey pubkey=@t label=(unit @t) rescan=(unit ?)]
+        [%import-pubkey pubkey=@ux label=(unit @t) rescan=(unit ?)]
         ::  Imports keys from a wallet dump file (see dumpwallet). Requires a new wallet backup to include imported keys.
         ::
         ::  (Arguments:
@@ -385,7 +387,7 @@
         ::  (Arguments:
         ::  (1. purpose    (string, optional) Address purpose to list labels for ('send','receive'). An empty string is the same as not providing this argument.
         ::
-        [%list-labels purpose=(unit @t)]
+        [%list-labels purpose=(unit purpose)]
         ::  Returns list of temporarily unspendable outputs.
         ::  (See the lockunspent call to lock and unlock transactions for spending.
         ::
@@ -562,7 +564,7 @@
             amounts=(list [=address amount=@t])
             minconf=(unit @ud)
             comment=(unit @t)
-            subtract-fee-from=(unit (list @t))
+            subtract-fee-from=(unit (list address))
             :: subtract-fee-from=(unit (list address))
             conf-target=(unit @ud)
             estimate-mode=(unit @t)
@@ -577,7 +579,7 @@
         ::  (4. comment-to               (string, optional) A comment to store the name of the person or organization
         ::                             to which you're sending the transaction. This is not part of the
         ::                             transaction, just kept in your wallet.
-        ::  (5. subtract-fee-from    (boolean, optional, default=false) The fee will be deducted from the amount being sent.
+        ::  (5. subtractfeefromamount    (boolean, optional, default=false) The fee will be deducted from the amount being sent.
         ::                             The recipient will receive less bitcoins than you enter in the amount field.
         ::  (6. replaceable              (boolean, optional, default=fallback to wallet's default) Allow this transaction to be replaced by a transaction with higher fees via BIP 125
         ::  (7. conf-target              (numeric, optional, default=fallback to wallet's default) Confirmation target (in blocks)
@@ -591,8 +593,7 @@
             amount=@t
             comment=(unit @t)
             comment-to=(unit @t)
-            subtract-fee-from=(unit (list @t))
-            :: subtract-fee-from=(unit (list address))
+            subtract-fee-from-amount=(unit ?)
             replaceable=(unit ?)
             conf-target=(unit @ud)
             estimate-mode=(unit @t)
@@ -874,7 +875,7 @@
         ::      }
         $:  %get-addresses-by-label
             $=  addresses  %-  list
-            [=address purpose=?(%send %receive)]
+            [=address =purpose]
         ==
         ::
         ::  %get-address-info:
@@ -950,7 +951,7 @@
                 is-compressed=(unit ?)
                 label=(unit @t)
                 hd-master-finger-print=(unit @ux)
-                labels=(list [name=@t purpose=?(%send %receive)])
+                labels=(list [name=@t =purpose])
             ==
             is-compressed=(unit ?)
             label=(unit @t)
@@ -958,7 +959,7 @@
             hd-key-path=(unit @t)
             hd-seed-id=(unit @ux)
             hd-master-finger-print=(unit @ux)
-            labels=(list [name=@t purpose=?(%send %receive)])
+            labels=(list [name=@t =purpose])
         ==
         ::  %get-balance
         ::
@@ -1027,10 +1028,10 @@
             confirmations=@ud
             blockhash=@ux
             blockindex=@ud
-            blocktime=@t
+            blocktime=@ud
             txid=@ux
-            time=@t
-            time-received=@t
+            time=@ud
+            time-received=@ud
             =bip125-replaceable
             $=  details  %-  list
             $:  =address
@@ -1071,17 +1072,17 @@
         ::
         $:  %get-wallet-info
             wallet-name=@t
-            wallet-version=@t
+            wallet-version=@ud
             balance=@t
             unconfirmed-balance=@t
             immature-balance=@t
-            tx-count=@t
-            key-pool-oldest=@t
-            key-pool-size=@t
-            key-pool-size-hd-internal=@t
+            tx-count=@ud
+            key-pool-oldest=@ud
+            key-pool-size=@ud
+            key-pool-size-hd-internal=@ud
             unlocked-until=@t
             pay-tx-fee=@t
-            hd-seed-id=(unit @t)
+            hd-seed-id=(unit @ux)
             private-keys-enabled=?
         ==
         ::
@@ -1280,10 +1281,10 @@
                 trusted=?
                 blockhash=@ux
                 blockindex=@ud
-                blocktime=@t
+                blocktime=@ud
                 txid=@ux
-                time=@t
-                time-received=@t
+                time=@ud
+                time-received=@ud
                 comment=@t
                 =bip125-replaceable
                 abandoned=?
@@ -1315,7 +1316,7 @@
         $:  %list-unspent
         $=  txs  %-  list
             $:  txid=@ux
-                vout=@t
+                vout=@ud
                 =address
                 label=@t
                 script-pubkey=@ux
@@ -1436,7 +1437,7 @@
         ::   "changepos": n          (numeric) The position of the added change output, or -1
         :: }
         ::
-        [%wallet-create-fundedpsbt psbt=@t fee=@t changepos=@t]
+        [%wallet-create-fundedpsbt psbt=@t fee=@t changepos=?(@ud %'-1')]
         ::
         [%wallet-lock ~]
         ::
@@ -1453,7 +1454,9 @@
         :: }
         ::
         [%wallet-process-psbt psbt=@t complete=?]
-        ::  ZMQ
+    ::  ZMQ
+    ::
+        ::  %get-zmq-notifications:
         ::
         ::  Result:
         :: [
@@ -1468,7 +1471,7 @@
         $:  %get-zmq-notifications  %-  list
             $:  type=@t
                 =address
-                hwm=@t
+                hwm=@ud
         ==  ==
     ==
   --

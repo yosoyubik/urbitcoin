@@ -74,7 +74,7 @@
               ^-  json
               =-  (pairs:enjs -)
               :~  ['confTarget' s+'23']
-                  ['totalFee' s+'23']
+                  ['totalFee' n+~.23]
                   ['replaceable' b+&]
                   ['estimate_mode' s+'ECONOMICAL']
           ==  ==
@@ -198,20 +198,6 @@
 ++  test-import-multi  ^-  tang
   =/  op  %import-multi
   =/  action=request:btc-rpc  [op requests=~ options=~]
-    :: :+  %import-multi
-    :: :~  desc=*@t
-    ::     script-pub-key=*@t
-    ::     timestamp=*?(@da %'now')
-    ::     redeem-script=*@t
-    ::     witness-script=*@t
-    ::     pubkeys=*(unit (list @t))
-    ::     keys=*(unit (list @t))
-    ::     range=*?(@ [@ @])
-    ::     internal=*?
-    ::     watchonly=*?
-    ::     label=*@t
-    ::     keypool=*?
-    :: ==
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -235,9 +221,9 @@
 ++  test-import-pubkey  ^-  tang
   =/  op  %import-pubkey
   =/  action=request:btc-rpc
-    [op pubkey=*@t label=*(unit @t) rescan=*(unit ?)]
+    [op pubkey=0x1234.1234 label=*(unit @t) rescan=*(unit ?)]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list [s+'']~]
+    !>  [op (method:btc-rpc:lib op) %list [s+'12341234']~]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-import-wallet  ^-  tang
@@ -263,7 +249,7 @@
 ::
 ++  test-list-labels  ^-  tang
   =/  op  %list-labels
-  =/  action=request:btc-rpc  [op purpose=*(unit @t)]
+  =/  action=request:btc-rpc  [op purpose=*(unit purpose)]
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -328,7 +314,7 @@
 ::
 ++  test-list-unspent  ^-  tang
   =/  query-options  %-  some
-  :*  minimum-amount=*(unit @t)  ::  n+(scot %ta minimun-amount)
+  :*  minimum-amount=*(unit @t)
       maximum-amount=*(unit @t)
       maximum-count=*(unit @t)
       minimum-sum-amount=*(unit @t)
@@ -398,22 +384,10 @@
         amounts=~
         minconf=*(unit @ud)
         comment=*(unit @t)
-        subtract-fee-from=*(unit (list @t))
-        :: subtract-fee-from=*(unit (list address))
+        subtract-fee-from=*(unit (list address))
         conf-target=*(unit @ud)
         estimate-mode=*(unit @t)
     ==
-  ::     :~  s+dummy.req
-  ::         (feob (some amounts.req))
-  ::         (feud minconf.req)
-  ::         (ferm comment.req %t)
-  ::         (feob subtract-fee-from.req)
-  ::         :: ?~  subtract-fee-from.req  ~
-  ::         :: o+(~(gas by *(map @t json)) u.subtract-fee-from.req)
-  ::         (feud conf-target.req)
-  ::         (ferm estimate-mode.req %s)
-  ::     ==
-  ::   ::
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list [s+'']~]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -423,17 +397,16 @@
   =/  action=request:btc-rpc
     :*  op
         en-addr
-        amount=*@t
+        amount='23.23'
         comment=*(unit @t)
         comment-to=*(unit @t)
-        subtract-fee-from=*(unit (list @t))
-        :: subtract-fee-from=*(unit (list address))
+        subtract-fee-from-amount=*(unit ?)
         replaceable=*(unit ?)
         conf-target=*(unit @ud)
         estimate-mode=*(unit @t)
     ==
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+addr s+'']]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+addr n+~.23.23]]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-set-hd-seed   ^-  tang
@@ -480,13 +453,6 @@
         ~
         `%'ALL'
     ==
-  :: :*  ['txid' s+a.txid]
-  ::     ['vout' n+(scot %ud a.vout)]
-  ::     ['scriptPubKey' s+a.script-pub-key]
-  ::     ['redeemScript' s+a.redeem-script]
-  ::     ['witnessScript' s+a.witness-script]
-  ::     ['amount' n+(scot %ta a.amount)]
-  :: ==
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~[s+txid s+'ALL']]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -526,7 +492,7 @@
         ~[['txid' s+txid] ['vout' n+~.2] ['sequence' n+~.2]]
         :-  %a
         :~  (pairs:enjs ['data' s+'0x0']~)
-            (pairs:enjs ~[['address' s+addr] ['amount' s+'23.23']])
+            (pairs:enjs ~[['address' s+addr] ['amount' n+~.23.23]])
         ==
         n+~.23
         =-  (pairs:enjs -)
@@ -535,7 +501,7 @@
             ['change-type' s+'bech32']
             ['includeWatching' b+&]
             ['lockUnspents' b+&]
-            ['feeRate' s+'23']
+            ['feeRate' n+~.23]
             ['subtractFeeFromOutputs' a+[n+~.23]~]
             ['replaceable' b+&]
             ['conf-target' n+~.23]
