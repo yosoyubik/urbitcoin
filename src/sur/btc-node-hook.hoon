@@ -218,7 +218,7 @@
         ::  (Arguments:
         ::  (1. address    (string, required) The bitcoin address to get the information of.
         ::
-        [%get-address-info =address]
+        [%get-address-info wallet=@t =address]
         ::  Returns the total available balance.
         ::  (The available balance is what the wallet considers currently spendable, and is
         ::  (thus affected by options which limit spendability such as -spendzeroconfchange.
@@ -228,7 +228,7 @@
         ::  (2. minconf              (numeric, optional, default=0) Only include transactions confirmed at least this many times.
         ::  (3. include-watch-only    (boolean, optional, default=false) Also include balance in watch-only addresses (see 'importaddress')
         ::
-        [%get-balance dummy=(unit @t) minconf=(unit @ud) include-watch-only=(unit ?)]
+        [%get-balance wallet=@t dummy=(unit @t) minconf=(unit @ud) include-watch-only=(unit ?)]
         ::  Returns a new Bitcoin address for receiving payments.
         ::  (If 'label' is specified, it is added to the address book
         ::  (so payments received with the address will be associated with 'label'.
@@ -271,7 +271,11 @@
         [%get-unconfirmed-balance ~]
         ::  Returns an object containing various wallet state info.
         ::
-        [%get-wallet-info ~]
+        ::  %name: does not figure on the spec, but it's necessary if
+        ::  multiple wallets exist.
+        ::  This is used by the RPC via the option: -rpcwallet=''
+        ::
+        [%get-wallet-info name=@t]
         ::  Adds an address or script (in hex) that can be watched as if it were in your wallet but cannot be used to spend. Requires a new wallet backup.
         ::
         ::  (Note: This call can take over an hour to complete if rescan is true, during that time, other rpc calls
@@ -1079,8 +1083,8 @@
             tx-count=@ud
             key-pool-oldest=@ud
             key-pool-size=@ud
-            key-pool-size-hd-internal=@ud
-            unlocked-until=@t
+            key-pool-size-hd-internal=(unit @ud)
+            unlocked-until=(unit @ud)
             pay-tx-fee=@t
             hd-seed-id=(unit @ux)
             private-keys-enabled=?

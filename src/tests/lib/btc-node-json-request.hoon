@@ -122,7 +122,7 @@
 ::
 ++  test-get-address-info  ^-  tang
   =/  op  %get-address-info
-  =/  action=request:btc-rpc  [op en-addr]
+  =/  action=request:btc-rpc  [op '' en-addr]
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list [s+addr]~]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -130,7 +130,7 @@
 ++  test-get-balance  ^-  tang
   =/  op  %get-balance
   =/  action=request:btc-rpc
-    [op dummy=*(unit @t) minconf=*(unit @ud) include-watch-only=*(unit ?)]
+    [op '' dummy=*(unit @t) minconf=*(unit @ud) include-watch-only=*(unit ?)]
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -182,7 +182,7 @@
 ::
 ++  test-get-wallet-info  ^-  tang
   =/  op  %get-wallet-info
-  =/  action=request:btc-rpc  [op ~]
+  =/  action=request:btc-rpc  [op name='']
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)

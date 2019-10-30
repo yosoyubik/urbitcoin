@@ -288,14 +288,14 @@
           ['keypoololdest' n+~.23]
           ['keypoolsize' n+~.23]
           ['keypool_size_hd_internal' n+~.23]
-          ['unlocked_until' s+'23']
+          ['unlocked_until' n+~.23]
           ['paytxfee' n+'23.23']
           ['hdseedid' s+'23']
           ['private_keys_enabled' b+&]
       ==
   =/  exp=response:btc-rpc
     :*  op  '23'  23  '23.23'  '23'  '23'  23  23
-       23  23  '23'  '23.23'  (some 0x23)  &
+       23  (some 23)  (some 23)  '23.23'  (some 0x23)  &
     ==
   %+  expect-eq
       !>  exp

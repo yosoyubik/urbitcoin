@@ -35,28 +35,40 @@
   ^-  (quip move _this)
   ?.  =(src.bol our.bol)
     [~ this]
-  (handle-add action)
+  ?+  -.action  ~|  [%unsupported-action -.action]  !!
+    %add-wallet     (handle-add +.action)
+    %list-wallets   handle-list-wallet
+    %update-wallet  (handle-update-wallet +.action)
+  ==
 ::
 ++  handle-add
-  |=  action=btc-node-store-action
+  |=  [name=@t warning=(unit @t)]
   ^-  (quip move _this)
-  ?+    -.action  ~|  [%unsupported-action -.action]  !!
-  ::
-      %add-wallet
-    ?:  (~(has by wallets) name.action)
-      ~&  "This wallet already exists"
-      [~ this]
-    :-  ~
-    =/  new-wallet=wallet  [name.action warning.action ~]
-    ~&  "Wallet {<name.action>} added succesfully"
-    %=    this
-      wallets  (~(put by wallets) [name.action new-wallet])
-    ==
-  ::
-      %list-wallets
-    ~&  [%local-wallets ~(tap by wallets)]
-    ::  TODO: connect to %sole to print to console
+  ?:  (~(has by wallets) name)
+    ~&  "This wallet already exists"
     [~ this]
+  :-  ~
+  =/  new-wallet=wallet  [name ~]
+  ~&  "Wallet {<name>} added succesfully"
+  %=    this
+    wallets  (~(put by wallets) [name new-wallet])
   ==
+::
+++  handle-list-wallet
+  ^-  (quip move _this)
+  ~&  [%local-wallets ~(tap by wallets)]
+  ::  TODO: connect to %sole to print to console
+  [~ this]
+::
+++  handle-update-wallet
+  |=  [name=@t attrs=wallet-attr]
+  ^-  (quip move _this)
+  =/  w=wallet  [name (some attrs)]
+  :-  ~
+  ?:  (~(has by wallets) name.w)
+    ~&  "The wallet exists. Updating..."
+    this(wallets (~(jab by wallets) name.w |=(* w)))
+  ~&  "The wallet doesn't exist. Creating..."
+  this(wallets (~(put by wallets) [name.w w]))
 ::
 --

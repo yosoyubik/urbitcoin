@@ -49,14 +49,12 @@
 ::
 ++  test-get-wallet-info  ^-  tang
   =/  op  %get-wallet-info
-  =/  action=request:btc-rpc  [op ~]
+  =/  action=request:btc-rpc  [op '']
   ::
   :: =^  request  app
   ::   (~(poke-noun app *bowl:gall app-state) action)
   =/  request=request:rpc:jstd
     (request-to-rpc:btc-rpc:lib action)
-  :: ?~  request  *tang
-  :: =/  req=card:app  card.i.request
   ::
   =^  response  http-client-gate
     %-  http-client-call
@@ -65,7 +63,6 @@
           scry=*sley
           request
       ==
-  ~&  response
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~]
     !>  (request-to-rpc:btc-rpc:lib action)

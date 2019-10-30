@@ -29,15 +29,15 @@
   ==
 ::
 +$  wallet-attr
-  $:  wallet-version=@t
+  $:  wallet-version=@ud
       balance=@t
       unconfirmed-balance=@t
       immature-balance=@t
-      tx-count=@t
-      key-pool-oldest=@t
-      key-pool-size=@t
-      key-pool-size-hd-internal=@t
-      unlocked-until=@t
+      tx-count=@ud
+      key-pool-oldest=@ud
+      key-pool-size=@ud
+      key-pool-size-hd-internal=(unit @ud)
+      unlocked-until=(unit @ud)
       pay-tx-fee=@t
       hd-seed-id=(unit @ux)
       private-keys-enabled=?
@@ -45,7 +45,6 @@
 ::
 +$  wallet
   $:  name=@t
-      warning=(unit @t)
       attrs=(unit wallet-attr)
   ==
 ::
@@ -77,6 +76,8 @@
     :: [%get-received-by-label]
     :: [%get-transaction]
     :: [%get-unconfirmed-balance]
+    :: [%get-wallet-info ~] -> This is replaced by %update
+    [%update-wallet name=@t attrs=wallet-attr]
     [%import-address ~]
     [%import-multi ~]
     [%import-privkey ~]
