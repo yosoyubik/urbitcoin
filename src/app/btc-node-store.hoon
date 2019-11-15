@@ -45,11 +45,11 @@
   |=  [name=@t warning=(unit @t)]
   ^-  (quip move _this)
   ?:  (~(has by wallets) name)
-    ~&  "This wallet already exists"
+    ~&  "This wallet already exists..."
     [~ this]
   :-  ~
   =/  new-wallet=wallet  [name ~]
-  ~&  "Wallet {<name>} added succesfully"
+  ~&  "Wallet {<name>} added succesfully..."
   %=    this
     wallets  (~(put by wallets) [name new-wallet])
   ==

@@ -42,8 +42,7 @@
         :~  ['Accept' 'application/json']
             ['Content-Type' 'text/plain']
             ['Authorization' 'Basic dXJiaXRjb2luZXI6dXJiaXRjb2luZXI']
-        ==
-    ==
+    ==  ==
   [~ this(+<+ u.old)]
 ::
 ++  poke-noun

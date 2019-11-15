@@ -491,7 +491,7 @@
     :~  =-  a+[(pairs:enjs -)]~
         ~[['txid' s+txid] ['vout' n+~.2] ['sequence' n+~.2]]
         :-  %a
-        :~  (pairs:enjs ['data' s+'0x0']~)
+        :~  (pairs:enjs ['data' s+'0']~)
             (pairs:enjs ~[['address' s+addr] ['amount' n+~.23.23]])
         ==
         n+~.23

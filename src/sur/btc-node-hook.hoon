@@ -42,7 +42,77 @@
 ::
 +$  bip125-replaceable  ?(%yes %no %unknown)
 ::
-+$  tx-raw
++$  bip32-derivs  %-  unit  %-  list
+  $:  pubkey=@ux
+      $:  master-fingerprint=@t
+          path=@t
+  ==  ==
+::
+::  redeem/witness script
+::
++$  script
+  $:  asm=@t
+      hex=@ux
+      type=@t
+  ==
+::
++$  script-pubkey
+  $:  asm=@t
+      hex=@ux
+      type=@t
+      =address
+  ==
+::
++$  vin
+  $:  txid=@ux
+      vout=@ud
+      script-sig=[asm=@t hex=@ux]
+      tx-in-witness=(list @ux)
+      sequence=@ud
+  ==
+::
++$  vout
+  $:  value=@t
+      n=@ud
+      $=  script-pubkey
+      $:  asm=@t
+          hex=@ux
+          req-sigs=@ud
+          type=@t
+          addresses=(list address)
+  ==  ==
+::
++$  input
+  $:  txid=@ux
+      vout=@ud
+      sequence=@ud
+  ==
+::
++$  output
+  $:  data=[%data @ux]
+      addresses=(list [=address amount=@t])
+  ==
+::
++$  partially-signed-transaction
+  $:  inputs=(list input)
+      outputs=output
+      locktime=(unit @ud)
+      replaceable=(unit ?)
+  ==
+::
++$  serialized-tx
+  $:  txid=@ux
+      hash=@ux
+      size=@ud
+      vsize=@ud
+      weight=@ud
+      version=@ud
+      locktime=@ud
+      vin=(list vin)
+      vout=(list vout)
+  ==
+::
++$  prev-tx
   $:  txid=@ux
       vout=@ud
       script-pubkey=@ux
@@ -51,7 +121,13 @@
       amount=@t
   ==
 ::
-+$  tx-response
++$  raw-tx
+  $:  hex-string=@ux
+      prev-txs=(unit (list prev-tx))
+      =sig-hash-type
+  ==
+::
++$  tx-in-block
   $:  =address
       =category
       amount=@t
@@ -88,6 +164,392 @@
     ::  Blockchain
     ::
         [%get-block-count ~]
+    ::  Raw Transactions
+    ::
+        :: %analyzepsbt: Analyzes and provides information about the current status of a PSBT and its inputs
+        ::
+        :: Arguments:
+        :: 1. psbt    (string, required) A base64 string of a PSBT
+        ::
+        [%analyze-psbt psbt=@t]
+        :: %combinepsbt: Combine multiple partially signed Bitcoin transactions into one transaction.
+        :: Implements the Combiner role.
+        ::
+        :: Arguments:
+        :: 1. txs            (json array, required) A json array of base64 strings of partially signed transactions
+        ::      [
+        ::        "psbt",    (string) A base64 string of a PSBT
+        ::        ...
+        ::      ]
+        ::
+        [%combine-psbt txs=(list @t)]
+        :: %combinerawtransaction:Combine multiple partially signed transactions into one transaction.
+        :: The combined transaction may be another partially signed transaction or a
+        :: fully signed transaction.
+        :: Arguments:
+        :: 1. txs                 (json array, required) A json array of hex strings of partially signed transactions
+        ::      [
+        ::        "hexstring",    (string) A transaction hash
+        ::        ...
+        ::      ]
+        ::
+        ::
+        [%combine-raw-transaction txs=(list @ux)]
+        :: %converttopsbt: Converts a network serialized transaction to a PSBT. This should be used only with createrawtransaction and fundrawtransaction
+        :: createpsbt and walletcreatefundedpsbt should be used for new applications.
+        ::
+        :: Arguments:
+        :: 1. hexstring        (string, required) The hex string of a raw transaction
+        :: 2. permitsigdata    (boolean, optional, default=false) If true, any signatures in the input will be discarded and conversion.
+        ::                     will continue. If false, RPC will fail if any signatures are present.
+        :: 3. iswitness        (boolean, optional, default=depends on heuristic tests) Whether the transaction hex is a serialized witness transaction.
+        ::                     If iswitness is not present, heuristic tests will be used in decoding. If true, only witness deserializaion
+        ::                     will be tried. If false, only non-witness deserialization will be tried. Only has an effect if
+        ::                     permitsigdata is true.
+        ::
+        $:  %convert-to-psbt
+            hex-string=@ux
+            permit-sig-data=(unit ?)
+            is-witness=(unit ?)
+        ==
+        :: %createpsbt: Creates a transaction in the Partially Signed Transaction format.
+        :: Implements the Creator role.
+        ::
+        :: Arguments:
+        :: 1. inputs                      (json array, required) A json array of json objects
+        ::      [
+        ::        {                       (json object)
+        ::          "txid": "hex",        (string, required) The transaction id
+        ::          "vout": n,            (numeric, required) The output number
+        ::          "sequence": n,        (numeric, optional, default=depends on the value of the 'replaceable' and 'locktime' arguments) The sequence number
+        ::        },
+        ::        ...
+        ::      ]
+        :: 2. outputs                     (json array, required) a json array with outputs (key-value pairs), where none of the keys are duplicated.
+        ::                                That is, each address can only appear once and there can only be one 'data' object.
+        ::                                For compatibility reasons, a dictionary, which holds the key-value pairs directly, is also
+        ::                                accepted as second parameter.
+        ::      [
+        ::        {                       (json object)
+        ::          "address": amount,    (numeric or string, required) A key-value pair. The key (string) is the bitcoin address, the value (float or string) is the amount in BTC
+        ::        },
+        ::        {                       (json object)
+        ::          "data": "hex",        (string, required) A key-value pair. The key must be "data", the value is hex-encoded data
+        ::        },
+        ::        ...
+        ::      ]
+        :: 3. locktime                    (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs
+        :: 4. replaceable                 (boolean, optional, default=false) Marks this transaction as BIP125 replaceable.
+        ::                                Allows this transaction to be replaced by a transaction with higher fees. If provided, it is an error if explicit sequence numbers are incompatible.
+        ::
+        [%create-psbt partially-signed-transaction]
+        :: %createrawtransaction: Create a transaction spending the given inputs and creating new outputs.
+        :: Outputs can be addresses or data.
+        :: Returns hex-encoded raw transaction.
+        :: Note that the transaction's inputs are not signed, and
+        :: it is not stored in the wallet or transmitted to the network.
+        ::
+        :: Arguments:
+        :: 1. inputs                      (json array, required) A json array of json objects
+        ::      [
+        ::        {                       (json object)
+        ::          "txid": "hex",        (string, required) The transaction id
+        ::          "vout": n,            (numeric, required) The output number
+        ::          "sequence": n,        (numeric, optional, default=depends on the value of the 'replaceable' and 'locktime' arguments) The sequence number
+        ::        },
+        ::        ...
+        ::      ]
+        :: 2. outputs                     (json array, required) a json array with outputs (key-value pairs), where none of the keys are duplicated.
+        ::                                That is, each address can only appear once and there can only be one 'data' object.
+        ::                                For compatibility reasons, a dictionary, which holds the key-value pairs directly, is also
+        ::                                accepted as second parameter.
+        ::      [
+        ::        {                       (json object)
+        ::          "address": amount,    (numeric or string, required) A key-value pair. The key (string) is the bitcoin address, the value (float or string) is the amount in BTC
+        ::        },
+        ::        {                       (json object)
+        ::          "data": "hex",        (string, required) A key-value pair. The key must be "data", the value is hex-encoded data
+        ::        },
+        ::        ...
+        ::      ]
+        :: 3. locktime                    (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs
+        :: 4. replaceable                 (boolean, optional, default=false) Marks this transaction as BIP125-replaceable.
+        ::                                Allows this transaction to be replaced by a transaction with higher fees. If provided, it is an error if explicit sequence numbers are incompatible.
+        ::
+        ::
+        [%create-raw-transaction partially-signed-transaction]
+        :: %decodepsbt: Return a JSON object representing the serialized, base64-encoded partially signed Bitcoin transaction.
+        ::
+        :: Arguments:
+        :: 1. psbt    (string, required) The PSBT base64 string
+        ::
+        [%decode-psbt psbt=@t]
+        :: %decoderawtransaction: Return a JSON object representing the serialized, hex-encoded transaction.
+        ::
+        :: Arguments:
+        :: 1. hexstring    (string, required) The transaction hex string
+        :: 2. iswitness    (boolean, optional, default=depends on heuristic tests) Whether the transaction hex is a serialized witness transaction
+        ::                 If iswitness is not present, heuristic tests will be used in decoding
+        ::
+        [%decode-raw-transaction hex-string=@ux is-witness=(unit ?)]
+        :: %decodescript: Decode a hex-encoded script.
+        ::
+        :: Arguments:
+        :: 1. hexstring    (string, required) the hex-encoded script
+        ::
+        [%decode-script hex-string=@ux]
+        :: %finalizepsbt: Finalize the inputs of a PSBT. If the transaction is fully signed, it will produce a
+        :: network serialized transaction which can be broadcast with sendrawtransaction. Otherwise a PSBT will be
+        :: created which has the final_scriptSig and final_scriptWitness fields filled for inputs that are complete.
+        :: Implements the Finalizer and Extractor roles.
+        ::
+        :: Arguments:
+        :: 1. psbt       (string, required) A base64 string of a PSBT
+        :: 2. extract    (boolean, optional, default=true) If true and the transaction is complete,
+        ::               extract and return the complete transaction in normal network serialization instead of the PSBT.
+        ::
+        ::
+        [%finalize-psbt psbt=@t extract=(unit ?)]
+        :: %fundrawtransaction: Add inputs to a transaction until it has enough in value to meet its out value.
+        :: This will not modify existing inputs, and will add at most one change output to the outputs.
+        :: No existing outputs will be modified unless "subtractFeeFromOutputs" is specified.
+        :: Note that inputs which were signed may need to be resigned after completion since in/outputs have been added.
+        :: The inputs added will not be signed, use signrawtransactionwithkey
+        ::  or signrawtransactionwithwallet for that.
+        :: Note that all existing inputs must have their previous output transaction be in the wallet.
+        :: Note that all inputs selected must be of standard form and P2SH scripts must be
+        :: in the wallet using importaddress or addmultisigaddress (to calculate fees).
+        :: You can see whether this is the case by checking the "solvable" field in the listunspent output.
+        :: Only pay-to-pubkey, multisig, and P2SH versions thereof are currently supported for watch-only
+        ::
+        :: Arguments:
+        :: 1. hexstring                          (string, required) The hex string of the raw transaction
+        :: 2. options                            (json object, optional) for backward compatibility: passing in a true instead of an object will result in {"includeWatching":true}
+        ::      {
+        ::        "changeAddress": "str",        (string, optional, default=pool address) The bitcoin address to receive the change
+        ::        "changePosition": n,           (numeric, optional, default=random) The index of the change output
+        ::        "change_type": "str",          (string, optional, default=set by -changetype) The output type to use. Only valid if changeAddress is not specified. Options are "legacy", "p2sh-segwit", and "bech32".
+        ::        "includeWatching": bool,       (boolean, optional, default=false) Also select inputs which are watch only
+        ::        "lockUnspents": bool,          (boolean, optional, default=false) Lock selected unspent outputs
+        ::        "feeRate": amount,             (numeric or string, optional, default=not set: makes wallet determine the fee) Set a specific fee rate in BTC/kB
+        ::        "subtractFeeFromOutputs": [    (json array, optional, default=empty array) A json array of integers.
+        ::                                       The fee will be equally deducted from the amount of each specified output.
+        ::                                       Those recipients will receive less bitcoins than you enter in their corresponding amount field.
+        ::                                       If no outputs are specified here, the sender pays the fee.
+        ::          vout_index,                  (numeric) The zero-based output index, before a change output is added.
+        ::          ...
+        ::        ],
+        ::        "replaceable": bool,           (boolean, optional, default=fallback to wallet's default) Marks this transaction as BIP125 replaceable.
+        ::                                       Allows this transaction to be replaced by a transaction with higher fees
+        ::        "conf_target": n,              (numeric, optional, default=fallback to wallet's default) Confirmation target (in blocks)
+        ::        "estimate_mode": "str",        (string, optional, default=UNSET) The fee estimate mode, must be one of:
+        ::                                       "UNSET"
+        ::                                       "ECONOMICAL"
+        ::                                       "CONSERVATIVE"
+        ::      }
+        :: 3. iswitness                          (boolean, optional, default=depends on heuristic tests) Whether the transaction hex is a serialized witness transaction
+        ::                                       If iswitness is not present, heuristic tests will be used in decoding
+        ::
+        $:  %fund-raw-transaction
+            hex-string=@ux
+            $=  options  %-  unit
+            $:  change-address=(unit address)
+                change-position=(unit @ud)
+                change-type=(unit address-type)
+                include-watching=(unit ?)
+                lock-unspents=(unit ?)
+                fee-rate=(unit @t)
+                subtract-fee-from-outputs=(unit (list @ud))
+                replaceable=(unit ?)
+                conf-target=(unit @ud)
+                =estimate-mode
+            ==
+            is-witness=(unit ?)
+        ==
+        :: %getrawtransaction: Return the raw transaction data.
+        ::
+        :: By default this function only works for mempool transactions. When called with a blockhash
+        :: argument, getrawtransaction will return the transaction if the specified block is available and
+        :: the transaction is found in that block. When called without a blockhash argument, getrawtransaction
+        :: will return the transaction if it is in the mempool, or if -txindex is enabled and the transaction
+        :: is in a block in the blockchain.
+        ::
+        :: Hint: Use gettransaction for wallet transactions.
+        ::
+        :: If verbose is 'true', returns an Object with information about 'txid'.
+        :: If verbose is 'false' or omitted, returns a string that is serialized, hex-encoded data for 'txid'.
+        ::
+        :: Arguments:
+        :: 1. txid         (string, required) The transaction id
+        :: 2. verbose      (boolean, optional, default=false) If false, return a string, otherwise return a json object
+        :: 3. blockhash    (string, optional) The block in which to look for the transaction
+        ::
+        [%get-raw-transaction txid=@ux verbose=(unit ?) blockhash=(unit @ux)]
+        :: %joinpsbts: Joins multiple distinct PSBTs with different inputs and outputs into one PSBT with inputs and outputs from all of the PSBTs
+        :: No input in any of the PSBTs can be in more than one of the PSBTs.
+        ::
+        :: Arguments:
+        :: 1. txs            (json array, required) A json array of base64 strings of partially signed transactions
+        ::      [
+        ::        "psbt",    (string, required) A base64 string of a PSBT
+        ::        ...
+        ::      ]
+        ::
+        [%join-psbts txs=(list @t)]
+        :: %sendrawtransaction: Submits raw transaction (serialized, hex-encoded) to local node and network.
+        ::
+        :: Also see createrawtransaction and signrawtransactionwithkey calls.
+        ::
+        :: Arguments:
+        :: 1. hexstring        (string, required) The hex string of the raw transaction
+        :: 2. allowhighfees    (boolean, optional, default=false) Allow high fees
+        ::
+        ::
+        [%send-raw-transaction hex-string=@ux allow-high-fees=(unit ?)]
+        :: %signrawtransactionwithkey: Sign inputs for raw transaction (serialized, hex-encoded).
+        :: The second argument is an array of base58-encoded private
+        :: keys that will be the only keys used to sign the transaction.
+        :: The third optional argument (may be null) is an array of previous transaction outputs that
+        :: this transaction depends on but may not yet be in the block chain.
+        ::
+        :: Arguments:
+        :: 1. hexstring                        (string, required) The transaction hex string
+        :: 2. privkeys                         (json array, required) A json array of base58-encoded private keys for signing
+        ::      [
+        ::        "privatekey",                (string) private key in base58-encoding
+        ::        ...
+        ::      ]
+        :: 3. prevtxs                          (json array, optional) A json array of previous dependent transaction outputs
+        ::      [
+        ::        {                            (json object)
+        ::          "txid": "hex",             (string, required) The transaction id
+        ::          "vout": n,                 (numeric, required) The output number
+        ::          "scriptPubKey": "hex",     (string, required) script key
+        ::          "redeemScript": "hex",     (string) (required for P2SH) redeem script
+        ::          "witnessScript": "hex",    (string) (required for P2WSH or P2SH-P2WSH) witness script
+        ::          "amount": amount,          (numeric or string, required) The amount spent
+        ::        },
+        ::        ...
+        ::      ]
+        :: 4. sighashtype                      (string, optional, default=ALL) The signature hash type. Must be one of:
+        ::                                     "ALL"
+        ::                                     "NONE"
+        ::                                     "SINGLE"
+        ::                                     "ALL|ANYONECANPAY"
+        ::                                     "NONE|ANYONECANPAY"
+        ::                                     "SINGLE|ANYONECANPAY"
+        ::
+        ::
+        ::
+        $:  %sign-raw-transaction-with-key
+            hex-string=@ux
+            priv-keys=(list @t)
+            prev-txs=(unit (list prev-tx))
+            =sig-hash-type
+        ==
+        :: %testmempoolaccept: Returns result of mempool acceptance tests indicating if raw transaction (serialized, hex-encoded) would be accepted by mempool.
+        ::
+        :: This checks if the transaction violates the consensus or policy rules.
+        ::
+        :: See sendrawtransaction call.
+        ::
+        :: Arguments:
+        :: 1. rawtxs           (json array, required) An array of hex strings of raw transactions.
+        ::                     Length must be one for now.
+        ::      [
+        ::        "rawtx",     (string)
+        ::        ...
+        ::      ]
+        :: 2. allowhighfees    (boolean, optional, default=false) Allow high fees
+        ::
+        [%test-mempool-accept raw-txs=(list @ux) allow-high-fees=(unit ?)]
+        :: %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from the UTXO set or the mempool.
+        ::
+        :: Arguments:
+        :: 1. psbt    (string, required) A base64 string of a PSBT
+        ::
+        [%utxo-update-psbt psbt=@t]
+    ::  Util
+    ::
+        ::  %createmultisig: Creates a multi-signature address with n signature
+        ::  of m keys required. It returns a json object with the address and
+        ::  redeemScript.
+        ::
+        ::  Arguments:
+        :: 1. nrequired       (numeric, required) The number of required signatures out of the n keys.
+        :: 2. keys            (json array, required) A json array of hex-encoded public keys.
+        ::      [
+        ::        "key",      (string) The hex-encoded public key
+        ::        ...
+        ::      ]
+        :: 3. address_type    (string, optional, default=legacy) The address type to use. Options are "legacy", "p2sh-segwit", and "bech32".
+        ::
+        ::
+        [%create-multi-sig n-required=@ud keys=(list @ux) address-type=(unit address-type)]
+        ::  %deriveaddresses: Derives one or more addresses corresponding to an
+        ::  output descriptor. Examples of output descriptors are:
+        ::  Examples of output descriptors are:
+        ::     pkh(<pubkey>)                        P2PKH outputs for the given pubkey
+        ::     wpkh(<pubkey>)                       Native segwit P2PKH outputs for the given pubkey
+        ::     sh(multi(<n>,<pubkey>,<pubkey>,...)) P2SH-multisig outputs for the given threshold and pubkeys
+        ::     raw(<hex script>)                    Outputs whose scriptPubKey equals the specified hex scripts
+        ::
+        :: In the above, <pubkey> either refers to a fixed public key in hexadecimal notation, or to an xpub/xprv optionally followed by one
+        :: or more path elements separated by "/", where "h" represents a hardened child key.
+        :: For more information on output descriptors, see the documentation in the doc/descriptors.md file.
+        ::
+        :: Arguments:
+        :: 1. descriptor    (string, required) The descriptor.
+        :: 2. range         (numeric or array, optional) If a ranged descriptor is used, this specifies the end or the range (in [begin,end] notation) to derive.
+        ::
+        ::
+        [%derive-addresses descriptor=@t range=(unit ?(@ud [@ud @ud]))]
+        ::  %estimatesmartfee: Estimates the approximate fee per kilobyte needed for a transaction to begin
+        :: confirmation within conf_target blocks if possible and return the number of blocks
+        :: for which the estimate is valid. Uses virtual transaction size as defined
+        :: in BIP 141 (witness data is discounted).
+        ::
+        ::  Arguments:
+        :: 1. conf_target      (numeric, required) Confirmation target in blocks (1 - 1008)
+        :: 2. estimate_mode    (string, optional, default=CONSERVATIVE) The fee estimate mode.
+        ::                     Whether to return a more conservative estimate which also satisfies
+        ::                     a longer history. A conservative estimate potentially returns a
+        ::                     higher feerate and is more likely to be sufficient for the desired
+        ::                     target, but is not as responsive to short term drops in the
+        ::                     prevailing fee market.  Must be one of:
+        ::                     "UNSET"
+        ::                     "ECONOMICAL"
+        ::                     "CONSERVATIVE"
+        ::
+        [%estimate-smart-fee conf-target=@ud =estimate-mode]
+        ::  %getdescriptorinfo: Analyses a descriptor.
+        ::
+        :: Arguments:
+        :: 1. descriptor    (string, required) The descriptor.
+        ::
+        [%get-descriptor-info descriptor=@t]
+        ::  %signmessagewithprivkey: Sign a message with the private key of an address
+        ::
+        :: Arguments:
+        :: 1. privkey    (string, required) The private key to sign the message with.
+        :: 2. message    (string, required) The message to create a signature of.
+        ::
+        [%sign-message-with-privkey privkey=@t message=@t]
+        ::  %validateaddress: Return information about the given bitcoin address.
+        ::
+        :: Arguments:
+        :: 1. address    (string, required) The bitcoin address to validate
+        ::
+        [%validate-address =address]
+        ::  %verifymessage: Verify a signed message
+        ::
+        :: Arguments:
+        :: 1. address      (string, required) The bitcoin address to use for the signature.
+        :: 2. signature    (string, required) The signature provided by the signer in base 64 encoding (see signmessage).
+        :: 3. message      (string, required) The message that was signed.
+        ::
+        ::
+        [%verify-message =address signature=@t message=@t]
     ::  Wallet
     ::
         ::  %abandon-transaction: Mark in-wallet transaction as abandoned.
@@ -665,19 +1127,7 @@
         ::                                     "NONE|ANYONECANPAY"
         ::                                     "SINGLE|ANYONECANPAY"
         ::
-        $:  %sign-raw-transaction-with-wallet
-           hex-string=@ux
-           prev-txs=(unit (list tx-raw))
-           :: $=  prev-txs  %-  unit  %-  list
-           :: $:  txid=@ux
-           ::     vout=@ud
-           ::     script-pubkey=@ux
-           ::     redeem-script=@ux
-           ::     witness-script=@ux
-           ::     amount=@t
-           :: ==
-           =sig-hash-type
-        ==
+        [%sign-raw-transaction-with-wallet raw-tx]
         ::  Unloads the wallet referenced by the request endpoint otherwise unloads the wallet specified in the argument.
         ::  (Specifying the wallet name on a wallet endpoint is invalid.
         ::  (Arguments:
@@ -744,15 +1194,8 @@
         :: }
         ::
         $:  %wallet-create-fundedpsbt
-            $=  inputs  %-  list
-            $:  txid=@ux
-                vout=@ud
-                sequence=@ud
-            ==
-            $=  outputs
-            $:  data=[%data @ux]
-                addresses=(list [=address amount=@t])
-            ==
+            inputs=(list input)
+            outputs=output
             locktime=(unit @ud)
             $=  options  %-  unit
             $:  change-address=(unit @uc)
@@ -766,7 +1209,7 @@
                 conf-target=(unit @ud)
                 =estimate-mode
             ==
-            bip32derivs=(unit ?)
+            bip32-derivs=(unit ?)
         ==
         ::  Removes the wallet encryption key from memory, locking the wallet.
         ::  (After calling this method, you will need to call walletpassphrase again
@@ -811,7 +1254,7 @@
             psbt=@t
             sign=(unit ?)
             =sig-hash-type
-            bip32derivs=(unit ?)
+            bip32-derivs=(unit ?)
         ==
     ::  ZMQ management
     ::
@@ -826,6 +1269,529 @@
     ::
         [%generate blocks=(list blockhash)]
         [%get-block-count count=@ud]
+    ::  Raw Transactions
+    ::
+        :: %analyzepsbt: Analyzes and provides information about the current status of a PSBT and its inputs
+        ::
+        :: Result:
+        :: {
+        ::   "inputs" : [                      (array of json objects)
+        ::     {
+        ::       "has_utxo" : true|false     (boolean) Whether a UTXO is provided
+        ::       "is_final" : true|false     (boolean) Whether the input is finalized
+        ::       "missing" : {               (json object, optional) Things that are missing that are required to complete this input
+        ::         "pubkeys" : [             (array, optional)
+        ::           "keyid"                 (string) Public key ID, hash160 of the public key, of a public key whose BIP 32 derivation path is missing
+        ::         ]
+        ::         "signatures" : [          (array, optional)
+        ::           "keyid"                 (string) Public key ID, hash160 of the public key, of a public key whose signature is missing
+        ::         ]
+        ::         "redeemscript" : "hash"   (string, optional) Hash160 of the redeemScript that is missing
+        ::         "witnessscript" : "hash"  (string, optional) SHA256 of the witnessScript that is missing
+        ::       }
+        ::       "next" : "role"             (string, optional) Role of the next person that this input needs to go to
+        ::     }
+        ::     ,...
+        ::   ]
+        ::   "estimated_vsize" : vsize       (numeric, optional) Estimated vsize of the final signed transaction
+        ::   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
+        ::   "fee" : fee                     (numeric, optional) The transaction fee paid. Shown only if all UTXO slots in the PSBT have been filled.
+        ::   "next" : "role"                 (string) Role of the next person that this psbt needs to go to
+        :: }
+        ::
+        $:  %analyze-psbt
+            $=  inputs  %-  list
+            $:  has-utxo=?
+                is-final=?
+                $=  missing  %-  list  %-  unit
+                $:  pubkeys=(list (unit @ux))
+                    signatures=(list (unit @ux))
+                    redeem-script=(unit @ux)
+                    witness-script=(unit @ux)
+                ==
+                next=(unit @t)
+            ==
+            estimated-vsize=(unit @t)
+            estimated-feerate=(unit @t)
+            fee=(unit @t)
+            next=@t
+        ==
+        :: %combinepsbt: Combine multiple partially signed Bitcoin transactions into one transaction.
+        :: Implements the Combiner role.
+        ::
+        :: Result:
+        ::   "psbt"          (string) The base64-encoded partially signed transaction
+        ::
+        [%combine-psbt psbt=@t]
+        :: %combinerawtransaction:Combine multiple partially signed transactions into one transaction.
+        :: The combined transaction may be another partially signed transaction or a
+        :: fully signed transaction.
+        ::
+        :: Result:
+        :: "hex"            (string) The hex-encoded raw transaction with signature(s)
+        ::
+        [%combine-raw-transaction hex=@ux]
+        :: %converttopsbt: Converts a network serialized transaction to a PSBT. This should be used only with createrawtransaction and fundrawtransaction
+        :: createpsbt and walletcreatefundedpsbt should be used for new applications.
+        ::
+        :: Result:
+        ::   "psbt"        (string)  The resulting raw transaction (base64-encoded string)
+        ::
+        [%convert-to-psbt psbt=@t]
+        :: %createpsbt: Creates a transaction in the Partially Signed Transaction format.
+        :: Implements the Creator role.
+        ::
+        :: Result:
+        ::   "psbt"        (string)  The resulting raw transaction (base64-encoded string)
+        ::
+        [%create-psbt psbt=@t]
+        :: %createrawtransaction: Create a transaction spending the given inputs and creating new outputs.
+        :: Outputs can be addresses or data.
+        :: Returns hex-encoded raw transaction.
+        :: Note that the transaction's inputs are not signed, and
+        :: it is not stored in the wallet or transmitted to the network.
+        ::
+        :: Result:
+        :: "transaction"              (string) hex string of the transaction
+        ::
+        [%create-raw-transaction transaction=@ux]
+        :: %decodepsbt: Return a JSON object representing the serialized, base64-encoded partially signed Bitcoin transaction.
+        ::
+        :: Result:
+        :: {
+        ::   "tx" : {                   (json object) The decoded network-serialized unsigned transaction.
+        ::     ...                                      The layout is the same as the output of decoderawtransaction.
+        ::   },
+        ::   "unknown" : {                (json object) The unknown global fields
+        ::     "key" : "value"            (key-value pair) An unknown key-value pair
+        ::      ...
+        ::   },
+        ::   "inputs" : [                 (array of json objects)
+        ::     {
+        ::       "non_witness_utxo" : {   (json object, optional) Decoded network transaction for non-witness UTXOs
+        ::         ...
+        ::       },
+        ::       "witness_utxo" : {            (json object, optional) Transaction output for witness UTXOs
+        ::         "amount" : x.xxx,           (numeric) The value in BTC
+        ::         "scriptPubKey" : {          (json object)
+        ::           "asm" : "asm",            (string) The asm
+        ::           "hex" : "hex",            (string) The hex
+        ::           "type" : "pubkeyhash",    (string) The type, eg 'pubkeyhash'
+        ::           "address" : "address"     (string) Bitcoin address if there is one
+        ::         }
+        ::       },
+        ::       "partial_signatures" : {             (json object, optional)
+        ::         "pubkey" : "signature",           (string) The public key and signature that corresponds to it.
+        ::         ,...
+        ::       }
+        ::       "sighash" : "type",                  (string, optional) The sighash type to be used
+        ::       "redeem_script" : {       (json object, optional)
+        ::           "asm" : "asm",            (string) The asm
+        ::           "hex" : "hex",            (string) The hex
+        ::           "type" : "pubkeyhash",    (string) The type, eg 'pubkeyhash'
+        ::         }
+        ::       "witness_script" : {       (json object, optional)
+        ::           "asm" : "asm",            (string) The asm
+        ::           "hex" : "hex",            (string) The hex
+        ::           "type" : "pubkeyhash",    (string) The type, eg 'pubkeyhash'
+        ::         }
+        ::       "bip32_derivs" : {          (json object, optional)
+        ::         "pubkey" : {                     (json object, optional) The public key with the derivation path as the value.
+        ::           "master_fingerprint" : "fingerprint"     (string) The fingerprint of the master key
+        ::           "path" : "path",                         (string) The path
+        ::         }
+        ::         ,...
+        ::       }
+        ::       "final_scriptsig" : {       (json object, optional)
+        ::           "asm" : "asm",            (string) The asm
+        ::           "hex" : "hex",            (string) The hex
+        ::         }
+        ::        "final_scriptwitness": ["hex", ...] (array of string) hex-encoded witness data (if any)
+        ::       "unknown" : {                (json object) The unknown global fields
+        ::         "key" : "value"            (key-value pair) An unknown key-value pair
+        ::          ...
+        ::       },
+        ::     }
+        ::     ,...
+        ::   ]
+        ::   "outputs" : [                 (array of json objects)
+        ::     {
+        ::       "redeem_script" : {       (json object, optional)
+        ::           "asm" : "asm",            (string) The asm
+        ::           "hex" : "hex",            (string) The hex
+        ::           "type" : "pubkeyhash",    (string) The type, eg 'pubkeyhash'
+        ::         }
+        ::       "witness_script" : {       (json object, optional)
+        ::           "asm" : "asm",            (string) The asm
+        ::           "hex" : "hex",            (string) The hex
+        ::           "type" : "pubkeyhash",    (string) The type, eg 'pubkeyhash'
+        ::       }
+        ::       "bip32_derivs" : [          (array of json objects, optional)
+        ::         {
+        ::           "pubkey" : "pubkey",                     (string) The public key this path corresponds to
+        ::           "master_fingerprint" : "fingerprint"     (string) The fingerprint of the master key
+        ::           "path" : "path",                         (string) The path
+        ::           }
+        ::         }
+        ::         ,...
+        ::       ],
+        ::       "unknown" : {                (json object) The unknown global fields
+        ::         "key" : "value"            (key-value pair) An unknown key-value pair
+        ::          ...
+        ::       },
+        ::     }
+        ::     ,...
+        ::   ]
+        ::   "fee" : fee                      (numeric, optional) The transaction fee paid if all UTXOs slots in the PSBT have been filled.
+        :: }
+        ::
+        $:  %decode-psbt
+            tx=serialized-tx
+            unknown=(list [@t @t])
+            $=  inputs  %-  list
+            $:  non-witness-utxo=(unit [amount=@t =script-pubkey])
+                witness-utxo=(unit [amount=@t =script-pubkey])
+                $=  partial-signatures  %-  unit  %-  list
+                $:  pubkey=@ux
+                    signature=@t
+                ==
+                =sig-hash-type
+                redeem-script=(unit script)
+                witness-script=(unit script)
+                =bip32-derivs
+                final-script-sig=(unit [asm=@t hex=@ux])
+                final-script-witness=(unit (list @ux))
+                unknown=(list [@t @t])
+            ==
+            $=  outputs
+            $:  redeem-script=(unit script)
+                witness-script=(unit script)
+                =bip32-derivs
+                unknown=(list [@t @t])
+            ==
+            fee=(unit @t)
+        ==
+        :: %decoderawtransaction: Return a JSON object representing the serialized, hex-encoded transaction.
+        ::
+        :: Result:
+        :: {
+        ::   "txid" : "id",        (string) The transaction id
+        ::   "hash" : "id",        (string) The transaction hash (differs from txid for witness transactions)
+        ::   "size" : n,             (numeric) The transaction size
+        ::   "vsize" : n,            (numeric) The virtual transaction size (differs from size for witness transactions)
+        ::   "weight" : n,           (numeric) The transaction's weight (between vsize*4 - 3 and vsize*4)
+        ::   "version" : n,          (numeric) The version
+        ::   "locktime" : ttt,       (numeric) The lock time
+        ::   "vin" : [               (array of json objects)
+        ::      {
+        ::        "txid": "id",    (string) The transaction id
+        ::        "vout": n,         (numeric) The output number
+        ::        "scriptSig": {     (json object) The script
+        ::          "asm": "asm",  (string) asm
+        ::          "hex": "hex"   (string) hex
+        ::        },
+        ::        "txinwitness": ["hex", ...] (array of string) hex-encoded witness data (if any)
+        ::        "sequence": n     (numeric) The script sequence number
+        ::      }
+        ::      ,...
+        ::   ],
+        ::   "vout" : [             (array of json objects)
+        ::      {
+        ::        "value" : x.xxx,            (numeric) The value in BTC
+        ::        "n" : n,                    (numeric) index
+        ::        "scriptPubKey" : {          (json object)
+        ::          "asm" : "asm",          (string) the asm
+        ::          "hex" : "hex",          (string) the hex
+        ::          "reqSigs" : n,            (numeric) The required sigs
+        ::          "type" : "pubkeyhash",  (string) The type, eg 'pubkeyhash'
+        ::          "addresses" : [           (json array of string)
+        ::            "12tvKAXCxZjSmdNbao16dKXC8tRWfcF5oc"   (string) bitcoin address
+        ::            ,...
+        ::          ]
+        ::        }
+        ::      }
+        ::      ,...
+        ::   ],
+        :: }
+        ::
+        [%decode-raw-transaction =serialized-tx]
+        :: %decodescript: Decode a hex-encoded script.
+        ::
+        :: Result:
+        :: {
+        ::   "asm":"asm",   (string) Script public key
+        ::   "hex":"hex",   (string) hex-encoded public key
+        ::   "type":"type", (string) The output type
+        ::   "reqSigs": n,    (numeric) The required signatures
+        ::   "addresses": [   (json array of string)
+        ::      "address"     (string) bitcoin address
+        ::      ,...
+        ::   ],
+        ::   "p2sh","address" (string) address of P2SH script wrapping this redeem script (not returned if the script is already a P2SH).
+        :: }
+        ::
+        $:  %decode-script
+            asm=@t
+            hex=@ux
+            type=@t
+            req-sigs=@ud
+            addresses=(list address)
+            p2sh=address
+        ==
+        :: %finalizepsbt: Finalize the inputs of a PSBT. If the transaction is fully signed, it will produce a
+        :: network serialized transaction which can be broadcast with sendrawtransaction. Otherwise a PSBT will be
+        :: created which has the final_scriptSig and final_scriptWitness fields filled for inputs that are complete.
+        :: Implements the Finalizer and Extractor roles.
+        ::
+        :: Result:
+        :: {
+        ::   "psbt" : "value",          (string) The base64-encoded partially signed transaction if not extracted
+        ::   "hex" : "value",           (string) The hex-encoded network transaction if extracted
+        ::   "complete" : true|false,   (boolean) If the transaction has a complete set of signatures
+        ::   ]
+        :: }
+        ::
+        [%finalize-psbt psbt=@t hex=@ux complete=?]
+        :: %fundrawtransaction: Add inputs to a transaction until it has enough in value to meet its out value.
+        :: This will not modify existing inputs, and will add at most one change output to the outputs.
+        :: No existing outputs will be modified unless "subtractFeeFromOutputs" is specified.
+        :: Note that inputs which were signed may need to be resigned after completion since in/outputs have been added.
+        :: The inputs added will not be signed, use signrawtransactionwithkey
+        ::  or signrawtransactionwithwallet for that.
+        :: Note that all existing inputs must have their previous output transaction be in the wallet.
+        :: Note that all inputs selected must be of standard form and P2SH scripts must be
+        :: in the wallet using importaddress or addmultisigaddress (to calculate fees).
+        :: You can see whether this is the case by checking the "solvable" field in the listunspent output.
+        :: Only pay-to-pubkey, multisig, and P2SH versions thereof are currently supported for watch-only
+        ::
+        :: Result:
+        :: {
+        ::   "hex":       "value", (string)  The resulting raw transaction (hex-encoded string)
+        ::   "fee":       n,         (numeric) Fee in BTC the resulting transaction pays
+        ::   "changepos": n          (numeric) The position of the added change output, or -1
+        :: }
+        ::
+        [%fund-raw-transaction hex=@ux fee=@t change-pos=@ud]
+        :: %getrawtransaction: Return the raw transaction data.
+        ::
+        :: By default this function only works for mempool transactions. When called with a blockhash
+        :: argument, getrawtransaction will return the transaction if the specified block is available and
+        :: the transaction is found in that block. When called without a blockhash argument, getrawtransaction
+        :: will return the transaction if it is in the mempool, or if -txindex is enabled and the transaction
+        :: is in a block in the blockchain.
+        ::
+        :: Hint: Use gettransaction for wallet transactions.
+        ::
+        :: If verbose is 'true', returns an Object with information about 'txid'.
+        :: If verbose is 'false' or omitted, returns a string that is serialized, hex-encoded data for 'txid'.
+        ::
+        :: Result (if verbose is not set or set to false):
+        :: "data"      (string) The serialized, hex-encoded data for 'txid'
+        ::
+        :: Result (if verbose is set to true):
+        :: {
+        ::   "in_active_chain": b, (bool) Whether specified block is in the active chain or not (only present with explicit "blockhash" argument)
+        ::   "hex" : "data",       (string) The serialized, hex-encoded data for 'txid'
+        ::   "txid" : "id",        (string) The transaction id (same as provided)
+        ::   "hash" : "id",        (string) The transaction hash (differs from txid for witness transactions)
+        ::   "size" : n,             (numeric) The serialized transaction size
+        ::   "vsize" : n,            (numeric) The virtual transaction size (differs from size for witness transactions)
+        ::   "weight" : n,           (numeric) The transaction's weight (between vsize*4-3 and vsize*4)
+        ::   "version" : n,          (numeric) The version
+        ::   "locktime" : ttt,       (numeric) The lock time
+        ::   "vin" : [               (array of json objects)
+        ::      {
+        ::        "txid": "id",    (string) The transaction id
+        ::        "vout": n,         (numeric)
+        ::        "scriptSig": {     (json object) The script
+        ::          "asm": "asm",  (string) asm
+        ::          "hex": "hex"   (string) hex
+        ::        },
+        ::        "sequence": n      (numeric) The script sequence number
+        ::        "txinwitness": ["hex", ...] (array of string) hex-encoded witness data (if any)
+        ::      }
+        ::      ,...
+        ::   ],
+        ::   "vout" : [              (array of json objects)
+        ::      {
+        ::        "value" : x.xxx,            (numeric) The value in BTC
+        ::        "n" : n,                    (numeric) index
+        ::        "scriptPubKey" : {          (json object)
+        ::          "asm" : "asm",          (string) the asm
+        ::          "hex" : "hex",          (string) the hex
+        ::          "reqSigs" : n,            (numeric) The required sigs
+        ::          "type" : "pubkeyhash",  (string) The type, eg 'pubkeyhash'
+        ::          "addresses" : [           (json array of string)
+        ::            "address"        (string) bitcoin address
+        ::            ,...
+        ::          ]
+        ::        }
+        ::      }
+        ::      ,...
+        ::   ],
+        ::   "blockhash" : "hash",   (string) the block hash
+        ::   "confirmations" : n,      (numeric) The confirmations
+        ::   "blocktime" : ttt         (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)
+        ::   "time" : ttt,             (numeric) Same as "blocktime"
+        :: }
+        ::
+        $:  %get-raw-transaction  $=  data
+            $?  @ux
+                $:  in-active-chain=?
+                    hex=@ux
+                    txid=@ux
+                    hash=@ux
+                    size=@ud
+                    vsize=@ud
+                    weight=@ud
+                    version=@ud
+                    locktime=@ud
+                    vin=(list vin)
+                    vout=(list vout)
+                    =blockhash
+                    confirmations=@ud
+                    blocktime=@ud
+                    time=@ud
+        ==  ==  ==
+        :: %joinpsbts: Joins multiple distinct PSBTs with different inputs and outputs into one PSBT with inputs and outputs from all of the PSBTs
+        :: No input in any of the PSBTs can be in more than one of the PSBTs.
+        ::
+        :: Result:
+        ::   "psbt"          (string) The base64-encoded partially signed transaction
+        ::
+        [%join-psbts psbt=@t]
+        :: %sendrawtransaction: Submits raw transaction (serialized, hex-encoded) to local node and network.
+        ::
+        :: Also see createrawtransaction and signrawtransactionwithkey calls.
+        ::
+        :: Result:
+        :: "hex"             (string) The transaction hash in hex
+        ::
+        [%send-raw-transaction hex=@ux]
+        :: %signrawtransactionwithkey: Sign inputs for raw transaction (serialized, hex-encoded).
+        :: The second argument is an array of base58-encoded private
+        :: keys that will be the only keys used to sign the transaction.
+        :: The third optional argument (may be null) is an array of previous transaction outputs that
+        :: this transaction depends on but may not yet be in the block chain.
+        ::
+        :: Result:
+        :: {
+        ::   "hex" : "value",                  (string) The hex-encoded raw transaction with signature(s)
+        ::   "complete" : true|false,          (boolean) If the transaction has a complete set of signatures
+        ::   "errors" : [                      (json array of objects) Script verification errors (if there are any)
+        ::     {
+        ::       "txid" : "hash",              (string) The hash of the referenced, previous transaction
+        ::       "vout" : n,                   (numeric) The index of the output to spent and used as input
+        ::       "scriptSig" : "hex",          (string) The hex-encoded signature script
+        ::       "sequence" : n,               (numeric) Script sequence number
+        ::       "error" : "text"              (string) Verification or signing error related to the input
+        ::     }
+        ::     ,...
+        ::   ]
+        :: }
+        ::
+        [%sign-raw-transaction-with-key ~]
+        :: %testmempoolaccept: Returns result of mempool acceptance tests indicating if raw transaction (serialized, hex-encoded) would be accepted by mempool.
+        ::
+        :: This checks if the transaction violates the consensus or policy rules.
+        ::
+        :: See sendrawtransaction call.
+        ::
+        :: Result:
+        :: [                   (array) The result of the mempool acceptance test for each raw transaction in the input array.
+        ::                             Length is exactly one for now.
+        ::  {
+        ::   "txid"           (string) The transaction hash in hex
+        ::   "allowed"        (boolean) If the mempool allows this tx to be inserted
+        ::   "reject-reason"  (string) Rejection string (only present when 'allowed' is false)
+        ::  }
+        :: ]
+        ::
+        [%test-mempool-accept txid=@ux allowed=? reject-reason=(unit @t)]
+        :: %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from the UTXO set or the mempool.
+        ::
+        :: Result:
+        ::   "psbt"          (string) The base64-encoded partially signed transaction with inputs updated
+        ::
+        [%utxo-update-psbt psbt=@t]
+    ::  Util
+    ::
+        ::  %createmultisig: Creates a multi-signature address with n signature
+        ::  of m keys required. It returns a json object with the address and
+        ::  redeemScript.
+        ::
+        :: Result:
+        :: {
+        ::   "address":"multisigaddress",  (string) The value of the new multisig address.
+        ::   "redeemScript":"script"       (string) The string value of the hex-encoded redemption script.
+        :: }
+        ::
+        [%create-multi-sig =address redeem-script=@t]
+        ::  %deriveaddresses: Derives one or more addresses corresponding to an
+        ::  output descriptor. Examples of output descriptors are:
+        ::
+        ::  Result:
+        ::  [ address ] (array) the derived addresses
+        ::
+        [%derive-addresses (list address)]
+        ::  %estimatesmartfee: Estimates the approximate fee per kilobyte needed for a transaction to begin
+        :: confirmation within conf_target blocks if possible and return the number of blocks
+        :: for which the estimate is valid. Uses virtual transaction size as defined
+        :: in BIP 141 (witness data is discounted).
+        ::
+        ::  Result:
+        :: {
+        ::   "feerate" : x.x,     (numeric, optional) estimate fee rate in BTC/kB
+        ::   "errors": [ str... ] (json array of strings, optional) Errors encountered during processing
+        ::   "blocks" : n         (numeric) block number where estimate was found
+        :: }
+        ::
+        [%estimate-smart-fee fee-rate=@t errors=(unit (list @t)) blocks=@ud]
+        ::  %getdescriptorinfo: Analyses a descriptor.
+        ::
+        :: Result:
+        :: {
+        ::   "descriptor" : "desc",         (string) The descriptor in canonical form, without private keys
+        ::   "isrange" : true|false,        (boolean) Whether the descriptor is ranged
+        ::   "issolvable" : true|false,     (boolean) Whether the descriptor is solvable
+        ::   "hasprivatekeys" : true|false, (boolean) Whether the input descriptor contained at least one private key
+        :: }
+        ::
+        [%get-descriptor-info descriptor=@t is-range=? is-solvable=? has-private-keys=?]
+        ::  %signmessagewithprivkey: Sign a message with the private key of an address
+        ::
+        :: Result:
+        :: "signature"          (string) The signature of the message encoded in base 64
+        ::
+        [%sign-message-with-privkey signature=@t]
+        ::  %validateaddress: Return information about the given bitcoin address.
+        ::
+        :: Result:
+        :: {
+        ::   "isvalid" : true|false,       (boolean) If the address is valid or not. If not, this is the only property returned.
+        ::   "address" : "address",        (string) The bitcoin address validated
+        ::   "scriptPubKey" : "hex",       (string) The hex-encoded scriptPubKey generated by the address
+        ::   "isscript" : true|false,      (boolean) If the key is a script
+        ::   "iswitness" : true|false,     (boolean) If the address is a witness address
+        ::   "witness_version" : version   (numeric, optional) The version number of the witness program
+        ::   "witness_program" : "hex"     (string, optional) The hex value of the witness program
+        :: }
+        ::
+        $:  %validate-address
+            is-valid=?
+            =address
+            script-pubkey=@ux
+            is-script=?
+            is-witness=?
+            witness-version=(unit @t)
+            witness-program=(unit @ux)
+        ==
+        ::  %verifymessage: Verify a signed message
+        ::
+        :: Result:
+        :: true|false   (boolean) If the signature is verified or not.
+        ::
+        [%verify-message ?]
     ::  Wallet
     ::
         [%abandon-transaction ~]
@@ -1234,8 +2200,8 @@
         :: }
         ::
         $:  %lists-in-ceblock
-            transactions=(list tx-response)
-            removed=(unit (list tx-response))
+            transactions=(list tx-in-block)
+            removed=(unit (list tx-in-block))
             lastblock=@ux
         ==
         ::

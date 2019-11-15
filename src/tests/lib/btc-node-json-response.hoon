@@ -372,7 +372,9 @@
     :-  %a
     [%a ~[s+addr s+'amount' s+'label']]~
   =/  exp=response:btc-rpc
-    [op [[en-addr 'amount' (some 'label')]~]~]
+    :-  op
+    :~  :~  [en-addr 'amount' (some 'label')]
+    ==  ==
   %+  expect-eq
       !>  exp
       !>  (parse-response:btc-rpc:lib result)
