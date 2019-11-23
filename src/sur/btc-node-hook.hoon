@@ -1,354 +1,395 @@
-|%
-::  %address: base58check encoded public key (20 bytes)
-::
-++  address  @uc
-++  blockhash  @ux
-::  Helper types
-::
-+$  sig-hash-type  %-  unit
-  $?  %'ALL'
-      %'NONE'
-      %'SINGLE'
-      %'ALL|ANYONECANPAY'
-      %'NONE|ANYONECANPAY'
-      %'SINGLE|ANYONECANPAY'
-  ==
-::
-+$  estimate-mode  (unit ?(%'ECONOMICAL' %'CONSERVATIVE' %'UNSET'))
-::
-+$  import-request
-  $:  desc=@t
-      $=  script-pubkey
-      $%  [%script s=@t]
-          [%address a=address]
+=>  ::  Helper types used within and outside the library
+    ::
+    |%
+    ::  %address: base58check encoded public key (20 bytes)
+    ::
+    ++  address  @uc
+    ++  blockhash  @ux
+    ::  Helper types
+    ::
+    +$  sig-hash
+      $?  %'ALL'
+          %'NONE'
+          %'SINGLE'
+          %'ALL|ANYONECANPAY'
+          %'NONE|ANYONECANPAY'
+          %'SINGLE|ANYONECANPAY'
       ==
-      timestamp=?(@da %now)
-      redeem-script=@t
-      witness-script=@t
-      pubkeys=(unit (list @t))
-      keys=(unit (list @t))
-      range=?(@ud [@ud @ud])
-      internal=?
-      watchonly=?
-      label=@t
-      keypool=?
-  ==
-::
-+$  category  ?(%send %receive %generate %immature %orphan)
-::
-+$  purpose  ?(%send %receive)
-::
-+$  address-type  ?(%legacy %p2sh-segwit %bech32)
-::
-+$  bip125-replaceable  ?(%yes %no %unknown)
-::
-+$  bip32-derivs  %-  unit  %-  list
-  $:  pubkey=@ux
-      $:  master-fingerprint=@t
-          path=@t
-  ==  ==
-::
-::  redeem/witness script
-::
-+$  script
-  $:  asm=@t
-      hex=@ux
-      type=@t
-  ==
-::
-+$  script-pubkey
-  $:  asm=@t
-      hex=@ux
-      type=@t
-      =address
-  ==
-::
-+$  vin
-  $:  txid=@ux
-      vout=@ud
-      script-sig=[asm=@t hex=@ux]
-      tx-in-witness=(list @ux)
-      sequence=@ud
-  ==
-::
-+$  vout
-  $:  value=@t
-      n=@ud
-      $=  script-pubkey
-      $:  asm=@t
+    ::
+    +$  sig-hash-type  (unit sig-hash)
+    ::
+    +$  estimate-mode  (unit ?(%'ECONOMICAL' %'CONSERVATIVE' %'UNSET'))
+    ::
+    +$  category  ?(%send %receive %generate %immature %orphan)
+    ::
+    +$  chain-status
+      $?  %invalid
+          %headers-only
+          %valid-headers
+          %valid-fork
+          %active
+      ==
+    ::
+    +$  soft-fork-status  ?(%defined %started %locked-in %active %failed)
+    ::
+    +$  purpose  ?(%send %receive)
+    ::
+    +$  address-type  ?(%legacy %p2sh-segwit %bech32)
+    ::
+    +$  bip125-replaceable  ?(%yes %no %unknown)
+    ::
+    +$  network-name  ?(%main %test %regtest)
+    ::
+    ::  FIXME: map instead of list produces a mint-vain
+    +$  bip32-derivs  %-  unit  %-  list
+        $:  pubkey=@ux
+            $:  master-fingerprint=@t
+                path=@t
+        ==  ==
+    ::  For redeem/witness script
+    ::
+    +$  script  [asm=@t hex=@ux type=@t]
+    ::
+    +$  script-pubkey  [asm=@t hex=@ux type=@t =address]
+    ::
+    +$  range  (unit ?(@ud [@ud @ud]))
+    ::
+    +$  vin
+      $:  txid=@ux
+          vout=@ud
+          script-sig=[asm=@t hex=@ux]
+          tx-in-witness=(list @ux)
+          sequence=@ud
+      ==
+    ::
+    +$  vout
+      $:  value=@t
+          n=@ud
+          $=  script-pubkey
+          $:  asm=@t
+              hex=@ux
+              req-sigs=@ud
+              type=@t
+              addresses=(list address)
+      ==  ==
+    ::
+    +$  input
+      $:  txid=@ux
+          vout=@ud
+          sequence=@ud
+      ==
+    ::
+    +$  output
+      $:  data=[%data @ux]
+          addresses=(list [=address amount=@t])
+      ==
+    ::
+    +$  scan-object
+      $?  descriptor=@t
+          $=  object
+          $:  desc=@t
+              range=(unit ?(@ud [@ud @ud]))
+      ==  ==
+    ::
+    +$  utxo  %-  unit
+      $:  amount=@t
+          =script-pubkey
+      ==
+    ::
+    +$  partially-signed-transaction
+      $:  inputs=(list input)
+          outputs=output
+          locktime=(unit @ud)
+          replaceable=(unit ?)
+      ==
+    ::
+    +$  import-request
+      $:  desc=@t
+          $=  script-pubkey
+          $%  [%script s=@t]
+              [%address a=address]
+          ==
+          timestamp=?(@da %now)
+          redeem-script=@t
+          witness-script=@t
+          pubkeys=(unit (list @t))
+          keys=(unit (list @t))
+          range=?(@ud [@ud @ud])
+          internal=?
+          watchonly=?
+          label=@t
+          keypool=?
+      ==
+    ::
+    +$  serialized-tx
+      $:  txid=@ux
+          hash=@ux
+          size=@ud
+          vsize=@ud
+          weight=@ud
+          version=@ud
+          locktime=@ud
+          vin=(list vin)
+          vout=(list vout)
+      ==
+    ::
+    +$  prev-tx
+      $:  txid=@ux
+          vout=@ud
+          script-pubkey=@ux
+          redeem-script=@ux
+          witness-script=@ux
+          amount=@t
+      ==
+    ::
+    +$  raw-tx
+      $:  hex-string=@ux
+          prev-txs=(unit (list prev-tx))
+          =sig-hash-type
+      ==
+    ::
+    +$  raw-transaction-rpc-out
+      $:  in-active-chain=?
           hex=@ux
-          req-sigs=@ud
-          type=@t
-          addresses=(list address)
-  ==  ==
+          txid=@ux
+          hash=@ux
+          size=@ud
+          vsize=@ud
+          weight=@ud
+          version=@t
+          locktime=@ud
+          vin=(list vin)
+          vout=(list vout)
+          =blockhash
+          confirmations=@ud
+          blocktime=@ud
+          time=@ud
+      ==
+    ::
+    +$  tx-in-block
+      $:  =address
+          =category
+          amount=@t
+          label=@t
+          vout=@ud
+          fee=@t
+          confirmations=@ud
+          blockhash=@ux
+          blockindex=@ud
+          blocktime=@ud
+          txid=@ux
+          time=@ud
+          time-received=@ud
+          =bip125-replaceable
+          abandoned=?
+          comment=@t
+          label=@t
+          to=@t
+      ==
+    ::
+    +$  errors  %-  list
+      $:  txid=@ux
+          vout=@ud
+          script-sig=@ux
+          sequence=@ud
+          error=@t
+      ==
+    ::
+    +$  mem-pool
+      $:  size=@ud
+          fee=@t
+          modified-fee=@t
+          time=@ud
+          height=@ud
+          descendant-count=@ud
+          descendant-size=@ud
+          descendant-fees=@t
+          ancestor-count=@ud
+          ancestor-size=@ud
+          ancestor-fees=@t
+          w-txid=@ux
+          $=  fees
+          $:  base=@t
+              modified=@t
+              ancestor=@t
+              descendant=@t
+          ==
+          depends=(list @ux)
+          spent-by=(list @ux)
+          bip125-replaceable=?
+      ==
+    ::
+    +$  mem-pool-response  %-  list
+      ::  FIXME: a list for ux and map for the cell
+      ::  produce a fish-loop
+      ::
+      $?  ::  (for verbose = false)
+          ::
+          @ux                      :: (list @ux)
+          ::  (for verbose = true)
+          ::
+          [id=@ux =mem-pool]       :: (map id=@ux mem-pool)
+      ==
+    --
+|%
 ::
-+$  input
-  $:  txid=@ux
-      vout=@ud
-      sequence=@ud
-  ==
-::
-+$  output
-  $:  data=[%data @ux]
-      addresses=(list [=address amount=@t])
-  ==
-::
-+$  partially-signed-transaction
-  $:  inputs=(list input)
-      outputs=output
-      locktime=(unit @ud)
-      replaceable=(unit ?)
-  ==
-::
-+$  serialized-tx
-  $:  txid=@ux
-      hash=@ux
-      size=@ud
-      vsize=@ud
-      weight=@ud
-      version=@ud
-      locktime=@ud
-      vin=(list vin)
-      vout=(list vout)
-  ==
-::
-+$  prev-tx
-  $:  txid=@ux
-      vout=@ud
-      script-pubkey=@ux
-      redeem-script=@ux
-      witness-script=@ux
-      amount=@t
-  ==
-::
-+$  raw-tx
-  $:  hex-string=@ux
-      prev-txs=(unit (list prev-tx))
-      =sig-hash-type
-  ==
-::
-+$  tx-in-block
-  $:  =address
-      =category
-      amount=@t
-      label=@t
-      vout=@ud
-      fee=@t
-      confirmations=@ud
-      blockhash=@ux
-      blockindex=@ud
-      blocktime=@ud
-      txid=@ux
-      time=@ud
-      time-received=@ud
-      =bip125-replaceable
-      abandoned=?
-      comment=@t
-      label=@t
-      to=@t
-  ==
-::
-+$  btc-node-hook-action  request:btc-rpc
++$  btc-node-hook-action    request:btc-rpc
++$  btc-node-hook-response  response:btc-rpc
 ::
 ++  btc-rpc
   |%
   +$  request
     $%
+    ::  Blockchain
+    ::
+        ::  %getbestblockhash: Returns the hash of the
+        ::  best (tip) block in the longest blockchain.
+        ::
+        [%get-best-block-hash ~]
+        ::  %getblock: Returns an Object/string with information about block
+        ::
+        [%get-block blockhash=@ux verbosity=(unit ?(%0 %1 %2))]
+        ::  %getblockchaininfo: Returns info regarding blockchain processing.
+        ::
+        [%get-blockchain-info ~]
+        ::  %getblockcount: Returns number of blocks in the longest blockchain.
+        ::
+        [%get-block-count ~]
+        ::  %getblockhash: Returns hash of block in best-block-chain at height.
+        ::
+        [%get-block-hash height=@ud]
+        ::  %getblockheader: If verbose is false, returns a string that is
+        ::  serialized, hex-encoded data for blockheader 'hash'. If verbose is
+        ::  true, returns an Object
+        ::
+        [%get-block-header blockhash=@ux verbose=(unit ?)]
+        ::  %getblockstats: Compute per block statistics for a given window.
+        ::
+        $:  %get-block-stats
+            $=  hash-or-height
+            $%  [%hex @ux]
+                [%num @ud]
+            ==
+            stats=(unit (list @t))
+        ==
+        ::  %getchaintips: Return information about tips in the block tree.
+        ::
+        [%get-chain-tips ~]
+        ::  %getchaintxstats: Compute statistics about total number rate
+        ::  of transactions in the chain.
+        ::
+        [%get-chain-tx-stats n-blocks=(unit @ud) blockhash=(unit @ux)]
+        ::  %getdifficulty: Returns the proof-of-work difficulty as a multiple
+        ::  of the minimum difficulty.
+        ::
+        [%get-difficulty ~]
+        ::  %getmempoolancestors: If txid is in the mempool, returns
+        ::  all in-mempool ancestors.
+        ::
+        [%get-mempool-ancestors txid=@ux verbose=(unit ?)]
+        ::  %getmempooldescendants: If txid is in the mempool, returns
+        ::  all in-mempool descendants.
+        ::
+        [%get-mempool-descendants txid=@ux verbose=(unit ?)]
+        ::  %getmempoolentry: Returns mempool data for given transaction
+        ::
+        [%get-mempool-entry txid=@ux]
+        ::  %getmempoolinfo: Returns details on the active state of the
+        ::  TX memory pool.
+        ::
+        [%get-mempool-info ~]
+        ::  %getrawmempool: Returns all transaction ids in memory pool as a
+        ::  json array of string transaction ids.
+        ::
+        [%get-raw-mempool verbose=(unit ?)]
+        ::  %gettxout: Returns details about an unspent transaction output.
+        ::
+        [%get-tx-out txid=@ux n=@ud include-mempool=(unit ?)]
+        ::  %gettxoutproof: Returns a hex-encoded proof that "txid" was
+        ::  included in a block.
+        ::
+        [%get-tx-out-proof tx-ids=(list @ux) blockhash=(unit @ux)]
+        ::  %gettxoutsetinfo: Returns statistics about the unspent transaction
+        ::  output set.
+        ::
+        [%get-tx-outset-info ~]
+        ::  %preciousblock: Treats a block as if it were received before
+        ::  others with the same work.
+        ::
+        [%precious-block blockhash=@ux]
+        ::  %pruneblockchain
+        ::
+        [%prune-blockchain height=@ud]
+        ::  %savemempool: Dumps the mempool to disk.
+        ::  It will fail until the previous dump is fully loaded.
+        ::
+        [%save-mempool ~]
+        ::  %scantxoutset: Scans the unspent transaction output set for
+        ::  entries that match certain output descriptors.
+        ::
+        $:  %scan-tx-outset
+            action=?(%start %abort %status)
+            scan-objects=(list scan-object)
+        ==
+        ::  %verifychain: Verifies blockchain database.
+        ::
+        [%verify-chain check-level=(unit @ud) n-blocks=(unit @ud)]
+        ::  %verifytxoutproof: Verifies that a proof points to a transaction
+        ::  in a block, returning the transaction it commits to
+        :: and throwing an RPC error if the block is not in our best chain
+        ::
+        [%verify-tx-out-proof proof=@t]
     ::  Control
     ::
         [%help command=(unit @t)]
     ::  Generating
     ::
         [%generate blocks=@ud max-tries=(unit @ud)]
-        [%get-blockchain-info ~]
-    ::  Blockchain
-    ::
-        [%get-block-count ~]
     ::  Raw Transactions
     ::
-        :: %analyzepsbt: Analyzes and provides information about the current status of a PSBT and its inputs
-        ::
-        :: Arguments:
-        :: 1. psbt    (string, required) A base64 string of a PSBT
+        ::  %analyzepsbt: Analyzes and provides information about
+        ::  the current status of a PSBT and its inputs
         ::
         [%analyze-psbt psbt=@t]
-        :: %combinepsbt: Combine multiple partially signed Bitcoin transactions into one transaction.
-        :: Implements the Combiner role.
-        ::
-        :: Arguments:
-        :: 1. txs            (json array, required) A json array of base64 strings of partially signed transactions
-        ::      [
-        ::        "psbt",    (string) A base64 string of a PSBT
-        ::        ...
-        ::      ]
+        ::  %combinepsbt: Combine multiple partially signed Bitcoin
+        ::  transactions into one transaction.
         ::
         [%combine-psbt txs=(list @t)]
-        :: %combinerawtransaction:Combine multiple partially signed transactions into one transaction.
-        :: The combined transaction may be another partially signed transaction or a
-        :: fully signed transaction.
-        :: Arguments:
-        :: 1. txs                 (json array, required) A json array of hex strings of partially signed transactions
-        ::      [
-        ::        "hexstring",    (string) A transaction hash
-        ::        ...
-        ::      ]
-        ::
+        ::  %combinerawtransaction: Combine multiple partially signed t
+        ::  ransactions into one transaction.
         ::
         [%combine-raw-transaction txs=(list @ux)]
-        :: %converttopsbt: Converts a network serialized transaction to a PSBT. This should be used only with createrawtransaction and fundrawtransaction
-        :: createpsbt and walletcreatefundedpsbt should be used for new applications.
-        ::
-        :: Arguments:
-        :: 1. hexstring        (string, required) The hex string of a raw transaction
-        :: 2. permitsigdata    (boolean, optional, default=false) If true, any signatures in the input will be discarded and conversion.
-        ::                     will continue. If false, RPC will fail if any signatures are present.
-        :: 3. iswitness        (boolean, optional, default=depends on heuristic tests) Whether the transaction hex is a serialized witness transaction.
-        ::                     If iswitness is not present, heuristic tests will be used in decoding. If true, only witness deserializaion
-        ::                     will be tried. If false, only non-witness deserialization will be tried. Only has an effect if
-        ::                     permitsigdata is true.
+        ::  %converttopsbt: Converts a network serialized transaction to a PSBT.
         ::
         $:  %convert-to-psbt
             hex-string=@ux
             permit-sig-data=(unit ?)
             is-witness=(unit ?)
         ==
-        :: %createpsbt: Creates a transaction in the Partially Signed Transaction format.
-        :: Implements the Creator role.
-        ::
-        :: Arguments:
-        :: 1. inputs                      (json array, required) A json array of json objects
-        ::      [
-        ::        {                       (json object)
-        ::          "txid": "hex",        (string, required) The transaction id
-        ::          "vout": n,            (numeric, required) The output number
-        ::          "sequence": n,        (numeric, optional, default=depends on the value of the 'replaceable' and 'locktime' arguments) The sequence number
-        ::        },
-        ::        ...
-        ::      ]
-        :: 2. outputs                     (json array, required) a json array with outputs (key-value pairs), where none of the keys are duplicated.
-        ::                                That is, each address can only appear once and there can only be one 'data' object.
-        ::                                For compatibility reasons, a dictionary, which holds the key-value pairs directly, is also
-        ::                                accepted as second parameter.
-        ::      [
-        ::        {                       (json object)
-        ::          "address": amount,    (numeric or string, required) A key-value pair. The key (string) is the bitcoin address, the value (float or string) is the amount in BTC
-        ::        },
-        ::        {                       (json object)
-        ::          "data": "hex",        (string, required) A key-value pair. The key must be "data", the value is hex-encoded data
-        ::        },
-        ::        ...
-        ::      ]
-        :: 3. locktime                    (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs
-        :: 4. replaceable                 (boolean, optional, default=false) Marks this transaction as BIP125 replaceable.
-        ::                                Allows this transaction to be replaced by a transaction with higher fees. If provided, it is an error if explicit sequence numbers are incompatible.
+        ::  %createpsbt: Creates a transaction in the Partially Signed
+        ::  Transaction format.
         ::
         [%create-psbt partially-signed-transaction]
-        :: %createrawtransaction: Create a transaction spending the given inputs and creating new outputs.
-        :: Outputs can be addresses or data.
-        :: Returns hex-encoded raw transaction.
-        :: Note that the transaction's inputs are not signed, and
-        :: it is not stored in the wallet or transmitted to the network.
-        ::
-        :: Arguments:
-        :: 1. inputs                      (json array, required) A json array of json objects
-        ::      [
-        ::        {                       (json object)
-        ::          "txid": "hex",        (string, required) The transaction id
-        ::          "vout": n,            (numeric, required) The output number
-        ::          "sequence": n,        (numeric, optional, default=depends on the value of the 'replaceable' and 'locktime' arguments) The sequence number
-        ::        },
-        ::        ...
-        ::      ]
-        :: 2. outputs                     (json array, required) a json array with outputs (key-value pairs), where none of the keys are duplicated.
-        ::                                That is, each address can only appear once and there can only be one 'data' object.
-        ::                                For compatibility reasons, a dictionary, which holds the key-value pairs directly, is also
-        ::                                accepted as second parameter.
-        ::      [
-        ::        {                       (json object)
-        ::          "address": amount,    (numeric or string, required) A key-value pair. The key (string) is the bitcoin address, the value (float or string) is the amount in BTC
-        ::        },
-        ::        {                       (json object)
-        ::          "data": "hex",        (string, required) A key-value pair. The key must be "data", the value is hex-encoded data
-        ::        },
-        ::        ...
-        ::      ]
-        :: 3. locktime                    (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs
-        :: 4. replaceable                 (boolean, optional, default=false) Marks this transaction as BIP125-replaceable.
-        ::                                Allows this transaction to be replaced by a transaction with higher fees. If provided, it is an error if explicit sequence numbers are incompatible.
-        ::
+        ::  %createrawtransaction: Create a transaction spending the given
+        ::  inputs and creating new outputs.
         ::
         [%create-raw-transaction partially-signed-transaction]
-        :: %decodepsbt: Return a JSON object representing the serialized, base64-encoded partially signed Bitcoin transaction.
-        ::
-        :: Arguments:
-        :: 1. psbt    (string, required) The PSBT base64 string
+        ::  %decodepsbt: Return a JSON object representing the serialized,
+        ::  base64-encoded partially signed Bitcoin transaction.
         ::
         [%decode-psbt psbt=@t]
-        :: %decoderawtransaction: Return a JSON object representing the serialized, hex-encoded transaction.
-        ::
-        :: Arguments:
-        :: 1. hexstring    (string, required) The transaction hex string
-        :: 2. iswitness    (boolean, optional, default=depends on heuristic tests) Whether the transaction hex is a serialized witness transaction
-        ::                 If iswitness is not present, heuristic tests will be used in decoding
+        ::  %decoderawtransaction: Return a JSON object representing the
+        ::  serialized, hex-encoded transaction.
         ::
         [%decode-raw-transaction hex-string=@ux is-witness=(unit ?)]
-        :: %decodescript: Decode a hex-encoded script.
-        ::
-        :: Arguments:
-        :: 1. hexstring    (string, required) the hex-encoded script
+        ::  %decodescript: Decode a hex-encoded script.
         ::
         [%decode-script hex-string=@ux]
-        :: %finalizepsbt: Finalize the inputs of a PSBT. If the transaction is fully signed, it will produce a
-        :: network serialized transaction which can be broadcast with sendrawtransaction. Otherwise a PSBT will be
-        :: created which has the final_scriptSig and final_scriptWitness fields filled for inputs that are complete.
-        :: Implements the Finalizer and Extractor roles.
-        ::
-        :: Arguments:
-        :: 1. psbt       (string, required) A base64 string of a PSBT
-        :: 2. extract    (boolean, optional, default=true) If true and the transaction is complete,
-        ::               extract and return the complete transaction in normal network serialization instead of the PSBT.
-        ::
+        ::  %finalizepsbt: Finalize the inputs of a PSBT.
         ::
         [%finalize-psbt psbt=@t extract=(unit ?)]
-        :: %fundrawtransaction: Add inputs to a transaction until it has enough in value to meet its out value.
-        :: This will not modify existing inputs, and will add at most one change output to the outputs.
-        :: No existing outputs will be modified unless "subtractFeeFromOutputs" is specified.
-        :: Note that inputs which were signed may need to be resigned after completion since in/outputs have been added.
-        :: The inputs added will not be signed, use signrawtransactionwithkey
-        ::  or signrawtransactionwithwallet for that.
-        :: Note that all existing inputs must have their previous output transaction be in the wallet.
-        :: Note that all inputs selected must be of standard form and P2SH scripts must be
-        :: in the wallet using importaddress or addmultisigaddress (to calculate fees).
-        :: You can see whether this is the case by checking the "solvable" field in the listunspent output.
-        :: Only pay-to-pubkey, multisig, and P2SH versions thereof are currently supported for watch-only
-        ::
-        :: Arguments:
-        :: 1. hexstring                          (string, required) The hex string of the raw transaction
-        :: 2. options                            (json object, optional) for backward compatibility: passing in a true instead of an object will result in {"includeWatching":true}
-        ::      {
-        ::        "changeAddress": "str",        (string, optional, default=pool address) The bitcoin address to receive the change
-        ::        "changePosition": n,           (numeric, optional, default=random) The index of the change output
-        ::        "change_type": "str",          (string, optional, default=set by -changetype) The output type to use. Only valid if changeAddress is not specified. Options are "legacy", "p2sh-segwit", and "bech32".
-        ::        "includeWatching": bool,       (boolean, optional, default=false) Also select inputs which are watch only
-        ::        "lockUnspents": bool,          (boolean, optional, default=false) Lock selected unspent outputs
-        ::        "feeRate": amount,             (numeric or string, optional, default=not set: makes wallet determine the fee) Set a specific fee rate in BTC/kB
-        ::        "subtractFeeFromOutputs": [    (json array, optional, default=empty array) A json array of integers.
-        ::                                       The fee will be equally deducted from the amount of each specified output.
-        ::                                       Those recipients will receive less bitcoins than you enter in their corresponding amount field.
-        ::                                       If no outputs are specified here, the sender pays the fee.
-        ::          vout_index,                  (numeric) The zero-based output index, before a change output is added.
-        ::          ...
-        ::        ],
-        ::        "replaceable": bool,           (boolean, optional, default=fallback to wallet's default) Marks this transaction as BIP125 replaceable.
-        ::                                       Allows this transaction to be replaced by a transaction with higher fees
-        ::        "conf_target": n,              (numeric, optional, default=fallback to wallet's default) Confirmation target (in blocks)
-        ::        "estimate_mode": "str",        (string, optional, default=UNSET) The fee estimate mode, must be one of:
-        ::                                       "UNSET"
-        ::                                       "ECONOMICAL"
-        ::                                       "CONSERVATIVE"
-        ::      }
-        :: 3. iswitness                          (boolean, optional, default=depends on heuristic tests) Whether the transaction hex is a serialized witness transaction
-        ::                                       If iswitness is not present, heuristic tests will be used in decoding
+        ::  %fundrawtransaction: Add inputs to a transaction until it has
+        ::  enough in value to meet its out value.
         ::
         $:  %fund-raw-transaction
             hex-string=@ux
@@ -366,80 +407,20 @@
             ==
             is-witness=(unit ?)
         ==
-        :: %getrawtransaction: Return the raw transaction data.
-        ::
-        :: By default this function only works for mempool transactions. When called with a blockhash
-        :: argument, getrawtransaction will return the transaction if the specified block is available and
-        :: the transaction is found in that block. When called without a blockhash argument, getrawtransaction
-        :: will return the transaction if it is in the mempool, or if -txindex is enabled and the transaction
-        :: is in a block in the blockchain.
-        ::
-        :: Hint: Use gettransaction for wallet transactions.
-        ::
-        :: If verbose is 'true', returns an Object with information about 'txid'.
-        :: If verbose is 'false' or omitted, returns a string that is serialized, hex-encoded data for 'txid'.
-        ::
-        :: Arguments:
-        :: 1. txid         (string, required) The transaction id
-        :: 2. verbose      (boolean, optional, default=false) If false, return a string, otherwise return a json object
-        :: 3. blockhash    (string, optional) The block in which to look for the transaction
+        ::  %getrawtransaction: Return the raw transaction data.
         ::
         [%get-raw-transaction txid=@ux verbose=(unit ?) blockhash=(unit @ux)]
-        :: %joinpsbts: Joins multiple distinct PSBTs with different inputs and outputs into one PSBT with inputs and outputs from all of the PSBTs
-        :: No input in any of the PSBTs can be in more than one of the PSBTs.
-        ::
-        :: Arguments:
-        :: 1. txs            (json array, required) A json array of base64 strings of partially signed transactions
-        ::      [
-        ::        "psbt",    (string, required) A base64 string of a PSBT
-        ::        ...
-        ::      ]
+        ::  %joinpsbts: Joins multiple distinct PSBTs with different inputs
+        ::  and outputs into one PSBT with inputs and outputs from all of
+        ::  the PSBTs
         ::
         [%join-psbts txs=(list @t)]
-        :: %sendrawtransaction: Submits raw transaction (serialized, hex-encoded) to local node and network.
-        ::
-        :: Also see createrawtransaction and signrawtransactionwithkey calls.
-        ::
-        :: Arguments:
-        :: 1. hexstring        (string, required) The hex string of the raw transaction
-        :: 2. allowhighfees    (boolean, optional, default=false) Allow high fees
-        ::
+        ::  %sendrawtransaction: Submits raw transaction
+        ::  (serialized, hex-encoded) to local node and network.
         ::
         [%send-raw-transaction hex-string=@ux allow-high-fees=(unit ?)]
-        :: %signrawtransactionwithkey: Sign inputs for raw transaction (serialized, hex-encoded).
-        :: The second argument is an array of base58-encoded private
-        :: keys that will be the only keys used to sign the transaction.
-        :: The third optional argument (may be null) is an array of previous transaction outputs that
-        :: this transaction depends on but may not yet be in the block chain.
-        ::
-        :: Arguments:
-        :: 1. hexstring                        (string, required) The transaction hex string
-        :: 2. privkeys                         (json array, required) A json array of base58-encoded private keys for signing
-        ::      [
-        ::        "privatekey",                (string) private key in base58-encoding
-        ::        ...
-        ::      ]
-        :: 3. prevtxs                          (json array, optional) A json array of previous dependent transaction outputs
-        ::      [
-        ::        {                            (json object)
-        ::          "txid": "hex",             (string, required) The transaction id
-        ::          "vout": n,                 (numeric, required) The output number
-        ::          "scriptPubKey": "hex",     (string, required) script key
-        ::          "redeemScript": "hex",     (string) (required for P2SH) redeem script
-        ::          "witnessScript": "hex",    (string) (required for P2WSH or P2SH-P2WSH) witness script
-        ::          "amount": amount,          (numeric or string, required) The amount spent
-        ::        },
-        ::        ...
-        ::      ]
-        :: 4. sighashtype                      (string, optional, default=ALL) The signature hash type. Must be one of:
-        ::                                     "ALL"
-        ::                                     "NONE"
-        ::                                     "SINGLE"
-        ::                                     "ALL|ANYONECANPAY"
-        ::                                     "NONE|ANYONECANPAY"
-        ::                                     "SINGLE|ANYONECANPAY"
-        ::
-        ::
+        ::  %signrawtransactionwithkey: Sign inputs for raw transaction
+        ::  (serialized, hex-encoded).
         ::
         $:  %sign-raw-transaction-with-key
             hex-string=@ux
@@ -447,26 +428,13 @@
             prev-txs=(unit (list prev-tx))
             =sig-hash-type
         ==
-        :: %testmempoolaccept: Returns result of mempool acceptance tests indicating if raw transaction (serialized, hex-encoded) would be accepted by mempool.
-        ::
-        :: This checks if the transaction violates the consensus or policy rules.
-        ::
-        :: See sendrawtransaction call.
-        ::
-        :: Arguments:
-        :: 1. rawtxs           (json array, required) An array of hex strings of raw transactions.
-        ::                     Length must be one for now.
-        ::      [
-        ::        "rawtx",     (string)
-        ::        ...
-        ::      ]
-        :: 2. allowhighfees    (boolean, optional, default=false) Allow high fees
+        ::  %testmempoolaccept: Returns result of mempool acceptance tests
+        ::  indicating if raw transaction (serialized, hex-encoded) would be
+        ::  accepted by mempool.
         ::
         [%test-mempool-accept raw-txs=(list @ux) allow-high-fees=(unit ?)]
-        :: %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from the UTXO set or the mempool.
-        ::
-        :: Arguments:
-        :: 1. psbt    (string, required) A base64 string of a PSBT
+        ::  %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from
+        ::  the UTXO set or the mempool.
         ::
         [%utxo-update-psbt psbt=@t]
     ::  Util
@@ -475,109 +443,42 @@
         ::  of m keys required. It returns a json object with the address and
         ::  redeemScript.
         ::
-        ::  Arguments:
-        :: 1. nrequired       (numeric, required) The number of required signatures out of the n keys.
-        :: 2. keys            (json array, required) A json array of hex-encoded public keys.
-        ::      [
-        ::        "key",      (string) The hex-encoded public key
-        ::        ...
-        ::      ]
-        :: 3. address_type    (string, optional, default=legacy) The address type to use. Options are "legacy", "p2sh-segwit", and "bech32".
-        ::
-        ::
         [%create-multi-sig n-required=@ud keys=(list @ux) address-type=(unit address-type)]
         ::  %deriveaddresses: Derives one or more addresses corresponding to an
         ::  output descriptor. Examples of output descriptors are:
-        ::  Examples of output descriptors are:
-        ::     pkh(<pubkey>)                        P2PKH outputs for the given pubkey
-        ::     wpkh(<pubkey>)                       Native segwit P2PKH outputs for the given pubkey
-        ::     sh(multi(<n>,<pubkey>,<pubkey>,...)) P2SH-multisig outputs for the given threshold and pubkeys
-        ::     raw(<hex script>)                    Outputs whose scriptPubKey equals the specified hex scripts
-        ::
-        :: In the above, <pubkey> either refers to a fixed public key in hexadecimal notation, or to an xpub/xprv optionally followed by one
-        :: or more path elements separated by "/", where "h" represents a hardened child key.
-        :: For more information on output descriptors, see the documentation in the doc/descriptors.md file.
-        ::
-        :: Arguments:
-        :: 1. descriptor    (string, required) The descriptor.
-        :: 2. range         (numeric or array, optional) If a ranged descriptor is used, this specifies the end or the range (in [begin,end] notation) to derive.
-        ::
         ::
         [%derive-addresses descriptor=@t range=(unit ?(@ud [@ud @ud]))]
-        ::  %estimatesmartfee: Estimates the approximate fee per kilobyte needed for a transaction to begin
-        :: confirmation within conf_target blocks if possible and return the number of blocks
-        :: for which the estimate is valid. Uses virtual transaction size as defined
-        :: in BIP 141 (witness data is discounted).
-        ::
-        ::  Arguments:
-        :: 1. conf_target      (numeric, required) Confirmation target in blocks (1 - 1008)
-        :: 2. estimate_mode    (string, optional, default=CONSERVATIVE) The fee estimate mode.
-        ::                     Whether to return a more conservative estimate which also satisfies
-        ::                     a longer history. A conservative estimate potentially returns a
-        ::                     higher feerate and is more likely to be sufficient for the desired
-        ::                     target, but is not as responsive to short term drops in the
-        ::                     prevailing fee market.  Must be one of:
-        ::                     "UNSET"
-        ::                     "ECONOMICAL"
-        ::                     "CONSERVATIVE"
+        ::  %estimatesmartfee: Estimates the approximate fee per kilobyte
+        ::  needed for a transaction to begin confirmation within conf_target
+        ::  blocks if possible and return the number of blocks for which the
+        ::  estimate is valid.
         ::
         [%estimate-smart-fee conf-target=@ud =estimate-mode]
         ::  %getdescriptorinfo: Analyses a descriptor.
         ::
-        :: Arguments:
-        :: 1. descriptor    (string, required) The descriptor.
-        ::
         [%get-descriptor-info descriptor=@t]
-        ::  %signmessagewithprivkey: Sign a message with the private key of an address
-        ::
-        :: Arguments:
-        :: 1. privkey    (string, required) The private key to sign the message with.
-        :: 2. message    (string, required) The message to create a signature of.
+        ::  %signmessagewithprivkey: Sign a message with the private key of
+        ::  an address
         ::
         [%sign-message-with-privkey privkey=@t message=@t]
-        ::  %validateaddress: Return information about the given bitcoin address.
-        ::
-        :: Arguments:
-        :: 1. address    (string, required) The bitcoin address to validate
+        ::  %validateaddress: Return information about the given
+        ::  bitcoin address.
         ::
         [%validate-address =address]
         ::  %verifymessage: Verify a signed message
-        ::
-        :: Arguments:
-        :: 1. address      (string, required) The bitcoin address to use for the signature.
-        :: 2. signature    (string, required) The signature provided by the signer in base 64 encoding (see signmessage).
-        :: 3. message      (string, required) The message that was signed.
-        ::
         ::
         [%verify-message =address signature=@t message=@t]
     ::  Wallet
     ::
         ::  %abandon-transaction: Mark in-wallet transaction as abandoned.
         ::
-        ::    %txid: The transaction id
-        ::
         [%abandon-transaction txid=@ux]
         ::  %abort-rescan: Stops current wallet rescan triggered by an
         ::  RPC call, e.g. by an importprivkey call.
         ::
         [%abort-rescan ~]
-        ::
-        :: %add-multisig-address:
-        ::    Add a nrequired-to-sign multisignature address
-        ::    to the wallet. Requires a new wallet backup.
-        ::    Each key is a Bitcoin address or hex-encoded public key.
-        ::    This functionality is only intended for use with
-        ::    non-watchonly addresses.
-        ::    See `importaddress` for watchonly p2sh address support.
-        ::    If 'label' is specified, assign address to that label.
-        ::
-        ::  - %nrequired:
-        ::    The number of required signatures out of the n keys or addresses.
-        ::  - %keys:
-        ::    A json array of bitcoin addresses or hex-encoded public keys
-        ::  - %label: A label to assign the addresses to.
-        ::  - %address-type: The address type to use.
-        ::    Options are "legacy", "p2sh-segwit", and "bech32".
+        ::  %add-multisig-address: Add a nrequired-to-sign multisignature
+        ::  address to the wallet.
         ::
         $:  %add-multisig-address
             n-required=@ud
@@ -585,43 +486,11 @@
             label=(unit @t)
             =address-type
         ==
-        ::  %backupwallet:
-        ::    Safely copies current wallet file to destination.
+        ::  %backupwallet: Safely copies current wallet file to destination.
         ::
         [%backup-wallet destination=@t]
-        ::  Bumps the fee of an opt-in-RBF transaction T, replacing it with a new transaction B.
-        ::  (An opt-in RBF transaction with the given txid must be in the wallet.
-        ::  (The command will pay the additional fee by decreasing (or perhaps removing) its change output.
-        ::  (If the change output is not big enough to cover the increased fee, the command will currently fail
-        ::  (instead of adding new inputs to compensate. (A future implementation could improve this.)
-        ::  (The command will fail if the wallet or mempool contains a transaction that spends one of T's outputs.
-        ::  (By default, the new fee will be calculated automatically using estimatesmartfee.
-        ::  (The user can specify a confirmation target for estimatesmartfee.
-        ::  (Alternatively, the user can specify totalFee, or use RPC settxfee to set a higher fee rate.
-        ::  (At a minimum, the new fee rate must be high enough to pay an additional new relay fee (incrementalfee
-        ::  (returned by getnetworkinfo) to enter the node's mempool.
-        ::
-        ::  (Arguments:
-        ::  (1. txid                           (string, required) The txid to be bumped
-        ::  (2. options                        (json object, optional)
-        ::      {
-        ::        "confTarget": n,           (numeric, optional, default=fallback to wallet's default) Confirmation target (in blocks)
-        ::        "totalFee": n,             (numeric, optional, default=fallback to 'confTarget') Total fee (NOT feerate) to pay, in satoshis.
-        ::                                   In rare cases, the actual fee paid might be slightly higher than the specified
-        ::                                   totalFee if the tx change output has to be removed because it is too close to
-        ::                                   the dust threshold.
-        ::        "replaceable": bool,       (boolean, optional, default=true) Whether the new transaction should still be
-        ::                                   marked bip-125 replaceable. If true, the sequence numbers in the transaction will
-        ::                                   be left unchanged from the original. If false, any input sequence numbers in the
-        ::                                   original transaction that were less than 0xfffffffe will be increased to 0xfffffffe
-        ::                                   so the new transaction will not be explicitly bip-125 replaceable (though it may
-        ::                                   still be replaceable in practice, for example if it has unconfirmed ancestors which
-        ::                                   are replaceable).
-        ::        "estimate_mode": "str",    (string, optional, default=UNSET) The fee estimate mode, must be one of:
-        ::                                   "UNSET"
-        ::                                   "ECONOMICAL"
-        ::                                   "CONSERVATIVE"
-        ::      }
+        ::  %bump-fee: Bumps the fee of an opt-in-RBF transaction T, replacing
+        ::  it with a new transaction B.
         ::
         $:  %bump-fee
             txid=@ux
@@ -642,388 +511,187 @@
         ::      One can be set using sethdseed.
         ::
         [%create-wallet name=@t disable-private-keys=(unit ?) blank=(unit ?)]
-        ::  Reveals the private key corresponding to 'address'.
-        ::  (Then the importprivkey can be used with this output
-        ::
-        ::  (Arguments:
-        ::  (1. address    (string, required) The bitcoin address for the private key
+        ::  %dump-privkey: Reveals the private key corresponding to 'address'.
         ::
         [%dump-privkey =address]
-        ::  Dumps all wallet keys in a human-readable format to a server-side file. This does not allow overwriting existing files.
-        ::  (Imported scripts are included in the dumpfile, but corresponding BIP173 addresses, etc. may not be added automatically by importwallet.
-        ::  (Note that if your wallet contains keys which are not derived from your HD seed (e.g. imported keys), these are not covered by
-        ::  (only backing up the seed itself, and must be backed up too (e.g. ensure you back up the whole dumpfile).
-        ::
-        ::  (Arguments:
-        ::  (1. filename    (string, required) The filename with path (either absolute or relative to bitcoind)
+        ::  %dump-wallet: Dumps all wallet keys in a human-readable format to
+        ::  a server-side file.
         ::
         [%dump-wallet filename=@t]
-        ::  Encrypts the wallet with 'passphrase'. This is for first time encryption.
-        ::  (After this, any calls that interact with private keys such as sending or signing
-        ::  (will require the passphrase to be set prior the making these calls.
-        ::  (Use the walletpassphrase call for this, and then walletlock call.
-        ::  (If the wallet is already encrypted, use the walletpassphrasechange call.
-        ::
-        ::  (Arguments:
-        ::  (1. passphrase    (string, required) The pass phrase to encrypt the wallet with. It must be at least 1 character, but should be long.
+        ::  %encrypt-wallet: Encrypts the wallet with 'passphrase'.
         ::
         [%encrypt-wallet passphrase=@t]
-        ::  Returns the list of addresses assigned the specified label.
-        ::
-        ::  (Arguments:
-        ::  (1. label    (string, required) The label.
+        ::  %get-addresses-by-label: Returns the list of addresses assigned the
+        ::  specified label.
         ::
         [%get-addresses-by-label label=@t]
-        ::  Return information about the given bitcoin address. Some information requires the address
-        ::  (to be in the wallet.
-        ::
-        ::  (Arguments:
-        ::  (1. address    (string, required) The bitcoin address to get the information of.
+        ::  %get-address-info: Return information about the given bitcoin
+        ::  address.
         ::
         [%get-address-info wallet=@t =address]
-        ::  Returns the total available balance.
-        ::  (The available balance is what the wallet considers currently spendable, and is
-        ::  (thus affected by options which limit spendability such as -spendzeroconfchange.
+        ::  %get-balance: Returns the total available balance.
         ::
-        ::  (Arguments:
-        ::  (1. dummy                (string, optional) Remains for backward compatibility. Must be excluded or set to "*".
-        ::  (2. minconf              (numeric, optional, default=0) Only include transactions confirmed at least this many times.
-        ::  (3. include-watch-only    (boolean, optional, default=false) Also include balance in watch-only addresses (see 'importaddress')
-        ::
-        [%get-balance wallet=@t dummy=(unit @t) minconf=(unit @ud) include-watch-only=(unit ?)]
-        ::  Returns a new Bitcoin address for receiving payments.
-        ::  (If 'label' is specified, it is added to the address book
-        ::  (so payments received with the address will be associated with 'label'.
-        ::
-        ::  (Arguments:
-        ::  (1. label           (string, optional, default="") The label name for the address to be linked to. It can also be set to the empty string "" to represent the default label. The label does not need to exist, it will be created if there is no label by the given name.
-        ::  (2. address-type    (string, optional, default=set by -addresstype) The address type to use. Options are "legacy", "p2sh-segwit", and "bech32".
+        $:  %get-balance
+            wallet=@t
+            dummy=(unit @t)
+            minconf=(unit @ud)
+            include-watch-only=(unit ?)
+        ==
+        ::  %get-new-address: Returns a new Bitcoin address for receiving
+        ::  payments.
         ::
         [%get-new-address label=(unit @t) address-type=(unit address-type)]
-        ::  Returns a new Bitcoin address, for receiving change.
-        ::  (This is for use with raw transactions, NOT normal use.
-        ::
-        ::  (Arguments:
-        ::  (1. address-type    (string, optional, default=set by -changetype) The address type to use. Options are "legacy", "p2sh-segwit", and "bech32".
+        ::  %get-raw-change-address: Returns a new Bitcoin address,
+        ::  for receiving change.
         ::
         [%get-raw-change-address address-type=(unit address-type)]
-        ::  Returns the total amount received by the given address in transactions with at least minconf confirmations.
-        ::
-        ::  (Arguments:
-        ::  (1. address    (string, required) The bitcoin address for transactions.
-        ::  (2. minconf    (numeric, optional, default=1) Only include transactions confirmed at least this many times.
+        ::  %get-received-by-address:  Returns the total amount received by the
+        ::  given address in transactions with at least minconf confirmations.
         ::
         [%get-received-by-address =address minconf=@ud]
-        ::  Returns the total amount received by addresses with <label> in transactions with at least [minconf] confirmations.
-        ::
-        ::  (Arguments:
-        ::  (1. label      (string, required) The selected label, may be the default label using "".
-        ::  (2. minconf    (numeric, optional, default=1) Only include transactions confirmed at least this many times.
+        ::  %get-received-by-label:  Returns the total amount received by
+        ::  addresses with <label> in transactions with at least [minconf]
+        ::  confirmations.
         ::
         [%get-received-by-label label=@t minconf=(unit @ud)]
-        ::  Get detailed information about in-wallet transaction <txid>
-        ::
-        ::  (Arguments:
-        ::  (1. txid                 (string, required) The transaction id
-        ::  (2. include-watch-only    (boolean, optional, default=false) Whether to include watch-only addresses in balance calculation and details[]
+        ::  %get-transaction:  Get detailed information about in-wallet
+        ::  transaction <txid>
         ::
         [%get-transaction txid=@ux include-watch-only=(unit ?)]
-        ::  Returns the server's total unconfirmed balance
+        ::  %get-unconfirmed-balance:  Returns the server's total unconfirmed
+        ::  balance
         ::
         [%get-unconfirmed-balance ~]
-        ::  Returns an object containing various wallet state info.
-        ::
-        ::  %name: does not figure on the spec, but it's necessary if
-        ::  multiple wallets exist.
-        ::  This is used by the RPC via the option: -rpcwallet=''
+        ::  %get-wallet-info:  Returns an object containing various wallet
+        ::  state info.
         ::
         [%get-wallet-info name=@t]
-        ::  Adds an address or script (in hex) that can be watched as if it were in your wallet but cannot be used to spend. Requires a new wallet backup.
+        ::  %import-address: Adds an address or script (in hex) that can be
+        ::  watched as if it were in your wallet but cannot be used to spend.
         ::
-        ::  (Note: This call can take over an hour to complete if rescan is true, during that time, other rpc calls
-        ::  (may report that the imported address exists but related transactions are still missing, leading to temporarily incorrect/bogus balances and unspent outputs until rescan completes.
-        ::  (If you have the full public key, you should call importpubkey instead of this.
-        ::
-        ::  (Note: If you import a non-standard raw script in hex form, outputs sending to it will be treated
-        ::  (as change, and not show up in many RPCs.
-        ::
-        ::  (Arguments:
-        ::  (1. address    (string, required) The Bitcoin address (or hex-encoded script)
-        ::  (2. label      (string, optional, default="") An optional label
-        ::  (3. rescan     (boolean, optional, default=true) Rescan the wallet for transactions
-        ::  (4. p2sh       (boolean, optional, default=false) Add the P2SH version of the script as well
-        ::
-        [%import-address =address label=(unit @t) rescan=(unit ?) p2sh=(unit ?)]
-        ::  Import addresses/scripts (with private or public keys, redeem script (P2SH)), optionally rescanning the blockchain from the earliest creation time of the imported scripts. Requires a new wallet backup.
-        ::
-        ::  (If an address/script is imported without all of the private keys required to spend from that address, it will be watchonly. The 'watchonly' option must be set to true in this case or a warning will be returned.
-        ::  (Conversely, if all the private keys are provided and the address/script is spendable, the watchonly option must be set to false, or a warning will be returned.
-        ::
-        ::  (Note: This call can take over an hour to complete if rescan is true, during that time, other rpc calls
-        ::  (may report that the imported keys, addresses or scripts exists but related transactions are still missing.
-        ::
-        ::  (Arguments:
-        ::  (1. requests                                                         (json array, required) Data to be imported
-        ::      [
-        ::        {                                                            (json object)
-        ::          "desc": "str",                                             (string) Descriptor to import. If using descriptor, do not also provide address/scriptPubKey, scripts, or pubkeys
-        ::          "scriptPubKey": "<script>" | { "address":"<address>" },    (string / json, required) Type of scriptPubKey (string for script, json for address). Should not be provided if using a descriptor
-        ::          "timestamp": timestamp | "now",                            (integer / string, required) Creation time of the key in seconds since epoch (Jan 1 1970 GMT),
-        ::                                                                     or the string "now" to substitute the current synced blockchain time. The timestamp of the oldest
-        ::                                                                     key will determine how far back blockchain rescans need to begin for missing wallet transactions.
-        ::                                                                     "now" can be specified to bypass scanning, for keys which are known to never have been used, and
-        ::                                                                     0 can be specified to scan the entire blockchain. Blocks up to 2 hours before the earliest key
-        ::                                                                     creation time of all keys being imported by the importmulti call will be scanned.
-        ::          "redeemscript": "str",                                     (string) Allowed only if the scriptPubKey is a P2SH or P2SH-P2WSH address/scriptPubKey
-        ::          "witnessscript": "str",                                    (string) Allowed only if the scriptPubKey is a P2SH-P2WSH or P2WSH address/scriptPubKey
-        ::          "pubkeys": [                                               (json array, optional, default=empty array) Array of strings giving pubkeys to import. They must occur in P2PKH or P2WPKH scripts. They are not required when the private key is also provided (see the "keys" argument).
-        ::            "pubKey",                                                (string)
-        ::            ...
-        ::          ],
-        ::          "keys": [                                                  (json array, optional, default=empty array) Array of strings giving private keys to import. The corresponding public keys must occur in the output or redeemscript.
-        ::            "key",                                                   (string)
-        ::            ...
-        ::          ],
-        ::          "range": n or [n,n],                                       (numeric or array) If a ranged descriptor is used, this specifies the end or the range (in the form [begin,end]) to import
-        ::          "internal": bool,                                          (boolean, optional, default=false) Stating whether matching outputs should be treated as not incoming payments (also known as change)
-        ::          "watchonly": bool,                                         (boolean, optional, default=false) Stating whether matching outputs should be considered watchonly.
-        ::          "label": "str",                                            (string, optional, default='') Label to assign to the address, only allowed with internal=false
-        ::          "keypool": bool,                                           (boolean, optional, default=false) Stating whether imported public keys should be added to the keypool for when users request new addresses. Only allowed when wallet private keys are disabled
-        ::        },
-        ::        ...
-        ::      ]
-        ::  (2. options                                                          (json object, optional)
-        ::      {
-        ::        "rescan": bool,                                              (boolean, optional, default=true) Stating if should rescan the blockchain after all imports
-        ::      }
+        $:  %import-address
+            =address
+            label=(unit @t)
+            rescan=(unit ?)
+            p2sh=(unit ?)
+        ==
+        ::  %import-multi: Import addresses/scripts (with private or public
+        ::  keys, redeem script (P2SH)), optionally rescanning the blockchain
+        ::  from the earliest creation time of the imported scripts.
         ::
         $:  %import-multi
             requests=(list import-request)
             options=(unit rescan=?)
         ==
-        ::  Adds a private key (as returned by dumpprivkey) to your wallet. Requires a new wallet backup.
-        ::  (Hint: use importmulti to import more than one private key.
-        ::
-        ::  (Note: This call can take over an hour to complete if rescan is true, during that time, other rpc calls
-        ::  (may report that the imported key exists but related transactions are still missing, leading to temporarily incorrect/bogus balances and unspent outputs until rescan completes.
-        ::
-        ::  (Arguments:
-        ::  (1. privkey    (string, required) The private key (see dumpprivkey)
-        ::  (2. label      (string, optional, default=current label if address exists, otherwise "") An optional label
-        ::  (3. rescan     (boolean, optional, default=true) Rescan the wallet for transactions
+        ::  %import-privkey:  Adds a private key (as returned by dumpprivkey)
+        ::  to your wallet.
         ::
         [%import-privkey privkey=@t label=(unit @t) rescan=(unit ?)]
-        ::  Imports funds without rescan. Corresponding address or script must previously be included in wallet. Aimed towards pruned wallets. The end-user is responsible to import additional transactions that subsequently spend the imported outputs or rescan after the point in the blockchain the transaction is included.
-        ::
-        ::  (Arguments:
-        ::  (1. rawtransaction    (string, required) A raw transaction in hex funding an already-existing address in wallet
-        ::  (2. txoutproof        (string, required) The hex output from gettxoutproof that contains the transaction
+        ::  %import-pruned-funds:  Imports funds without rescan.
         ::
         [%import-pruned-funds raw-transaction=@t tx-out-proof=@t]
-        ::  Adds a public key (in hex) that can be watched as if it were in your wallet but cannot be used to spend. Requires a new wallet backup.
-        ::
-        ::  (Note: This call can take over an hour to complete if rescan is true, during that time, other rpc calls
-        ::  (may report that the imported pubkey exists but related transactions are still missing, leading to temporarily incorrect/bogus balances and unspent outputs until rescan completes.
-        ::
-        ::  (Arguments:
-        ::  (1. pubkey    (string, required) The hex-encoded public key
-        ::  (2. label     (string, optional, default="") An optional label
-        ::  (3. rescan    (boolean, optional, default=true) Rescan the wallet for transactions
+        ::  %import-pubkey:  Adds a public key (in hex) that can be watched as
+        ::  if it were in your wallet but cannot be used to spend.
         ::
         [%import-pubkey pubkey=@ux label=(unit @t) rescan=(unit ?)]
-        ::  Imports keys from a wallet dump file (see dumpwallet). Requires a new wallet backup to include imported keys.
-        ::
-        ::  (Arguments:
-        ::  (1. filename    (string, required) The wallet file
+        ::  %import-wallet:  Imports keys from a wallet dump file
         ::
         [%import-wallet filename=@t]
-        ::  Fills the keypool.
-        ::
-        ::  (Arguments:
-        ::  (1. newsize    (numeric, optional, default=100) The new keypool size
+        ::  %key-pool-refill:  Fills the keypool.
         ::
         [%key-pool-refill new-size=(unit @ud)]
-        ::  Lists groups of addresses which have had their common ownership
-        ::  (made public by common use as inputs or as the resulting change
-        ::  (in past transactions
+        ::  %list-address-groupings:  Lists groups of addresses which have had
+        ::  their common ownership (made public by common use as inputs or as
+        ::  the resulting change in past transactions)
         ::
         [%list-address-groupings ~]
-        ::  Returns the list of all labels, or labels that are assigned to addresses with a specific purpose.
-        ::
-        ::  (Arguments:
-        ::  (1. purpose    (string, optional) Address purpose to list labels for ('send','receive'). An empty string is the same as not providing this argument.
+        ::  %list-labels:  Returns the list of all labels, or labels that are
+        ::  assigned to addresses with a specific purpose.
         ::
         [%list-labels purpose=(unit purpose)]
-        ::  Returns list of temporarily unspendable outputs.
-        ::  (See the lockunspent call to lock and unlock transactions for spending.
+        ::  %list-lock-unspent:  Returns list of temporarily unspendable
+        ::  outputs.
         ::
         [%list-lock-unspent ~]
-        ::  List balances by receiving address.
-        ::
-        ::  (Arguments:
-        ::  (1. minconf              (numeric, optional, default=1) The minimum number of confirmations before payments are included.
-        ::  (2. include-empty        (boolean, optional, default=false) Whether to include addresses that haven't received any payments.
-        ::  (3. include-watch-only    (boolean, optional, default=false) Whether to include watch-only addresses (see 'importaddress').
-        ::  (4. address-filter       (string, optional) If present, only return information on this address.
+        ::  %list-received-by-address: List balances by receiving address.
         ::
         $:  %list-received-by-address
-            minconf=(unit @ud)
-            include-empty=(unit ?)
-            include-watch-only=(unit ?)
-            address-filter=(unit @t)
-        ==
-        ::  List received transactions by label.
-        ::
-        ::  (Arguments:
-        ::  (1. minconf              (numeric, optional, default=1) The minimum number of confirmations before payments are included.
-        ::  (2. include-empty        (boolean, optional, default=false) Whether to include labels that haven't received any payments.
-        ::  (3. include-watch-only    (boolean, optional, default=false) Whether to include watch-only addresses (see 'importaddress').
+            $?  ~
+                $:  minconf=(unit @ud)
+                    include-empty=(unit ?)
+                    include-watch-only=(unit ?)
+                    address-filter=(unit @t)
+        ==  ==  ==
+        ::  %list-received-by-label: List received transactions by label.
         ::
         $:  %list-received-by-label
-            minconf=(unit @ud)
-            include-empty=(unit ?)
-            include-watch-only=(unit ?)
-        ==
-        ::  Get all transactions in blocks since block [blockhash], or all transactions if omitted.
-        ::  (If "blockhash" is no longer a part of the main chain, transactions from the fork point onward are included.
-        ::  (Additionally, if include-removed is set, transactions affecting the wallet which were removed are returned in the "removed" array.
-        ::
-        ::  (Arguments:
-        ::  (1. blockhash               (string, optional) If set, the block hash to list transactions since, otherwise list all transactions.
-        ::  (2. target-confirmations    (numeric, optional, default=1) Return the nth block hash from the main chain. e.g. 1 would mean the best block hash. Note: this is not used as a filter, but only affects [lastblock] in the return value
-        ::  (3. include-watch-only       (boolean, optional, default=false) Include transactions to watch-only addresses (see 'importaddress')
-        ::  (4. include-removed         (boolean, optional, default=true) Show transactions that were removed due to a reorg in the "removed" array
-        ::                            (not guaranteed to work on pruned nodes)
+            $?  ~
+                $:  minconf=(unit @ud)
+                    include-empty=(unit ?)
+                    include-watch-only=(unit ?)
+        ==  ==  ==
+        ::  %lists-in-ceblock: Get all transactions in blocks since block
+        ::  [blockhash], or all transactions if omitted.
         ::
         $:  %lists-in-ceblock
-            blockhash=(unit blockhash)
-            target-confirmations=(unit @ud)
-            include-watch-only=(unit ?)
-            include-removed=(unit ?)
-        ==
-        ::  If a label name is provided, this will return only incoming transactions paying to addresses with the specified label.
-        ::
-        ::  (Returns up to 'count' most recent transactions skipping the first 'from' transactions.
-        ::
-        ::  (Arguments:
-        ::  (1. label                (string, optional) If set, should be a valid label name to return only incoming transactions
-        ::                         with the specified label, or "*" to disable filtering and return all transactions.
-        ::  (2. count                (numeric, optional, default=10) The number of transactions to return
-        ::  (3. skip                 (numeric, optional, default=0) The number of transactions to skip
-        ::  (4. include-watch-only    (boolean, optional, default=false) Include transactions to watch-only addresses (see 'importaddress')
+            $?  ~
+                $:  blockhash=(unit blockhash)
+                    target-confirmations=(unit @ud)
+                    include-watch-only=(unit ?)
+                    include-removed=(unit ?)
+        ==  ==  ==
+        ::  %list-transactions: If a label name is provided, this will return
+        ::  only incoming transactions paying to addresses with the specified
+        ::  label.
         ::
         $:  %list-transactions
-            label=(unit @t)
-            count=(unit @ud)
-            skip=(unit @ud)
-            include-watch-only=(unit ?)
-        ==
-        ::  Returns array of unspent transaction outputs
+            $?  ~
+                $:  label=(unit @t)
+                    count=(unit @ud)
+                    skip=(unit @ud)
+                    include-watch-only=(unit ?)
+        ==  ==  ==
+        ::  %list-unspent: Returns array of unspent transaction outputs
         ::  (with between minconf and maxconf (inclusive) confirmations.
-        ::  (Optionally filter to only include txouts paid to specified addresses.
-        ::
-        ::  (Arguments:
-        ::  (1. minconf                            (numeric, optional, default=1) The minimum confirmations to filter
-        ::  (2. maxconf                            (numeric, optional, default=9999999) The maximum confirmations to filter
-        ::  (3. addresses                          (json array, optional, default=empty array) A json array of bitcoin addresses to filter
-        ::      [
-        ::        "address",                     (string) bitcoin address
-        ::        ...
-        ::      ]
-        ::  (4. include-unsafe                     (boolean, optional, default=true) Include outputs that are not safe to spend
-        ::                                       See description of "safe" attribute below.
-        ::  (5. query-options                      (json object, optional) JSON with query options
-        ::      {
-        ::        "minimumAmount": amount,       (numeric or string, optional, default=0) Minimum value of each UTXO in BTC
-        ::        "maximumAmount": amount,       (numeric or string, optional, default=unlimited) Maximum value of each UTXO in BTC
-        ::        "maximumCount": n,             (numeric, optional, default=unlimited) Maximum number of UTXOs
-        ::        "minimumSumAmount": amount,    (numeric or string, optional, default=unlimited) Minimum sum value of all UTXOs in BTC
-        ::      }
         ::
         $:  %list-unspent
-            minconf=(unit @t)
-            maxconf=(unit @ud)
-            addresses=(unit (list @t))
-            include-unsafe=(unit ?)
-            $=  query-options  %-  unit
-            $:  minimum-amount=(unit @t)
-                maximum-amount=(unit @t)
-                maximum-count=(unit @t)
-                minimum-sum-amount=(unit @t)
-            ==
-        ==
-        ::  Returns a list of wallets in the wallet directory.
+            $?  ~
+                $:  minconf=(unit @t)
+                    maxconf=(unit @ud)
+                    addresses=(unit (list @t))
+                    include-unsafe=(unit ?)
+                    $=  query-options  %-  unit
+                    $:  minimum-amount=(unit @t)
+                        maximum-amount=(unit @t)
+                        maximum-count=(unit @t)
+                        minimum-sum-amount=(unit @t)
+        ==  ==  ==  ==
+        ::  %list-wallet-dir  Returns a list of wallets in the wallet directory.
         ::
         [%list-wallet-dir ~]
-        ::  Returns a list of currently loaded wallets.
+        ::  %list-wallets  Returns a list of currently loaded wallets.
         ::  (For full information on the wallet, use "getwalletinfo"
         ::
         [%list-wallets ~]
-        ::  Loads a wallet from a wallet file or directory.
-        ::  (Note that all wallet command-line options used when starting bitcoind will be
-        ::  (applied to the new wallet (eg -zapwallettxes, upgradewallet, rescan, etc).
-        ::
-        ::  (Arguments:prev-txs
-        ::  (1. filename    (string, required) The wallet directory or .dat file.
+        ::  %load-wallet  Loads a wallet from a wallet file or directory.
         ::
         [%load-wallet filename=@t]
-        ::  Updates list of temporarily unspendable outputs.
-        ::  (Temporarily lock (unlock=false) or unlock (unlock=true) specified transaction outputs.
-        ::  (If no transaction outputs are specified when unlocking then all current locked transaction outputs are unlocked.
-        ::  (A locked transaction output will not be chosen by automatic coin selection, when spending bitcoins.
-        ::  (Locks are stored in memory only. Nodes start with zero locked outputs, and the locked output list
-        ::  (is always cleared (by virtue of process exit) when a node stops or fails.
-        ::  (Also see the listunspent call
+        ::  %lock-unspent: Updates list of temporarily unspendable outputs.
         ::
-        ::  (Arguments:
-        ::  (1. unlock                  (boolean, required) Whether to unlock (true) or lock (false) the specified transactions
-        ::  (2. transactions            (json array, optional, default=empty array) A json array of objects. Each object the txid (string) vout (numeric).
-        ::      [
-        ::        {                   (json object)
-        ::          "txid": "hex",    (string, required) The transaction id
-        ::          "vout": n,        (numeric, required) The output number
-        ::        },
-        ::        ...
-        ::      ]
-        ::
-        [%lock-unspent unlock=? transactions=(unit (list [txid=@ux vout=@ud]))]
-        ::  Deletes the specified transaction from the wallet. Meant for use with pruned wallets and as a companion to importprunedfunds. This will affect wallet balances.
-        ::
-        ::  (Arguments:
-        ::  (1. txid    (string, required) The hex-encoded id of the transaction you are deleting
+        $:  %lock-unspent
+            unlock=?
+            transactions=(unit (list [txid=@ux vout=@ud]))
+        ==
+        ::  %remove-pruned-funds  Deletes the specified transaction from the
+        ::  wallet.
         ::
         [%remove-pruned-funds txid=@ux]
-        ::  Rescan the local blockchain for wallet related transactions.
-        ::
-        ::  (Arguments:
-        ::  (1. start-height    (numeric, optional, default=0) block height where the rescan should start
-        ::  (2. stop-height     (numeric, optional) the last block height that should be scanned. If none is provided it will rescan up to the tip at return time of this call.
+        ::  %rescan-blockchain  Rescan the local blockchain for wallet related
+        ::  transactions.
         ::
         [%rescan-blockchain start-height=(unit @ud) stop-height=(unit @ud)]
-        ::  Send multiple times. Amounts are double-precision floating point numbers.
-        ::
-        ::  (Arguments:
-        ::  (1. dummy                     (string, required) Must be set to "" for backwards compatibility.
-        ::  (2. amounts                   (json object, required) A json object with addresses and amounts
-        ::      {
-        ::        "address": amount,    (numeric or string, required) The bitcoin address is the key, the numeric amount (can be string) in BTC is the value
-        ::      }
-        ::  (3. minconf                   (numeric, optional, default=1) Only use the balance confirmed at least this many times.
-        ::  (4. comment                   (string, optional) A comment
-        ::  (5. subtract-fee-from           (json array, optional) A json array with addresses.
-        ::                              The fee will be equally deducted from the amount of each selected address.
-        ::                              Those recipients will receive less bitcoins than you enter in their corresponding amount field.
-        ::                              If no addresses are specified here, the sender pays the fee.
-        ::      [
-        ::        "address",            (string) Subtract fee from this address
-        ::        ...
-        ::      ]
-        ::  (6. replaceable               (boolean, optional, default=fallback to wallet's default) Allow this transaction to be replaced by a transaction with higher fees via BIP 125
-        ::  (7. conf-target               (numeric, optional, default=fallback to wallet's default) Confirmation target (in blocks)
-        ::  (8. estimate-mode             (string, optional, default=UNSET) The fee estimate mode, must be one of:
-        ::                              "UNSET"
-        ::                              "ECONOMICAL"
-        ::                              "CONSERVATIVE"
+        ::  %send-many: Send multiple times.
+        ::  Amounts are double-precision floating point numbers.
         ::
         $:  %send-many
             dummy=%''
@@ -1035,24 +703,7 @@
             conf-target=(unit @ud)
             estimate-mode=(unit @t)
         ==
-        ::  Send an amount to a given address.
-        ::
-        ::  (Arguments:
-        ::  (1. address                  (string, required) The bitcoin address to send to.
-        ::  (2. amount                   (numeric or string, required) The amount in BTC to send. eg 0.1
-        ::  (3. comment                  (string, optional) A comment used to store what the transaction is for.
-        ::                             This is not part of the transaction, just kept in your wallet.
-        ::  (4. comment-to               (string, optional) A comment to store the name of the person or organization
-        ::                             to which you're sending the transaction. This is not part of the
-        ::                             transaction, just kept in your wallet.
-        ::  (5. subtractfeefromamount    (boolean, optional, default=false) The fee will be deducted from the amount being sent.
-        ::                             The recipient will receive less bitcoins than you enter in the amount field.
-        ::  (6. replaceable              (boolean, optional, default=fallback to wallet's default) Allow this transaction to be replaced by a transaction with higher fees via BIP 125
-        ::  (7. conf-target              (numeric, optional, default=fallback to wallet's default) Confirmation target (in blocks)
-        ::  (8. estimate-mode            (string, optional, default=UNSET) The fee estimate mode, must be one of:
-        ::                             "UNSET"
-        ::                             "ECONOMICAL"
-        ::                             "CONSERVATIVE"
+        ::  %send-to-address: Send an amount to a given address.
         ::
         $:  %send-to-address
             =address
@@ -1064,134 +715,30 @@
             conf-target=(unit @ud)
             estimate-mode=(unit @t)
         ==
-        ::  Set or generate a new HD wallet seed. Non-HD wallets will not be upgraded to being a HD wallet. Wallets that are already
-        ::  (HD will have a new HD seed set so that new keys added to the keypool will be derived from this new seed.
-        ::
-        ::  (Note that you will need to MAKE A NEW BACKUP of your wallet after setting the HD wallet seed.
-        ::
-        ::  (Arguments:
-        ::  (1. newkeypool    (boolean, optional, default=true) Whether to flush old unused addresses, including change addresses, from the keypool and regenerate it.
-        ::                  If true, the next address from getnewaddress and change address from getrawchangeaddress will be from this new seed.
-        ::                  If false, addresses (including change addresses if the wallet already had HD Chain Split enabled) from the existing
-        ::                  keypool will be used until it has been depleted.
-        ::  (2. seed          (string, optional, default=random seed) The WIF private key to use as the new HD seed.
-        ::                  The seed value can be retrieved using the dumpwallet command. It is the private key marked hdseed=1
+        ::  %set-hd-seed: Set or generate a new HD wallet seed.
+        ::  Non-HD wallets will not be upgraded to being a HD wallet.
         ::
         [%set-hd-seed ~]
-        ::  Sets the label associated with the given address.
-        ::
-        ::  (Arguments:
-        ::  (1. address    (string, required) The bitcoin address to be associated with a label.
-        ::  (2. label      (string, required) The label to assign to the address.
+        ::  %set-label:   Sets the label associated with the given address.
         ::
         [%set-label =address label=@t]
-        ::  Set the transaction fee per kB for this wallet. Overrides the global -paytxfee command line parameter.
-        ::
-        ::  (Arguments:
-        ::  (1. amount    (numeric or string, required) The transaction fee in BTC/kB
+        ::  %set-tx-fee: Set the transaction fee per kB for this wallet.
         ::
         [%set-tx-fee amount=@t]
-        ::  Sign a message with the private key of an address
-        ::
-        ::  (Arguments:
-        ::  (1. address    (string, required) The bitcoin address to use for the private key.
-        ::  (2. message    (string, required) The message to create a signature of.
-        ::
-        ::  (Result:
-        :: "signature"          (string) The signature of the message encoded in base 64
+        ::  %sign-message:   Sign a message with the private key of an address
         ::
         [%sign-message =address message=@t]
-        ::  Sign inputs for raw transaction (serialized, hex-encoded).
-        ::  (The second optional argument (may be null) is an array of previous transaction outputs that
-        ::  (this transaction depends on but may not yet be in the block chain.
-        ::
-        ::  (Arguments:
-        ::  (1. hexstring                        (string, required) The transaction hex string
-        ::  (2. prevtxs                          (json array, optional) A json array of previous dependent transaction outputs
-        ::      [
-        ::        {                            (json object)
-        ::          "txid": "hex",             (string, required) The transaction id
-        ::          "vout": n,                 (numeric, required) The output number
-        ::          "scriptPubKey": "hex",     (string, required) script key
-        ::          "redeemScript": "hex",     (string) (required for P2SH) redeem script
-        ::          "witnessScript": "hex",    (string) (required for P2WSH or P2SH-P2WSH) witness script
-        ::          "amount": amount,          (numeric or string, required) The amount spent
-        ::        },
-        ::        ...
-        ::      ]
-        ::  (3. sighashtype                      (string, optional, default=ALL) The signature hash type. Must be one of
-        ::                                     "ALL"
-        ::                                     "NONE"
-        ::                                     "SINGLE"
-        ::                                     "ALL|ANYONECANPAY"
-        ::                                     "NONE|ANYONECANPAY"
-        ::                                     "SINGLE|ANYONECANPAY"
+        ::  %sign-raw-transaction-with-wallet: Sign inputs for raw transaction
+        ::  (serialized, hex-encoded).
         ::
         [%sign-raw-transaction-with-wallet raw-tx]
-        ::  Unloads the wallet referenced by the request endpoint otherwise unloads the wallet specified in the argument.
-        ::  (Specifying the wallet name on a wallet endpoint is invalid.
-        ::  (Arguments:
-        ::  (1. wallet-name    (string, optional, default=the wallet name from the RPC request) The name of the wallet to unload.
+        ::  %unload-wallet:   Unloads the wallet referenced by the request
+        ::  endpoint otherwise unloads the wallet specified in the argument.
         ::
         [%unload-wallet wallet-name=(unit @t)]
-        ::  Creates and funds a transaction in the Partially Signed Transaction format. Inputs will be added if supplied inputs are not enough
-        ::  (Implements the Creator and Updater roles.
-        ::
-        ::  (Arguments:
-        ::  (1. inputs                             (json array, required) A json array of json objects
-        ::      [
-        ::        {                              (json object)
-        ::          "txid": "hex",               (string, required) The transaction id
-        ::          "vout": n,                   (numeric, required) The output number
-        ::          "sequence": n,               (numeric, required) The sequence number
-        ::        },
-        ::        ...
-        ::      ]
-        ::  (2. outputs                            (json array, required) a json array with outputs (key-value pairs), where none of the keys are duplicated.
-        ::                                       That is, each address can only appear once and there can only be one 'data' object.
-        ::                                       For compatibility reasons, a dictionary, which holds the key-value pairs directly, is also
-        ::                                       accepted as second parameter.
-        ::      [
-        ::        {                              (json object)
-        ::          "address": amount,           (numeric or string, required) A key-value pair. The key (string) is the bitcoin address, the value (float or string) is the amount in BTC
-        ::        },
-        ::        {                              (json object)
-        ::          "data": "hex",               (string, required) A key-value pair. The key must be "data", the value is hex-encoded data
-        ::        },
-        ::        ...
-        ::      ]
-        ::  (3. locktime                           (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs
-        ::  (4. options                            (json object, optional)
-        ::      {
-        ::        "changeAddress": "hex",        (string, optional, default=pool address) The bitcoin address to receive the change
-        ::        "changePosition": n,           (numeric, optional, default=random) The index of the change output
-        ::        "change-type": "str",          (string, optional, default=set by -changetype) The output type to use. Only valid if changeAddress is not specified. Options are "legacy", "p2sh-segwit", and "bech32".
-        ::        "includeWatching": bool,       (boolean, optional, default=false) Also select inputs which are watch only
-        ::        "lockUnspents": bool,          (boolean, optional, default=false) Lock selected unspent outputs
-        ::        "feeRate": amount,             (numeric or string, optional, default=not set: makes wallet determine the fee) Set a specific fee rate in BTC/kB
-        ::        "subtractFeeFromOutputs": [    (json array, optional, default=empty array) A json array of integers.
-        ::                                       The fee will be equally deducted from the amount of each specified output.
-        ::                                       Those recipients will receive less bitcoins than you enter in their corresponding amount field.
-        ::                                       If no outputs are specified here, the sender pays the fee.
-        ::          vout-index,                  (numeric) The zero-based output index, before a change output is added.
-        ::          ...
-        ::        ],
-        ::        "replaceable": bool,           (boolean, optional, default=false) Marks this transaction as BIP125 replaceable.
-        ::                                       Allows this transaction to be replaced by a transaction with higher fees
-        ::        "conf-target": n,              (numeric, optional, default=Fallback to wallet's confirmation target) Confirmation target (in blocks)
-        ::        "estimate-mode": "str",        (string, optional, default=UNSET) The fee estimate mode, must be one of:
-        ::                                       "UNSET"
-        ::                                       "ECONOMICAL"
-        ::                                       "CONSERVATIVE"
-        ::      }
-        ::  (5. bip32derivs                        (boolean, optional, default=false) If true, includes the BIP 32 derivation paths for public keys if we know them
-        ::
-        ::  (Result:
-        :: {
-                ::      "psbt": "value",        (string)  The resulting raw transaction (base64-encoded string)
-                ::      "fee":       n,         (numeric) Fee in BTC the resulting transaction pays
-                ::      "changepos": n          (numeric) The position of the added change output, or -1
-        :: }
+        ::  %wallet-create-fundedpsbt: Creates and funds a transaction in the
+        ::  Partially Signed Transaction format.
+        ::  Inputs will be added if supplied inputs are not enough
         ::
         $:  %wallet-create-fundedpsbt
             inputs=(list input)
@@ -1211,44 +758,23 @@
             ==
             bip32-derivs=(unit ?)
         ==
-        ::  Removes the wallet encryption key from memory, locking the wallet.
-        ::  (After calling this method, you will need to call walletpassphrase again
-        ::  (before being able to call any methods which require the wallet to be unlocked.
+        ::  %wallet-lock:   Removes the wallet encryption key from memory,
+        ::  locking the wallet.
         ::
         [%wallet-lock ~]
-        ::  Stores the wallet decryption key in memory for 'timeout' seconds.
-        ::  (This is needed prior to performing transactions related to private keys such as sending bitcoins
-        ::
-        ::  (Note:
-        ::  (Issuing the walletpassphrase command while the wallet is already unlocked will set a new unlock
-        ::  (time that overrides the old one.
-        ::
-        ::  (Arguments:
-        ::  (1. passphrase    (string, required) The wallet passphrase
-        ::  (2. timeout       (numeric, required) The time to keep the decryption key in seconds; capped at 100000000 (~3 years).
+        ::  %wallet-passphrase:   Stores the wallet decryption key in memory
+        ::  for 'timeout' seconds.
         ::
         [%wallet-passphrase passphrase=@t timeout=@ud]
-        ::  Changes the wallet passphrase from 'oldpassphrase' to 'newpassphrase'.
+        ::  C%wallet-passphrase-changehange: s the wallet passphrase from
+        ::  'oldpassphrase' to 'newpassphrase'.
         ::
-        ::  (Arguments:
-        ::  (1. old-passphrase    (string, required) The current passphrase
-        ::  (2. new-passphrase    (string, required) The new passphrase
-        ::
-        [%wallet-passphrase-change old-passphrase=(unit @t) new-passphrase=(unit @t)]
-        ::  Update a PSBT with input information from our wallet and then sign inputs
-        ::  (that we can sign for.
-        ::
-        ::  (Arguments:
-        ::  (1. psbt           (string, required) The transaction base64 string
-        ::  (2. sign           (boolean, optional, default=true) Also sign the transaction when updating
-        ::  (3. sighashtype    (string, optional, default=ALL) The signature hash type to sign with if not specified by the PSBT. Must be one of
-        ::                   "ALL"
-        ::                   "NONE"
-        ::                   "SINGLE"
-        ::                   "ALL|ANYONECANPAY"
-        ::                   "NONE|ANYONECANPAY"
-        ::                   "SINGLE|ANYONECANPAY"
-        ::  (4. bip32derivs    (boolean, optional, default=false) If true, includes the BIP 32 derivation paths for public keys if we know them
+        $:  %wallet-passphrase-change
+            old-passphrase=(unit @t)
+            new-passphrase=(unit @t)
+        ==
+        ::  %wallet-process-psbt: Update a PSBT with input information from
+        ::  our wallet and then sign inputs
         ::
         $:  %wallet-process-psbt
             psbt=@t
@@ -1258,20 +784,690 @@
         ==
     ::  ZMQ management
     ::
-        ::  Returns information about the active ZeroMQ notifications.
+        ::  %get-zmq-notifications: Returns information about the active
+        ::  ZeroMQ notifications.
         ::
         [%get-zmq-notifications ~]
     ==
   ::
   +$  response
     $%
+    ::  Blockchain
+    ::
+        ::  %getbestblockhash: Returns the hash of the best (tip) block in the longest blockchain.
+        ::
+        [%get-best-block-hash hex=@ux]
+        ::  %getblock: If verbosity is 0, returns a string that is serialized, hex-encoded data for block 'hash'.
+        :: If verbosity is 1, returns an Object with information about block <hash>.
+        :: If verbosity is 2, returns an Object with information about block <hash> and information about each transaction.
+        ::
+        :: Result (for verbosity = 0):
+        :: "data"             (string) A string that is serialized, hex-encoded data for block 'hash'.
+        ::
+        :: Result (for verbosity = 1):
+        :: {
+        ::   "hash" : "hash",     (string) the block hash (same as provided)
+        ::   "confirmations" : n,   (numeric) The number of confirmations, or -1 if the block is not on the main chain
+        ::   "size" : n,            (numeric) The block size
+        ::   "strippedsize" : n,    (numeric) The block size excluding witness data
+        ::   "weight" : n           (numeric) The block weight as defined in BIP 141
+        ::   "height" : n,          (numeric) The block height or index
+        ::   "version" : n,         (numeric) The block version
+        ::   "versionHex" : "00000000", (string) The block version formatted in hexadecimal
+        ::   "merkleroot" : "xxxx", (string) The merkle root
+        ::   "tx" : [               (array of string) The transaction ids
+        ::      "transactionid"     (string) The transaction id
+        ::      ,...
+        ::   ],
+        ::   "time" : ttt,          (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)
+        ::   "mediantime" : ttt,    (numeric) The median block time in seconds since epoch (Jan 1 1970 GMT)
+        ::   "nonce" : n,           (numeric) The nonce
+        ::   "bits" : "1d00ffff", (string) The bits
+        ::   "difficulty" : x.xxx,  (numeric) The difficulty
+        ::   "chainwork" : "xxxx",  (string) Expected number of hashes required to produce the chain up to this block (in hex)
+        ::   "nTx" : n,             (numeric) The number of transactions in the block.
+        ::   "previousblockhash" : "hash",  (string) The hash of the previous block
+        ::   "nextblockhash" : "hash"       (string) The hash of the next block
+        :: }
+        ::
+        :: Result (for verbosity = 2):
+        :: {
+        ::   ...,                     Same output as verbosity = 1.
+        ::   "tx" : [               (array of Objects) The transactions in the format of the getrawtransaction RPC. Different from verbosity = 1 "tx" result.
+        ::          ,...
+        ::   ],
+        ::   ,...                     Same output as verbosity = 1.
+        :: }
+        ::
+        $:  %get-block
+            $?  ::  verbosity = 0
+                ::
+                @ux
+                ::  verbosity > 0
+                ::
+                $:  hash=@ux
+                    confirmations=@ud
+                    size=@ud
+                    stripped-size=@ud
+                    weight=@ud
+                    height=@ud
+                    version=@t
+                    version-hex=@ux
+                    merkle-root=@ux
+                    $=  tx  %-  list
+                    $?  ::  verbosity = 1
+                        ::
+                        @ux
+                        ::  verbosity = 2
+                        ::
+                        raw-transaction-rpc-out
+                    ==
+                    time=@ud
+                    median-time=@ud
+                    nonce=@ud
+                    bits=@ux
+                    difficulty=@t
+                    chain-work=@ux
+                    n-tx=@ud
+                    previous-blockhash=@ux
+                    next-blockhash=@ux
+        ==  ==  ==
+        ::  %getblockchaininfo: Returns an object containing various state info regarding blockchain processing.
+        ::
+        :: Result:
+        :: {
+        ::   "chain": "xxxx",              (string) current network name as defined in BIP70 (main, test, regtest)
+        ::   "blocks": xxxxxx,             (numeric) the current number of blocks processed in the server
+        ::   "headers": xxxxxx,            (numeric) the current number of headers we have validated
+        ::   "bestblockhash": "...",       (string) the hash of the currently best block
+        ::   "difficulty": xxxxxx,         (numeric) the current difficulty
+        ::   "mediantime": xxxxxx,         (numeric) median time for the current best block
+        ::   "verificationprogress": xxxx, (numeric) estimate of verification progress [0..1]
+        ::   "initialblockdownload": xxxx, (bool) (debug information) estimate of whether this node is in Initial Block Download mode.
+        ::   "chainwork": "xxxx"           (string) total amount of work in active chain, in hexadecimal
+        ::   "size_on_disk": xxxxxx,       (numeric) the estimated size of the block and undo files on disk
+        ::   "pruned": xx,                 (boolean) if the blocks are subject to pruning
+        ::   "pruneheight": xxxxxx,        (numeric) lowest-height complete block stored (only present if pruning is enabled)
+        ::   "automatic_pruning": xx,      (boolean) whether automatic pruning is enabled (only present if pruning is enabled)
+        ::   "prune_target_size": xxxxxx,  (numeric) the target size used by pruning (only present if automatic pruning is enabled)
+        ::   "softforks": [                (array) status of softforks in progress
+        ::      {
+        ::         "id": "xxxx",           (string) name of softfork
+        ::         "version": xx,          (numeric) block version
+        ::         "reject": {             (object) progress toward rejecting pre-softfork blocks
+        ::            "status": xx,        (boolean) true if threshold reached
+        ::         },
+        ::      }, ...
+        ::   ],
+        ::   "bip9_softforks": {           (object) status of BIP9 softforks in progress
+        ::      "xxxx" : {                 (string) name of the softfork
+        ::         "status": "xxxx",       (string) one of "defined", "started", "locked_in", "active", "failed"
+        ::         "bit": xx,              (numeric) the bit (0-28) in the block version field used to signal this softfork (only for "started" status)
+        ::         "startTime": xx,        (numeric) the minimum median time past of a block at which the bit gains its meaning
+        ::         "timeout": xx,          (numeric) the median time past of a block at which the deployment is considered failed if not yet locked in
+        ::         "since": xx,            (numeric) height of the first block to which the status applies
+        ::         "statistics": {         (object) numeric statistics about BIP9 signalling for a softfork (only for "started" status)
+        ::            "period": xx,        (numeric) the length in blocks of the BIP9 signalling period
+        ::            "threshold": xx,     (numeric) the number of blocks with the version bit set required to activate the feature
+        ::            "elapsed": xx,       (numeric) the number of blocks elapsed since the beginning of the current period
+        ::            "count": xx,         (numeric) the number of blocks with the version bit set in the current period
+        ::            "possible": xx       (boolean) returns false if there are not enough blocks left in this period to pass activation threshold
+        ::         }
+        ::      }
+        ::   }
+        ::   "warnings" : "...",           (string) any network and blockchain warnings.
+        :: }
+        ::
+        $:  %get-blockchain-info
+            chain=network-name
+            blocks=@ud
+            headers=@ud
+            best-block-hash=@ux
+            difficulty=@t
+            median-time=@ud
+            verification-progress=@ud
+            initial-block-download=?
+            chain-work=@ux
+            size-on-disk=@ud
+            pruned=?
+            pruneheight=(unit @ud)
+            automatic-pruning=(unit ?)
+            prune-target-size=(unit @ud)
+            $=  soft-forks  %-  list
+            $:  id=@t
+                version=@t
+                reject-status=?
+            ==
+            $=  bip9-softforks  %+  map
+                name=@t
+                $:  status=soft-fork-status
+                    bit=(unit @ud)
+                    start-time=?(%'-1' @ud)
+                    timeout=@ud
+                    since=@ud
+                    $=  statistics  %-  unit
+                    $:  period=@ud
+                        threshold=@ud
+                        elapsed=@ud
+                        count=@ud
+                        possible=?
+                ==  ==
+            warnings=(list @t)
+        ==
+        ::  %getblockcount: Returns the number of blocks in the longest blockchain.
+        ::
+        :: Result:
+        :: n    (numeric) The current block count
+        ::
+        [%get-block-count count=@ud]
+        ::  %getblockhash: Returns hash of block in best-block-chain at height provided.
+        ::
+        :: Result:
+        :: "hash"         (string) The block hash
+        ::
+        [%get-block-hash hash=@ux]
+        ::  %getblockheader: If verbose is false, returns a string that is serialized, hex-encoded data for blockheader 'hash'.
+        :: If verbose is true, returns an Object with information about blockheader <hash>.
+        ::
+        :: Result (for verbose = true):
+        :: {
+        ::   "hash" : "hash",     (string) the block hash (same as provided)
+        ::   "confirmations" : n,   (numeric) The number of confirmations, or -1 if the block is not on the main chain
+        ::   "height" : n,          (numeric) The block height or index
+        ::   "version" : n,         (numeric) The block version
+        ::   "versionHex" : "00000000", (string) The block version formatted in hexadecimal
+        ::   "merkleroot" : "xxxx", (string) The merkle root
+        ::   "time" : ttt,          (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)
+        ::   "mediantime" : ttt,    (numeric) The median block time in seconds since epoch (Jan 1 1970 GMT)
+        ::   "nonce" : n,           (numeric) The nonce
+        ::   "bits" : "1d00ffff", (string) The bits
+        ::   "difficulty" : x.xxx,  (numeric) The difficulty
+        ::   "chainwork" : "0000...1f3"     (string) Expected number of hashes required to produce the current chain (in hex)
+        ::   "nTx" : n,             (numeric) The number of transactions in the block.
+        ::   "previousblockhash" : "hash",  (string) The hash of the previous block
+        ::   "nextblockhash" : "hash",      (string) The hash of the next block
+        :: }
+        ::
+        :: Result (for verbose=false):
+        :: "data"             (string) A string that is serialized, hex-encoded data for block 'hash'.
+        ::
+        $:  %get-block-header
+            $?  :: (for verbose = false)
+                ::
+                @ux
+                ::  (for verbose = true)
+                ::
+                $:  hash=@ux
+                    confirmations=@ud
+                    weight=@ud
+                    version=@t
+                    version-hex=@ux
+                    merkle-root=@ux
+                    time=@ud
+                    median-time=@ud
+                    nonce=@ud
+                    bits=@ux
+                    difficulty=@t
+                    chain-work=@ux
+                    n-tx=@ud
+                    previous-blockhash=@ux
+                    next-blockhash=@ux
+        ==  ==  ==
+        ::  %getblockstats: Compute per block statistics for a given window. All amounts are in satoshis.
+        :: It won't work for some heights with pruning.
+        :: It won't work without -txindex for utxo_size_inc, *fee or *feerate stats.
+        ::
+        :: Result:
+        :: {                           (json object)
+        ::   "avgfee": xxxxx,          (numeric) Average fee in the block
+        ::   "avgfeerate": xxxxx,      (numeric) Average feerate (in satoshis per virtual byte)
+        ::   "avgtxsize": xxxxx,       (numeric) Average transaction size
+        ::   "blockhash": xxxxx,       (string) The block hash (to check for potential reorgs)
+        ::   "feerate_percentiles": [  (array of numeric) Feerates at the 10th, 25th, 50th, 75th, and 90th percentile weight unit (in satoshis per virtual byte)
+        ::       "10th_percentile_feerate",      (numeric) The 10th percentile feerate
+        ::       "25th_percentile_feerate",      (numeric) The 25th percentile feerate
+        ::       "50th_percentile_feerate",      (numeric) The 50th percentile feerate
+        ::       "75th_percentile_feerate",      (numeric) The 75th percentile feerate
+        ::       "90th_percentile_feerate",      (numeric) The 90th percentile feerate
+        ::   ],
+        ::   "height": xxxxx,          (numeric) The height of the block
+        ::   "ins": xxxxx,             (numeric) The number of inputs (excluding coinbase)
+        ::   "maxfee": xxxxx,          (numeric) Maximum fee in the block
+        ::   "maxfeerate": xxxxx,      (numeric) Maximum feerate (in satoshis per virtual byte)
+        ::   "maxtxsize": xxxxx,       (numeric) Maximum transaction size
+        ::   "medianfee": xxxxx,       (numeric) Truncated median fee in the block
+        ::   "mediantime": xxxxx,      (numeric) The block median time past
+        ::   "mediantxsize": xxxxx,    (numeric) Truncated median transaction size
+        ::   "minfee": xxxxx,          (numeric) Minimum fee in the block
+        ::   "minfeerate": xxxxx,      (numeric) Minimum feerate (in satoshis per virtual byte)
+        ::   "mintxsize": xxxxx,       (numeric) Minimum transaction size
+        ::   "outs": xxxxx,            (numeric) The number of outputs
+        ::   "subsidy": xxxxx,         (numeric) The block subsidy
+        ::   "swtotal_size": xxxxx,    (numeric) Total size of all segwit transactions
+        ::   "swtotal_weight": xxxxx,  (numeric) Total weight of all segwit transactions divided by segwit scale factor (4)
+        ::   "swtxs": xxxxx,           (numeric) The number of segwit transactions
+        ::   "time": xxxxx,            (numeric) The block time
+        ::   "total_out": xxxxx,       (numeric) Total amount in all outputs (excluding coinbase and thus reward [ie subsidy + totalfee])
+        ::   "total_size": xxxxx,      (numeric) Total size of all non-coinbase transactions
+        ::   "total_weight": xxxxx,    (numeric) Total weight of all non-coinbase transactions divided by segwit scale factor (4)
+        ::   "totalfee": xxxxx,        (numeric) The fee total
+        ::   "txs": xxxxx,             (numeric) The number of transactions (excluding coinbase)
+        ::   "utxo_increase": xxxxx,   (numeric) The increase/decrease in the number of unspent outputs
+        ::   "utxo_size_inc": xxxxx,   (numeric) The increase/decrease in size for the utxo index (not discounting op_return and similar)
+        :: }
+        ::
+        $:  %get-block-stats
+            avg-fee=@t
+            avg-feerate=@ud
+            avg-tx-size=@ud
+            block-hash=@ux
+            fee-rate-percentiles=[p-1=@t p-2=@t p-3=@t p-4=@t p-5=@t]
+            height=@ud
+            ins=@ud
+            max-fee=@t
+            max-fee-rate=@t
+            max-tx-size=@ud
+            median-fee=@t
+            median-time=@ud
+            median-tx-size=@ud
+            min-fee=@t
+            min-fee-rate=@t
+            min-tx-size=@ud
+            outs=@ud
+            subsidy=@t
+            swtotal-size=@ud
+            swtotal-weight=@ud
+            swtxs=@ud
+            time=@ud
+            total-out=@t
+            total-size=@ud
+            total-weight=@t
+            total-fee=@t
+            txs=@ud
+            utxo-increase=@ud
+            utxo-size-inc=@ud
+        ==
+        ::  %getchaintips: Return information about all known tips in the block tree, including the main chain as well as orphaned branches.
+        ::
+        :: Result:
+        :: [
+        ::   {
+        ::     "height": xxxx,         (numeric) height of the chain tip
+        ::     "hash": "xxxx",         (string) block hash of the tip
+        ::     "branchlen": 0          (numeric) zero for main chain
+        ::     "status": "active"      (string) "active" for the main chain
+        ::   },
+        ::   {
+        ::     "height": xxxx,
+        ::     "hash": "xxxx",
+        ::     "branchlen": 1          (numeric) length of branch connecting the tip to the main chain
+        ::     "status": "xxxx"        (string) status of the chain (active, valid-fork, valid-headers, headers-only, invalid)
+        ::   }
+        :: ]
+        :: Possible values for status:
+        :: 1.  "invalid"               This branch contains at least one invalid block
+        :: 2.  "headers-only"          Not all blocks for this branch are available, but the headers are valid
+        :: 3.  "valid-headers"         All blocks are available for this branch, but they were never fully validated
+        :: 4.  "valid-fork"            This branch is not part of the active chain, but is fully validated
+        :: 5.  "active"                This is the tip of the active main chain, which is certainly valid
+        ::
+        $:  %get-chain-tips  %-  list
+            $:  height=@ud
+                hash=@ux
+                branch-len=@ud
+                status=chain-status
+        ==  ==
+        ::  %getchaintxstats: Compute statistics about the total number and rate of transactions in the chain.
+        ::
+        :: Result:
+        :: {
+        ::   "time": xxxxx,                         (numeric) The timestamp for the final block in the window in UNIX format.
+        ::   "txcount": xxxxx,                      (numeric) The total number of transactions in the chain up to that point.
+        ::   "window_final_block_hash": "...",      (string) The hash of the final block in the window.
+        ::   "window_block_count": xxxxx,           (numeric) Size of the window in number of blocks.
+        ::   "window_tx_count": xxxxx,              (numeric) The number of transactions in the window. Only returned if "window_block_count" is > 0.
+        ::   "window_interval": xxxxx,              (numeric) The elapsed time in the window in seconds. Only returned if "window_block_count" is > 0.
+        ::   "txrate": x.xx,                        (numeric) The average rate of transactions per second in the window. Only returned if "window_interval" is > 0.
+        :: }
+        ::
+        $:  %get-chain-tx-stats
+            time=@ud
+            tx-count=@ud
+            window-final-block-hash=@ux
+            window-block-count=@ud
+            window-tx-count=(unit @ud)
+            window-interval=(unit @ud)
+            tx-rate=(unit @ud)
+        ==
+        ::  %getdifficulty: Returns the proof-of-work difficulty as a multiple of the minimum difficulty.
+        ::
+        :: Result:
+        :: n.nnn       (numeric) the proof-of-work difficulty as a multiple of the minimum difficulty.
+        ::
+        [%get-difficulty n=@t]
+        ::  %getmempoolancestor: If txid is in the mempool, returns all in-mempool ancestors.
+        ::
+        :: Result (for verbose = false):
+        :: [                       (json array of strings)
+        ::   "transactionid"           (string) The transaction id of an in-mempool ancestor transaction
+        ::   ,...
+        :: ]
+        ::
+        :: Result (for verbose = true):
+        :: {                           (json object)
+        ::   "transactionid" : {       (json object)
+        ::     "size" : n,             (numeric) virtual transaction size as defined in BIP 141. This is different from actual serialized size for witness transactions as witness data is discounted.
+        ::     "fee" : n,              (numeric) transaction fee in BTC (DEPRECATED)
+        ::     "modifiedfee" : n,      (numeric) transaction fee with fee deltas used for mining priority (DEPRECATED)
+        ::     "time" : n,             (numeric) local time transaction entered pool in seconds since 1 Jan 1970 GMT
+        ::     "height" : n,           (numeric) block height when transaction entered pool
+        ::     "descendantcount" : n,  (numeric) number of in-mempool descendant transactions (including this one)
+        ::     "descendantsize" : n,   (numeric) virtual transaction size of in-mempool descendants (including this one)
+        ::     "descendantfees" : n,   (numeric) modified fees (see above) of in-mempool descendants (including this one) (DEPRECATED)
+        ::     "ancestorcount" : n,    (numeric) number of in-mempool ancestor transactions (including this one)
+        ::     "ancestorsize" : n,     (numeric) virtual transaction size of in-mempool ancestors (including this one)
+        ::     "ancestorfees" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) (DEPRECATED)
+        ::     "wtxid" : hash,         (string) hash of serialized transaction, including witness data
+        ::     "fees" : {
+        ::         "base" : n,         (numeric) transaction fee in BTC
+        ::         "modified" : n,     (numeric) transaction fee with fee deltas used for mining priority in BTC
+        ::         "ancestor" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) in BTC
+        ::         "descendant" : n,   (numeric) modified fees (see above) of in-mempool descendants (including this one) in BTC
+        ::     }
+        ::     "depends" : [           (array) unconfirmed transactions used as inputs for this transaction
+        ::         "transactionid",    (string) parent transaction id
+        ::        ... ]
+        ::     "spentby" : [           (array) unconfirmed transactions spending outputs from this transaction
+        ::         "transactionid",    (string) child transaction id
+        ::        ... ]
+        ::     "bip125-replaceable" : true|false,  (boolean) Whether this transaction could be replaced due to BIP125 (replace-by-fee)
+        ::   }, ...
+        :: }
+        ::
+        [%get-mempool-ancestors mem-pool-response]
+        ::  %getmempooldescendants: If txid is in the mempool, returns all in-mempool descendants.
+        ::
+        :: Result (for verbose = false):
+        :: [                       (json array of strings)
+        ::   "transactionid"           (string) The transaction id of an in-mempool descendant transaction
+        ::   ,...
+        :: ]
+        ::
+        :: Result (for verbose = true):
+        :: {                           (json object)
+        ::   "transactionid" : {       (json object)
+        ::     "size" : n,             (numeric) virtual transaction size as defined in BIP 141. This is different from actual serialized size for witness transactions as witness data is discounted.
+        ::     "fee" : n,              (numeric) transaction fee in BTC (DEPRECATED)
+        ::     "modifiedfee" : n,      (numeric) transaction fee with fee deltas used for mining priority (DEPRECATED)
+        ::     "time" : n,             (numeric) local time transaction entered pool in seconds since 1 Jan 1970 GMT
+        ::     "height" : n,           (numeric) block height when transaction entered pool
+        ::     "descendantcount" : n,  (numeric) number of in-mempool descendant transactions (including this one)
+        ::     "descendantsize" : n,   (numeric) virtual transaction size of in-mempool descendants (including this one)
+        ::     "descendantfees" : n,   (numeric) modified fees (see above) of in-mempool descendants (including this one) (DEPRECATED)
+        ::     "ancestorcount" : n,    (numeric) number of in-mempool ancestor transactions (including this one)
+        ::     "ancestorsize" : n,     (numeric) virtual transaction size of in-mempool ancestors (including this one)
+        ::     "ancestorfees" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) (DEPRECATED)
+        ::     "wtxid" : hash,         (string) hash of serialized transaction, including witness data
+        ::     "fees" : {
+        ::         "base" : n,         (numeric) transaction fee in BTC
+        ::         "modified" : n,     (numeric) transaction fee with fee deltas used for mining priority in BTC
+        ::         "ancestor" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) in BTC
+        ::         "descendant" : n,   (numeric) modified fees (see above) of in-mempool descendants (including this one) in BTC
+        ::     }
+        ::     "depends" : [           (array) unconfirmed transactions used as inputs for this transaction
+        ::         "transactionid",    (string) parent transaction id
+        ::        ... ]
+        ::     "spentby" : [           (array) unconfirmed transactions spending outputs from this transaction
+        ::         "transactionid",    (string) child transaction id
+        ::        ... ]
+        ::     "bip125-replaceable" : true|false,  (boolean) Whether this transaction could be replaced due to BIP125 (replace-by-fee)
+        ::   }, ...
+        :: }
+        ::
+        [%get-mempool-descendants mem-pool-response]
+        ::  %getmempoolentry: Returns mempool data for given transaction
+        ::
+        :: Result:
+        :: {                           (json object)
+        ::     "size" : n,             (numeric) virtual transaction size as defined in BIP 141. This is different from actual serialized size for witness transactions as witness data is discounted.
+        ::     "fee" : n,              (numeric) transaction fee in BTC (DEPRECATED)
+        ::     "modifiedfee" : n,      (numeric) transaction fee with fee deltas used for mining priority (DEPRECATED)
+        ::     "time" : n,             (numeric) local time transaction entered pool in seconds since 1 Jan 1970 GMT
+        ::     "height" : n,           (numeric) block height when transaction entered pool
+        ::     "descendantcount" : n,  (numeric) number of in-mempool descendant transactions (including this one)
+        ::     "descendantsize" : n,   (numeric) virtual transaction size of in-mempool descendants (including this one)
+        ::     "descendantfees" : n,   (numeric) modified fees (see above) of in-mempool descendants (including this one) (DEPRECATED)
+        ::     "ancestorcount" : n,    (numeric) number of in-mempool ancestor transactions (including this one)
+        ::     "ancestorsize" : n,     (numeric) virtual transaction size of in-mempool ancestors (including this one)
+        ::     "ancestorfees" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) (DEPRECATED)
+        ::     "wtxid" : hash,         (string) hash of serialized transaction, including witness data
+        ::     "fees" : {
+        ::         "base" : n,         (numeric) transaction fee in BTC
+        ::         "modified" : n,     (numeric) transaction fee with fee deltas used for mining priority in BTC
+        ::         "ancestor" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) in BTC
+        ::         "descendant" : n,   (numeric) modified fees (see above) of in-mempool descendants (including this one) in BTC
+        ::     }
+        ::     "depends" : [           (array) unconfirmed transactions used as inputs for this transaction
+        ::         "transactionid",    (string) parent transaction id
+        ::        ... ]
+        ::     "spentby" : [           (array) unconfirmed transactions spending outputs from this transaction
+        ::         "transactionid",    (string) child transaction id
+        ::        ... ]
+        ::     "bip125-replaceable" : true|false,  (boolean) Whether this transaction could be replaced due to BIP125 (replace-by-fee)
+        :: }
+        ::
+        [%get-mempool-entry mem-pool]
+        ::  %getmempoolinfo: Returns details on the active state of the TX memory pool.
+        ::
+        :: Result:
+        :: {
+        ::   "size": xxxxx,               (numeric) Current tx count
+        ::   "bytes": xxxxx,              (numeric) Sum of all virtual transaction sizes as defined in BIP 141. Differs from actual serialized size because witness data is discounted
+        ::   "usage": xxxxx,              (numeric) Total memory usage for the mempool
+        ::   "maxmempool": xxxxx,         (numeric) Maximum memory usage for the mempool
+        ::   "mempoolminfee": xxxxx       (numeric) Minimum fee rate in BTC/kB for tx to be accepted. Is the maximum of minrelaytxfee and minimum mempool fee
+        ::   "minrelaytxfee": xxxxx       (numeric) Current minimum relay fee for transactions
+        :: }
+        ::
+        $:  %get-mempool-info
+            size=@ud
+            bytes=@ud
+            usage=@ud
+            max-mem-pool=@ud
+            mem-pool-min-fee=@t
+            min-relay-tx-fee=@t
+        ==
+        ::  %getrawmempool: Returns all transaction ids in memory pool as a json array of string transaction ids.
+        ::
+        :: Hint: use getmempoolentry to fetch a specific transaction from the mempool.
+        ::
+        :: Result (for verbose = false):
+        :: [                     (json array of string)
+        ::   "transactionid"     (string) The transaction id
+        ::   ,...
+        :: ]
+        ::
+        :: Result: (for verbose = true):
+        :: {                           (json object)
+        ::   "transactionid" : {       (json object)
+        ::     "size" : n,             (numeric) virtual transaction size as defined in BIP 141. This is different from actual serialized size for witness transactions as witness data is discounted.
+        ::     "fee" : n,              (numeric) transaction fee in BTC (DEPRECATED)
+        ::     "modifiedfee" : n,      (numeric) transaction fee with fee deltas used for mining priority (DEPRECATED)
+        ::     "time" : n,             (numeric) local time transaction entered pool in seconds since 1 Jan 1970 GMT
+        ::     "height" : n,           (numeric) block height when transaction entered pool
+        ::     "descendantcount" : n,  (numeric) number of in-mempool descendant transactions (including this one)
+        ::     "descendantsize" : n,   (numeric) virtual transaction size of in-mempool descendants (including this one)
+        ::     "descendantfees" : n,   (numeric) modified fees (see above) of in-mempool descendants (including this one) (DEPRECATED)
+        ::     "ancestorcount" : n,    (numeric) number of in-mempool ancestor transactions (including this one)
+        ::     "ancestorsize" : n,     (numeric) virtual transaction size of in-mempool ancestors (including this one)
+        ::     "ancestorfees" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) (DEPRECATED)
+        ::     "wtxid" : hash,         (string) hash of serialized transaction, including witness data
+        ::     "fees" : {
+        ::         "base" : n,         (numeric) transaction fee in BTC
+        ::         "modified" : n,     (numeric) transaction fee with fee deltas used for mining priority in BTC
+        ::         "ancestor" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) in BTC
+        ::         "descendant" : n,   (numeric) modified fees (see above) of in-mempool descendants (including this one) in BTC
+        ::     }
+        ::     "depends" : [           (array) unconfirmed transactions used as inputs for this transaction
+        ::         "transactionid",    (string) parent transaction id
+        ::        ... ]
+        ::     "spentby" : [           (array) unconfirmed transactions spending outputs from this transaction
+        ::         "transactionid",    (string) child transaction id
+        ::        ... ]
+        ::     "bip125-replaceable" : true|false,  (boolean) Whether this transaction could be replaced due to BIP125 (replace-by-fee)
+        ::   }, ...
+        :: }
+        ::
+        [%get-raw-mempool mem-pool-response]
+        ::  %gettxout: Returns details about an unspent transaction output.
+        ::
+        :: Result:
+        :: {
+        ::   "bestblock":  "hash",    (string) The hash of the block at the tip of the chain
+        ::   "confirmations" : n,       (numeric) The number of confirmations
+        ::   "value" : x.xxx,           (numeric) The transaction value in BTC
+        ::   "scriptPubKey" : {         (json object)
+        ::      "asm" : "code",       (string)
+        ::      "hex" : "hex",        (string)
+        ::      "reqSigs" : n,          (numeric) Number of required signatures
+        ::      "type" : "pubkeyhash", (string) The type, eg pubkeyhash
+        ::      "addresses" : [          (array of string) array of bitcoin addresses
+        ::         "address"     (string) bitcoin address
+        ::         ,...
+        ::      ]
+        ::   },
+        ::   "coinbase" : true|false   (boolean) Coinbase or not
+        :: }
+        ::
+        :: $:  %get-tx-out
+        ::     bestblock=@ux
+        ::     confirmations=@ud
+        ::     value=@t
+        ::     coinbase=?
+        ::     $=  script-pubkey
+        ::     $:  asm=@t
+        ::         hex=@ux
+        ::         req-sigs=@ud
+        ::         type=@t
+        ::         addresses=(list address)
+        ::     ==
+        ::     coinbase=?
+        :: ==
+        ::  %gettxoutproof: Returns a hex-encoded proof that "txid" was included in a block.
+        ::
+        :: NOTE: By default this function only works sometimes. This is when there is an
+        :: unspent output in the utxo for this transaction. To make it always work,
+        :: you need to maintain a transaction index, using the -txindex command line option or
+        :: specify the block in which the transaction is included manually (by blockhash).
+        ::
+        :: Result:
+        :: "data"           (string) A string that is a serialized, hex-encoded data for the proof.
+        ::
+        [%get-tx-out-proof data=@ux]
+        ::  %gettxoutsetinfo: Returns statistics about the unspent transaction output set.
+        :: Note this call may take some time.
+        ::
+        :: Result:
+        :: {
+        ::   "height":n,     (numeric) The current block height (index)
+        ::   "bestblock": "hex",   (string) The hash of the block at the tip of the chain
+        ::   "transactions": n,      (numeric) The number of transactions with unspent outputs
+        ::   "txouts": n,            (numeric) The number of unspent transaction outputs
+        ::   "bogosize": n,          (numeric) A meaningless metric for UTXO set size
+        ::   "hash_serialized_2": "hash", (string) The serialized hash
+        ::   "disk_size": n,         (numeric) The estimated size of the chainstate on disk
+        ::   "total_amount": x.xxx          (numeric) The total amount
+        :: }
+        ::
+        $:  %get-tx-outset-info
+            height=@ud
+            best-block=@ux
+            transactions=@ud
+            tx-outs=@ud
+            bogo-size=@ud
+            hash-serialized-2=@ux
+            disk-size=@ud
+            total-amount=@t
+        ==
+        ::  %preciousblock: Treats a block as if it were received before others with the same work.
+        ::
+        :: A later preciousblock call can override the effect of an earlier one.
+        ::
+        :: The effects of preciousblock are not retained across restarts.
+        ::
+        [%precious-block ~]
+        ::  %pruneblockchain:
+        ::
+        :: Result:
+        :: n    (numeric) Height of the last block pruned.
+        ::
+        [%prune-blockchain height=@ud]
+        ::  %savemempool: Dumps the mempool to disk. It will fail until the previous dump is fully loaded.
+        ::
+        [%save-mempool ~]
+        ::  %scantxoutset: EXPERIMENTAL warning: this call may be removed or changed in future releases.
+        ::
+        :: Scans the unspent transaction output set for entries that match certain output descriptors.
+        :: Examples of output descriptors are:
+        ::     addr(<address>)                      Outputs whose scriptPubKey corresponds to the specified address (does not include P2PK)
+        ::     raw(<hex script>)                    Outputs whose scriptPubKey equals the specified hex scripts
+        ::     combo(<pubkey>)                      P2PK, P2PKH, P2WPKH, and P2SH-P2WPKH outputs for the given pubkey
+        ::     pkh(<pubkey>)                        P2PKH outputs for the given pubkey
+        ::     sh(multi(<n>,<pubkey>,<pubkey>,...)) P2SH-multisig outputs for the given threshold and pubkeys
+        ::
+        :: In the above, <pubkey> either refers to a fixed public key in hexadecimal notation, or to an xpub/xprv optionally followed by one
+        :: or more path elements separated by "/", and optionally ending in "/*" (unhardened), or "/*'" or "/*h" (hardened) to specify all
+        :: unhardened or hardened child keys.
+        :: In the latter case, a range needs to be specified by below if different from 1000.
+        :: For more information on output descriptors, see the documentation in the doc/descriptors.md file.
+        ::
+        :: Result:
+        :: {
+        ::   "unspents": [
+        ::     {
+        ::     "txid" : "transactionid",     (string) The transaction id
+        ::     "vout": n,                    (numeric) the vout value
+        ::     "scriptPubKey" : "script",    (string) the script key
+        ::     "desc" : "descriptor",        (string) A specialized descriptor for the matched scriptPubKey
+        ::     "amount" : x.xxx,             (numeric) The total amount in BTC of the unspent output
+        ::     "height" : n,                 (numeric) Height of the unspent transaction output
+        ::    }
+        ::    ,...],
+        ::  "total_amount" : x.xxx,          (numeric) The total amount of all found unspent outputs in BTC
+        :: ]
+        ::
+        $:  %scan-tx-outset
+            $=  unspents  %-  list
+            $:  txid=@ux
+                vout=@ud
+                script-pubkey=@ux
+                desc=@t
+                amount=@t
+                height=@ud
+            ==
+            total-amount=@t
+        ==
+        ::  %verifychain: Verifies blockchain database.
+        ::
+        :: Result:
+        :: true|false       (boolean) Verified or not
+        ::
+        [%verify-chain ?]
+        ::  %verifytxoutproof: Verifies that a proof points to a transaction in a block, returning the transaction it commits to
+        :: and throwing an RPC error if the block is not in our best chain
+        ::
+        :: Result:
+        :: ["txid"]      (array, strings) The txid(s) which the proof commits to, or empty array if the proof can not be validated.
+        ::
+        [%verify-tx-out-proof (list @ux)]
+    ::  Control
+        [%help ~]
     ::  Generating
     ::
         [%generate blocks=(list blockhash)]
-        [%get-block-count count=@ud]
     ::  Raw Transactions
     ::
-        :: %analyzepsbt: Analyzes and provides information about the current status of a PSBT and its inputs
+        ::  %analyzepsbt: Analyzes and provides information about the current status of a PSBT and its inputs
         ::
         :: Result:
         :: {
@@ -1303,9 +1499,9 @@
             $=  inputs  %-  list
             $:  has-utxo=?
                 is-final=?
-                $=  missing  %-  list  %-  unit
-                $:  pubkeys=(list (unit @ux))
-                    signatures=(list (unit @ux))
+                $=  missing  %-  unit  %-  list
+                $:  pubkeys=(unit (list @ux))
+                    signatures=(unit (list @ux))
                     redeem-script=(unit @ux)
                     witness-script=(unit @ux)
                 ==
@@ -1316,14 +1512,14 @@
             fee=(unit @t)
             next=@t
         ==
-        :: %combinepsbt: Combine multiple partially signed Bitcoin transactions into one transaction.
+        ::  %combinepsbt: Combine multiple partially signed Bitcoin transactions into one transaction.
         :: Implements the Combiner role.
         ::
         :: Result:
         ::   "psbt"          (string) The base64-encoded partially signed transaction
         ::
         [%combine-psbt psbt=@t]
-        :: %combinerawtransaction:Combine multiple partially signed transactions into one transaction.
+        ::  %combinerawtransaction:Combine multiple partially signed transactions into one transaction.
         :: The combined transaction may be another partially signed transaction or a
         :: fully signed transaction.
         ::
@@ -1331,21 +1527,21 @@
         :: "hex"            (string) The hex-encoded raw transaction with signature(s)
         ::
         [%combine-raw-transaction hex=@ux]
-        :: %converttopsbt: Converts a network serialized transaction to a PSBT. This should be used only with createrawtransaction and fundrawtransaction
+        ::  %converttopsbt: Converts a network serialized transaction to a PSBT. This should be used only with createrawtransaction and fundrawtransaction
         :: createpsbt and walletcreatefundedpsbt should be used for new applications.
         ::
         :: Result:
         ::   "psbt"        (string)  The resulting raw transaction (base64-encoded string)
         ::
         [%convert-to-psbt psbt=@t]
-        :: %createpsbt: Creates a transaction in the Partially Signed Transaction format.
+        ::  %createpsbt: Creates a transaction in the Partially Signed Transaction format.
         :: Implements the Creator role.
         ::
         :: Result:
         ::   "psbt"        (string)  The resulting raw transaction (base64-encoded string)
         ::
         [%create-psbt psbt=@t]
-        :: %createrawtransaction: Create a transaction spending the given inputs and creating new outputs.
+        ::  %createrawtransaction: Create a transaction spending the given inputs and creating new outputs.
         :: Outputs can be addresses or data.
         :: Returns hex-encoded raw transaction.
         :: Note that the transaction's inputs are not signed, and
@@ -1355,7 +1551,7 @@
         :: "transaction"              (string) hex string of the transaction
         ::
         [%create-raw-transaction transaction=@ux]
-        :: %decodepsbt: Return a JSON object representing the serialized, base64-encoded partially signed Bitcoin transaction.
+        ::  %decodepsbt: Return a JSON object representing the serialized, base64-encoded partially signed Bitcoin transaction.
         ::
         :: Result:
         :: {
@@ -1447,31 +1643,36 @@
         ::
         $:  %decode-psbt
             tx=serialized-tx
-            unknown=(list [@t @t])
+            unknown=(map @t @t)
             $=  inputs  %-  list
-            $:  non-witness-utxo=(unit [amount=@t =script-pubkey])
-                witness-utxo=(unit [amount=@t =script-pubkey])
-                $=  partial-signatures  %-  unit  %-  list
-                $:  pubkey=@ux
-                    signature=@t
-                ==
+            $:  non-witness-utxo=utxo
+                witness-utxo=utxo
+                partial-signatures=(unit (map pubkey=@ux signature=@ux))
                 =sig-hash-type
                 redeem-script=(unit script)
                 witness-script=(unit script)
-                =bip32-derivs
+                $=  bip32-derivs  %-  unit  %+  map
+                pubkey=@ux
+                $:  master-fingerprint=@t
+                    path=@t
+                ==
                 final-script-sig=(unit [asm=@t hex=@ux])
                 final-script-witness=(unit (list @ux))
-                unknown=(list [@t @t])
+                unknown=(map @t @t)
             ==
-            $=  outputs
+            $=  outputs  %-  list
             $:  redeem-script=(unit script)
                 witness-script=(unit script)
-                =bip32-derivs
-                unknown=(list [@t @t])
+                $=  bip32-derivs  %-  unit  %+  map
+                pubkey=@ux
+                $:  master-fingerprint=@t
+                    path=@t
+                ==
+                unknown=(map @t @t)
             ==
             fee=(unit @t)
         ==
-        :: %decoderawtransaction: Return a JSON object representing the serialized, hex-encoded transaction.
+        ::  %decoderawtransaction: Return a JSON object representing the serialized, hex-encoded transaction.
         ::
         :: Result:
         :: {
@@ -1515,7 +1716,7 @@
         :: }
         ::
         [%decode-raw-transaction =serialized-tx]
-        :: %decodescript: Decode a hex-encoded script.
+        ::  %decodescript: Decode a hex-encoded script.
         ::
         :: Result:
         :: {
@@ -1538,7 +1739,7 @@
             addresses=(list address)
             p2sh=address
         ==
-        :: %finalizepsbt: Finalize the inputs of a PSBT. If the transaction is fully signed, it will produce a
+        ::  %finalizepsbt: Finalize the inputs of a PSBT. If the transaction is fully signed, it will produce a
         :: network serialized transaction which can be broadcast with sendrawtransaction. Otherwise a PSBT will be
         :: created which has the final_scriptSig and final_scriptWitness fields filled for inputs that are complete.
         :: Implements the Finalizer and Extractor roles.
@@ -1552,7 +1753,7 @@
         :: }
         ::
         [%finalize-psbt psbt=@t hex=@ux complete=?]
-        :: %fundrawtransaction: Add inputs to a transaction until it has enough in value to meet its out value.
+        ::  %fundrawtransaction: Add inputs to a transaction until it has enough in value to meet its out value.
         :: This will not modify existing inputs, and will add at most one change output to the outputs.
         :: No existing outputs will be modified unless "subtractFeeFromOutputs" is specified.
         :: Note that inputs which were signed may need to be resigned after completion since in/outputs have been added.
@@ -1571,8 +1772,8 @@
         ::   "changepos": n          (numeric) The position of the added change output, or -1
         :: }
         ::
-        [%fund-raw-transaction hex=@ux fee=@t change-pos=@ud]
-        :: %getrawtransaction: Return the raw transaction data.
+        [%fund-raw-transaction hex=@ux fee=@t change-pos=?(@ud %'-1')]
+        ::  %getrawtransaction: Return the raw transaction data.
         ::
         :: By default this function only works for mempool transactions. When called with a blockhash
         :: argument, getrawtransaction will return the transaction if the specified block is available and
@@ -1635,32 +1836,15 @@
         ::   "time" : ttt,             (numeric) Same as "blocktime"
         :: }
         ::
-        $:  %get-raw-transaction  $=  data
-            $?  @ux
-                $:  in-active-chain=?
-                    hex=@ux
-                    txid=@ux
-                    hash=@ux
-                    size=@ud
-                    vsize=@ud
-                    weight=@ud
-                    version=@ud
-                    locktime=@ud
-                    vin=(list vin)
-                    vout=(list vout)
-                    =blockhash
-                    confirmations=@ud
-                    blocktime=@ud
-                    time=@ud
-        ==  ==  ==
-        :: %joinpsbts: Joins multiple distinct PSBTs with different inputs and outputs into one PSBT with inputs and outputs from all of the PSBTs
+        [%get-raw-transaction data=?(@ux raw-transaction-rpc-out)]
+        ::  %joinpsbts: Joins multiple distinct PSBTs with different inputs and outputs into one PSBT with inputs and outputs from all of the PSBTs
         :: No input in any of the PSBTs can be in more than one of the PSBTs.
         ::
         :: Result:
         ::   "psbt"          (string) The base64-encoded partially signed transaction
         ::
         [%join-psbts psbt=@t]
-        :: %sendrawtransaction: Submits raw transaction (serialized, hex-encoded) to local node and network.
+        ::  %sendrawtransaction: Submits raw transaction (serialized, hex-encoded) to local node and network.
         ::
         :: Also see createrawtransaction and signrawtransactionwithkey calls.
         ::
@@ -1668,7 +1852,7 @@
         :: "hex"             (string) The transaction hash in hex
         ::
         [%send-raw-transaction hex=@ux]
-        :: %signrawtransactionwithkey: Sign inputs for raw transaction (serialized, hex-encoded).
+        ::  %signrawtransactionwithkey: Sign inputs for raw transaction (serialized, hex-encoded).
         :: The second argument is an array of base58-encoded private
         :: keys that will be the only keys used to sign the transaction.
         :: The third optional argument (may be null) is an array of previous transaction outputs that
@@ -1690,8 +1874,12 @@
         ::   ]
         :: }
         ::
-        [%sign-raw-transaction-with-key ~]
-        :: %testmempoolaccept: Returns result of mempool acceptance tests indicating if raw transaction (serialized, hex-encoded) would be accepted by mempool.
+        $:  %sign-raw-transaction-with-key
+            hex=@ux
+            complete=?
+            =errors
+        ==
+        ::  %testmempoolaccept: Returns result of mempool acceptance tests indicating if raw transaction (serialized, hex-encoded) would be accepted by mempool.
         ::
         :: This checks if the transaction violates the consensus or policy rules.
         ::
@@ -1707,8 +1895,12 @@
         ::  }
         :: ]
         ::
-        [%test-mempool-accept txid=@ux allowed=? reject-reason=(unit @t)]
-        :: %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from the UTXO set or the mempool.
+        $:  %test-mempool-accept  %-  list
+            $:  txid=@ux
+                allowed=?
+                reject-reason=(unit @t)
+        ==  ==
+        ::  %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from the UTXO set or the mempool.
         ::
         :: Result:
         ::   "psbt"          (string) The base64-encoded partially signed transaction with inputs updated
@@ -1843,10 +2035,7 @@
         ::          "purpose": "string" (string)  Purpose of address ("send" for sending address, "receive" for receiving address)
         ::        },...
         ::      }
-        $:  %get-addresses-by-label
-            $=  addresses  %-  list
-            [=address =purpose]
-        ==
+        [%get-addresses-by-label addresses=(list [=address =purpose])]
         ::
         ::  %get-address-info:
         ::
@@ -2260,7 +2449,7 @@
                 abandoned=?
         ==  ==
         ::
-        :: %list-unspent
+        ::  %list-unspent
         ::
         ::  Result:
         :: [                   (array of json object)
@@ -2300,7 +2489,7 @@
                 safe=?
         ==  ==
         ::
-        :: %list-wallet-dir:
+        ::  %list-wallet-dir:
         ::
         :: Response:
         ::    {  "wallets":
@@ -2310,7 +2499,7 @@
         ::    }
         [%list-wallet-dir wallets=(list @t)]
         ::
-        :: %list-wallets
+        ::  %list-wallets
         :: Result:
         :: [                         (json array of strings)
         ::   "walletname"            (string) the wallet name
@@ -2362,13 +2551,12 @@
         [%set-label ~]
         ::
         [%set-tx-fee ?]
-        ::
+        ::  %sign-message
         ::
         ::  Result:
         :: "signature"          (string) The signature of the message encoded in base 64
         ::
         [%sign-message signature=@t]
-        ::
         ::  %sign-raw-transaction-with-wallet
         ::
         :: Result:
@@ -2389,13 +2577,8 @@
         $:  %sign-raw-transaction-with-wallet
             hex=@ux
             complete=?
-            $=  errors  %-  list
-            $:  txid=@ux
-                vout=@ud
-                script-sig=@ux
-                sequence=@ud
-                error=@t
-        ==  ==
+            =errors
+        ==
         ::
         [%unload-wallet ~]
         ::
@@ -2442,7 +2625,6 @@
             $:  type=@t
                 =address
                 hwm=@ud
-        ==  ==
-    ==
+    ==  ==  ==
   --
 --

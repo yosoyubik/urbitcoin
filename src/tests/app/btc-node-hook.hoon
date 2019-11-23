@@ -1,5 +1,5 @@
-/-  *btc-node-hook
-/+  *test, lib=btc-node-json
+/-  *btc-node-hook, sole
+/+  sole, *test, lib=btc-node-json
 ::
 /=  app  /:  /===/app/btc-node-hook
              /!noun/
@@ -17,7 +17,7 @@
       ['Content-Type' 'text/plain']
       ['Authorization' 'Basic dXJiaXRjb2luZXI6dXJiaXRjb2luZXI']
   ==
-=/  app-state=state:app  [%0 endpoint headers]
+=/  app-state=state:app  [%0 endpoint headers [*bone *sole-share:sole]]
 ::
 |%
 ::  Others

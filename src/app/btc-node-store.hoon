@@ -16,6 +16,7 @@
 ::
 +$  state-zero
   $:  =wallets
+      default-wallet=@t
   ==
 --
 ::
@@ -26,9 +27,12 @@
 ++  prep
   |=  old=(unit state)
   ^-  (quip move _this)
-  ?~  old
-    [~ this]
-  [~ this(+<+ u.old)]
+  :-  ~
+  ?^  old
+    this(+<+ u.old)
+  %=    this
+    wallets  (~(put by wallets) [*@t *wallet])
+  ==
 ::
 ++  poke-btc-node-store-action
   |=  action=btc-node-store-action
@@ -48,10 +52,9 @@
     ~&  "This wallet already exists..."
     [~ this]
   :-  ~
-  =/  new-wallet=wallet  [name ~]
   ~&  "Wallet {<name>} added succesfully..."
   %=    this
-    wallets  (~(put by wallets) [name new-wallet])
+    wallets  (~(put by wallets) [name name ~])
   ==
 ::
 ++  handle-list-wallet
