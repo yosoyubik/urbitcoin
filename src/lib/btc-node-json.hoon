@@ -179,9 +179,7 @@
             ^-  json
             ?@  s-o
               s+s-o
-            ::  FIXME: too verbose?
-            ::
-            ?>  ?=([@t (unit ?(@ud [@ud @ud]))] s-o)
+            ?>  ?=([@t range] s-o)
             %-  pairs
               :~  ['desc' s+desc.object.s-o]
                   :-  'range'
@@ -192,19 +190,6 @@
                     (numb r)
                   a+~[(numb -.r) (numb +.r)]
       ==      ==
-      ::     %+  weld
-      ::       ~[s+descriptor.s-o]
-      ::     ::
-      ::       %+  turn  metadata.s-o
-      ::         |=  [desc=@t =range]
-      ::         ^-  json
-      ::         %-  pairs
-      ::           :~  ['desc' s+desc]
-      ::               ?~  range  ~
-      ::               ?@  range
-      ::                 (numb range)
-      ::               a+~[(numb -.range) (numb +.range)]
-      :: ==        ==
     ::
         %verify-chain
       ~[(feud check-level.req) (feud n-blocks.req)]
@@ -517,6 +502,7 @@
       ~[s+(base58-to-cord address.req)]
     ::
         %get-balance
+      ?~  +.req  ~
       :~  (ferm dummy.req %s)
           (feud minconf.req)
           (ferm include-watch-only.req %b)
@@ -895,7 +881,7 @@
     ::  ignores (%error, %fails and %batch)
     ::
     ?>  ?=(%result -.res)
-    ?+    id.res  ~|([%unsupported-response id.res] !!)
+    ?+    id.res  ~|  [%unsupported-response id.res]   !!
     ::  Blockchain
     ::
         %get-best-block-hash
@@ -1432,9 +1418,6 @@
               ==  ==
             ::
               =-  ['partial_signatures' (uf ~ (mu -))]
-              :: %-  molt
-              ::   =-  %+  turn   ~(tap by -)
-              ::     |=([a=@ b=@ux] [`@ux`a b])
                 (op hex (cu to-hex so))
             ::
               =-  ['sighash' (uf ~ (mu -))]
@@ -1452,13 +1435,6 @@
                   ['type' so]
               ==
             ::
-              :: =-  ['bip32_derivs' (uf ~ (mu -))]
-              :: :: =-  %-  molt
-              :: ::   (turn ~(tap by -) |*([a=@ b=*] [`@ux`a b]))
-              :: =-  (op hex (ot -))
-              :: :~  ['master_fingerprint' so]
-              ::     ['path' so]
-              :: ==
               =-  ['bip32_derivs' (uf ~ (mu -))]
               =-  (op hex (ot -))
               :~  ['master_fingerprint' so]
@@ -2152,7 +2128,6 @@
          (cu ux-to-base (su fim:ag))
          ['hwm' ni]
       ==
-    ::
     ==
   --
 --

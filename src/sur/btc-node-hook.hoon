@@ -660,15 +660,15 @@
         ::  %get-address-info: Return information about the given bitcoin
         ::  address.
         ::
-        [%get-address-info wallet=@t =address]
+        [%get-address-info =address]
         ::  %get-balance: Returns the total available balance.
         ::
         $:  %get-balance
-            wallet=@t
-            dummy=(unit @t)
-            minconf=(unit @ud)
-            include-watch-only=(unit ?)
-        ==
+            $?  ~
+                $:  dummy=(unit @t)
+                    minconf=(unit @ud)
+                    include-watch-only=(unit ?)
+        ==  ==  ==
         ::  %get-new-address: Returns a new Bitcoin address for receiving
         ::  payments.
         ::
@@ -697,7 +697,7 @@
         ::  %get-wallet-info:  Returns an object containing various wallet
         ::  state info.
         ::
-        [%get-wallet-info name=@t]
+        [%get-wallet-info wallet=@t]
         ::  %import-address: Adds an address or script (in hex) that can be
         ::  watched as if it were in your wallet but cannot be used to spend.
         ::

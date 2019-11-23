@@ -34,6 +34,23 @@
     wallets  (~(put by wallets) [*@t *wallet])
   ==
 ::
+::  +peek: read from app state
+::
+::    .^(@t %gx /=btc-node-store=/default-wallet/noun)
+::
+++  peek-x-default-wallet
+  |=  =path
+  ^-  (unit (unit [%noun @t]))
+  [~ ~ %noun default-wallet]
+::
+::  +peek: read from app state
+::    .^(@ud %gx /=btc-node-store=/n-wallets/noun)
+::
+++  peek-x-n-wallets
+  |=  =path
+  ^-  (unit (unit [%noun @ud]))
+  [~ ~ %noun ~(wyt by wallets)]
+::
 ++  poke-btc-node-store-action
   |=  action=btc-node-store-action
   ^-  (quip move _this)
@@ -55,6 +72,13 @@
   ~&  "Wallet {<name>} added succesfully..."
   %=    this
     wallets  (~(put by wallets) [name name ~])
+    ::  FIXME: default wallet is updated to avoid
+    ::  the error where calling the RPC API with .../wallet/
+    ::  gives us a 404
+    ::  i.e. when there is more than 1 wallet, '' as a wallet name
+    ::  can't be added to the request URL
+    ::
+    default-wallet  name
   ==
 ::
 ++  handle-list-wallet

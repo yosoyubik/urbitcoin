@@ -22,7 +22,6 @@
 +$  state-zero
   $:  endpoint=@t
       headers=header-list:http
-      :: wallet=@t
       ::  $consol: console state
       ::
       ::     $conn:  id for console connection
@@ -88,9 +87,6 @@
       =.  consol  [ost.bol *sole-share]
       ~&  consol
       [~ this]
-      :: :_  this
-      :: :_  ~
-      :: (send (prompt enter))
       :: =.  consol  [ost.bol *sole-share]
       :: :_  this
       :: [(send (prompt enter))]~
@@ -117,19 +113,16 @@
       ?+    -.act  [~ this]
           ::  %clr: clear screen
           ::
-          %clr
-        [~ this]
+          %clr  [~ this]
       ::
           ::  %ret: enter key pressed
           ::
-          %ret
-        [~ this]
+          %ret  [~ this]
       ::
           ::  %det: key press
           ::  pressed key is stored in the console state
           ::
-          %det
-        (edit-sole +.act)
+          %det  (edit-sole +.act)
       ==
     :: ::
     ++  to-sole
@@ -149,58 +142,60 @@
 ++  poke-atom
   |=  a=@
   ^-  (quip move _this)
+  =/  default-wallet=@t
+    =-  .^(@t %gx -)
+    /(scot %p our.bol)/btc-node-store/(scot %da now.bol)/default-wallet/noun
+  =/  n-wallets=@ud
+    =-  .^(@ud %gx -)
+    /(scot %p our.bol)/btc-node-store/(scot %da now.bol)/n-wallets/noun
+  :: =/  n-wallets=@ud
+  ::   .^(@ %gx /=btc-node-store=/n-wallets/atom)
+  ~&  [default-wallet n-wallets]
   :_  this
   [ost.bol %flog / ^-(flog:dill text+"done")]~
 ::
 ++  poke-noun
   |=  act=btc-node-hook-action
   ^-  (quip move _this)
-  =/  body=request:rpc:jstd
-    (request-to-rpc:btc-rpc:lib act)
+  =/  body=request:rpc:jstd  (request-to-rpc:btc-rpc:lib act)
+  =/  default-wallet=@t
+    =-  .^(@t %gx -)
+    %+  weld  /(scot %p our.bol)/btc-node-store
+    /(scot %da now.bol)/default-wallet/noun
+  =/  n-wallets=@ud
+    =-  .^(@ud %gx -)
+    %+  weld  /(scot %p our.bol)/btc-node-store
+    /(scot %da now.bol)/n-wallets/noun
   =/  req=request:http
     :*  %'POST'
+        ::  URL endpoint
+        ::
         ?+    -.act
           endpoint
         ::
             %get-balance
-          ::  FIXME: fails when wallet.act is ''
-          ::
-          ::    url='http://127.0.0.1:8332/wallet/'
-          ::
-          ::  this example works with curl:
-          ::
-          :: curl --user XXX:YYY
-          ::      --data-binary '{
-          ::        "jsonrpc": "1.0",
-          ::        "id":"curltest",
-          ::        "method": "getwalletinfo",
-          ::        "params": []
-          ::      }'
-          ::      -H 'content-type: text/plain;'
-          ::      http://127.0.0.1:8332/wallet/
-          ::
-          %-  crip
-          %+  weld  "{(trip endpoint)}/wallet/"
-          ?:  =('' wallet.act)  ~
-          "{(trip wallet.act)}"
-        ::
-            %get-wallet-info
-          ::  FIXME: fails when name.act is ''
-          ::
-          (crip "{(trip endpoint)}/wallet/{(trip name.act)}")
-        ::
-        ::  TODO: add rest of wallet-related actions
-        ::  that might require a /wallet/<file_name>
+          ?:  (lte n-wallets 1)
+            endpoint
+          %-  crip  %+  weld
+            "{(trip endpoint)}/wallet/"
+          ?:  =('' default-wallet)  ~
+          "{(trip default-wallet)}"
         ::
             %get-address-info
-          ::  FIXME: fails when name.act is ''
-          ::
-          (crip "{(trip endpoint)}/wallet/{(trip wallet.act)}")
+          ?:  (lte n-wallets 1)
+            endpoint
+          %-  crip  %+  weld
+            "{(trip endpoint)}/wallet/"
+          ?:  =('' default-wallet)  ~
+          "{(trip default-wallet)}"
         ::
-          ::   %list-transactions
-          :: ::  FIXME: fails when name.act is ''
-          :: ::
-          :: (crip "{(trip endpoint)}/wallet/{(trip wallet.act)}")
+            %get-wallet-info
+          ?:  (lte n-wallets 1)
+            endpoint
+          %-  crip  %+  weld
+            "{(trip endpoint)}/wallet/"
+          ?:  =('' default-wallet)  ~
+          "{(trip default-wallet)}"
         ==
         headers
         %-  some
@@ -238,7 +233,7 @@
   ^-  (quip move _this)
   :_  this
   ;:  weld
-      ::  Print term for each succesful RPC request
+      ::  Print term for each succesful RPC request (used by :ph)
       ::
       [ost.bol %flog / [%text (trip -.rpc-resp)]]~
       ?+    -.rpc-resp  ~|  [%unsupported-response -.rpc-resp]  !!
