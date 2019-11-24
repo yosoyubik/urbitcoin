@@ -62,6 +62,14 @@
     %update-wallet  (handle-update-wallet +.action)
   ==
 ::
+++  poke-btc-node-store-command
+  |=  command=btc-node-store-command
+  ^-  (quip move _this)
+  ?>  (team:title our.bol src.bol)
+  ?+  -.command  ~|  [%unsupported-command -.command]  !!
+      %switch-wallet  (handle-switch +.command)
+  ==
+::
 ++  handle-add
   |=  [name=@t warning=(unit @t)]
   ^-  (quip move _this)
@@ -97,5 +105,14 @@
     this(wallets (~(jab by wallets) name.w |=(* w)))
   ~&  "The wallet doesn't exist. Creating..."
   this(wallets (~(put by wallets) [name.w w]))
+::
+++  handle-switch
+  |=  name=@t
+  ^-  (quip move _this)
+  ?.  (~(has by wallets) name)
+    ~&  "The wallet doesn't exist..."
+    [~ this]
+  ~&  "New default-wallet: {<name>}"
+  [~ this(default-wallet name)]
 ::
 --

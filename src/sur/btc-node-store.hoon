@@ -125,4 +125,12 @@
       [%wallet-attrs name=@t attr=wallet-attr]
   ==
 ::
++$  btc-node-store-command
+  $%  ::  Updated the default wallet stored in btc-node-store
+      ::
+      [%switch-wallet @t]
+      ::  TODO: do the actual syncing
+      ::
+      [%sync ~]
+  ==
 --
