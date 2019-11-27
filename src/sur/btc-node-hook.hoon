@@ -575,7 +575,11 @@
         ::  of m keys required. It returns a json object with the address and
         ::  redeemScript.
         ::
-        [%create-multi-sig n-required=@ud keys=(list @ux) address-type=(unit address-type)]
+        $:  %create-multi-sig
+            n-required=@ud
+            keys=(list @ux)
+            address-type=(unit address-type)
+        ==
         ::  %deriveaddresses: Derives one or more addresses corresponding to an
         ::  output descriptor. Examples of output descriptors are:
         ::
@@ -926,8 +930,6 @@
     $%
     ::  Blockchain
     ::
-        ::  %getbestblockhash: Returns the hash of the best (tip) block in the longest blockchain.
-        ::
         [%get-best-block-hash hex=@ux]
       ::
         $:  %get-block
@@ -1102,6 +1104,20 @@
       ::
         [%get-raw-mempool mem-pool-response]
       ::
+        $:  %get-tx-out
+            best-block=@ux
+            confirmations=@ud
+            value=@t
+            $=  script-pubkey
+            $:  asm=@t
+                hex=@ux
+                req-sigs=@ud
+                type=@t
+                addresses=(list address)
+            ==
+            coinbase=?
+        ==
+      ::
         [%get-tx-out-proof data=@ux]
       ::
         $:  %get-tx-outset-info
@@ -1136,14 +1152,11 @@
         [%verify-chain ?]
       ::
         [%verify-tx-out-proof (list @ux)]
-      ::
     ::  Control
         [%help ~]
-      ::
     ::  Generating
     ::
         [%generate blocks=(list blockhash)]
-      ::
     ::  Raw Transactions
     ::
         $:  %analyze-psbt

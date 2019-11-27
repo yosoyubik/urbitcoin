@@ -53,12 +53,6 @@
   ?~  old
     :-  ~
     %=  this
-      ::  TODO: wallet should be part of the state.
-      ::  few hook actions have a wallet name added for demo
-      ::  purposes but it should be removed
-      ::
-      ::  wallet  'urbit-wallet'
-      ::
       endpoint  'http://127.0.0.1:8332'
       headers
         :~  ['Accept' 'application/json']
@@ -148,8 +142,6 @@
   =/  n-wallets=@ud
     =-  .^(@ud %gx -)
     /(scot %p our.bol)/btc-node-store/(scot %da now.bol)/n-wallets/noun
-  :: =/  n-wallets=@ud
-  ::   .^(@ %gx /=btc-node-store=/n-wallets/atom)
   ~&  [default-wallet n-wallets]
   :_  this
   [ost.bol %flog / ^-(flog:dill text+"done")]~
@@ -174,6 +166,28 @@
           endpoint
         ::
             %get-balance
+          ::  FIXME: fails when default-wallet is '' and more than 1 wallet
+          ::  has been created
+          ::
+          ::    url='http://127.0.0.1:8332/wallet/'
+          ::
+          ::  this example works with curl:
+          ::
+          ::
+          :: curl --user XXX:YYY
+          ::      --data-binary '{
+          ::        "jsonrpc": "1.0",
+          ::        "id":"curltest",
+          ::        "method": "getwalletinfo",
+          ::        "params": []
+          ::      }'
+          ::      -H 'content-type: text/plain;'
+          ::      http://127.0.0.1:8332/wallet/
+          ::
+          ::  A %switch-wallet command needs to be issued against the store app
+          ::  when a wallet is created
+          ::  e.g.  > btc-node-store|command [%switch-wallet 'local']
+          ::
           ?:  (lte n-wallets 1)
             endpoint
           %-  crip  %+  weld

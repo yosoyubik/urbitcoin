@@ -73,8 +73,6 @@
 |%
 ++  btc-rpc
   =,  ^btc-rpc
-  ::  Utility core
-  ::
   |%
   ++  request-to-rpc
     =,  enjs:format
@@ -1256,22 +1254,22 @@
           ['bip125-replaceable' bo]
       ==
     ::
-      ::   %get-tx-out
-      :: :-  id.res
-      :: %.  res.res
-      :: =-  (ot -)
-      :: :~  ['bestblock' (cu to-hex so)]
-      ::     ['confirmations' ni]
-      ::     ['value' so]
-      ::     =-  ['scriptPubKey' (ot -)]
-      ::     :~  ['asm' so]
-      ::         ['hex' (cu to-hex so)]
-      ::         ['reqSigs' ni]
-      ::         ['type' so]
-      ::         ['addresses' (ar (cu ux-to-base (su fim:ag)))]
-      ::     ==
-      ::     ['coinbase' bo]
-      :: ==
+        %get-tx-out
+      :-  id.res
+      %.  res.res
+      =-  (ot -)
+      :~  ['bestblock' (cu to-hex so)]
+          ['confirmations' ni]
+          ['value' so]
+          =-  ['scriptPubKey' (ot -)]
+          :~  ['asm' so]
+              ['hex' (cu to-hex so)]
+              ['reqSigs' ni]
+              ['type' so]
+              ['addresses' (ar (cu ux-to-base (su fim:ag)))]
+          ==
+          ['coinbase' bo]
+      ==
     ::
         %get-tx-out-proof
       [id.res ((cu to-hex so) res.res)]
@@ -2117,7 +2115,7 @@
           ['complete' bo]
       ==
     ::
-    ::  %zmq
+    ::  ZMQ
     ::
         %get-zmq-notifications
       :-  id.res
