@@ -32,10 +32,10 @@
       ^-  (quip card _this)
       :-  ~
       %=  this
-        endpoint  'http://127.0.0.1:8332'
+        endpoint  'http://127.0.0.1:18443/'
         headers
-          :~  ['Accept' 'application/json']
-              ['Content-Type' 'text/plain']
+          :~  ::['Accept' 'application/json']
+              ['Content-Type' 'application/json']
               ['Authorization' 'Basic dXJiaXRjb2luZXI6dXJiaXRjb2luZXI']
       ==  ==
     ::
@@ -133,7 +133,9 @@
   ::  Only (FOR NOW) parse successful responses
   ::
   ?.  =(%result -.rpc-resp)
-    ~&  +.rpc-resp
+    ::  TODO: parse error response properly
+    ::
+    ~&  [%error +.rpc-resp]
     [~ state]
   %-  handle-btc-response
     (parse-response:btc-rpc:lib rpc-resp)
@@ -148,13 +150,26 @@
       ::
       ^-  (list card)
       [%pass / %arvo %d %flog [%text (trip -.btc-resp)]]~
-      ?+    -.btc-resp  ~|  [%unsupported-response -.btc-resp]  !!
+      ?+    -.btc-resp  ::  ~|  [%unsupported-response -.btc-resp]  !!
+          ~&  btc-resp
+          ~
+      ::
+          :: %abandon-transaction
+          :: %abort-rescan
+          :: %add-multisig-address
+          :: %backup-wallet
+          :: %bump-fee
           %create-wallet
         ^-  (list card)
         =/  btc-store-req=btc-node-store-action
           :+  %add-wallet   name.btc-resp
           ?:(=('' warning.btc-resp) ~ (some warning.btc-resp))
         [(btc-node-store-poke /store btc-store-req)]~
+      ::
+          :: %dump-privkey
+          :: %dump-wallet
+          :: %encrypt-wallet
+          :: %get-addresses-by-label
       ::
           %get-address-info
         ^-  (list card)
@@ -168,20 +183,63 @@
             %text  "amount={(trip +.btc-resp)}"
         ==
       ::
+          :: %get-balance
+          :: %get-new-address
+          :: %get-raw-change-address
+          :: %get-received-by-address
+          :: %get-received-by-label
+          :: %get-transaction
+          :: %get-unconfirmed-balance
+      ::
           %get-wallet-info
         ^-  (list card)
         =/  btc-store-req=btc-node-store-action
           [%update-wallet wallet-name.btc-resp +>:btc-resp]
         [(btc-node-store-poke /update btc-store-req)]~
       ::
-          %list-wallets
-        ^-  (list card)
-        [(btc-node-store-poke /list [%list-wallets ~])]~
+          :: %import-address
+          :: %import-multi
+          :: %import-privkey
+          :: %import-pruned-funds
+          :: %import-pubkey
+          :: %import-wallet
+          :: %key-pool-refill
+          :: %list-address-groupings
+          :: %list-labels
+          :: %list-lock-unspent
+          :: %list-received-by-address
+          :: %list-received-by-label
+          :: %lists-in-ceblock
       ::
           %list-transactions
         ^-  (list card)
         ~&  [%transactions +.btc-resp]
         ~
+      ::
+          :: %list-unspent
+          :: %list-wallet-dir
+      ::
+          %list-wallets
+        ^-  (list card)
+        [(btc-node-store-poke /list [%list-wallets ~])]~
+      ::
+          :: %load-wallet
+          :: %lock-unspent
+          :: %remove-pruned-funds
+          :: %rescan-blockchain
+          :: %send-many
+          :: %send-to-address
+          :: %set-hd-seed
+          :: %set-label
+          :: %set-tx-fee
+          :: %sign-message
+          :: %sign-raw-transaction-with-wallet
+          :: %unload-wallet
+          :: %wallet-create-fundedpsbt
+          :: %wallet-lock
+          :: %wallet-passphrase
+          :: %wallet-passphrase-change
+          :: %wallet-process-psbt
   ==  ==
 ::
 ++  btc-node-store-poke
@@ -204,18 +262,54 @@
 ::
 ++  endpoint-url
   |=  [act=btc-node-hook-action]
-  ?.  ?|  =(-.act %get-balance)
+  ?.  ?|  =(-.act %abandon-transaction)
+          =(-.act %dump-privkey)
+          =(-.act %dump-wallet)
+          =(-.act %fund-raw-transaction)
+          =(-.act %get-balance)
+          =(-.act %get-addresses-by-label)
           =(-.act %get-address-info)
+          =(-.act %get-balance)
+          =(-.act %get-new-address)
+          =(-.act %get-received-by-label)
+          =(-.act %get-transaction)
+          =(-.act %get-unconfirmed-balance)
           =(-.act %get-wallet-info)
+          =(-.act %import-address)
+          =(-.act %import-multi)
+          =(-.act %import-privkey)
+          =(-.act %import-pruned-funds)
+          =(-.act %import-pubkey)
+          =(-.act %key-pool-refill)
+          =(-.act %list-address-groupings)
+          =(-.act %list-labels)
+          =(-.act %list-lock-unspent)
+          =(-.act %list-received-by-address)
+          =(-.act %list-received-by-label)
+          =(-.act %lists-in-ceblock)
+          =(-.act %list-transactions)
+          =(-.act %list-unspent)
+          =(-.act %remove-pruned-funds)
+          =(-.act %send-many)
+          =(-.act %send-to-address)
+          =(-.act %set-label)
+          =(-.act %set-tx-fee)
+          =(-.act %sign-message)
+          =(-.act %sign-raw-transaction-with-wallet)
+          =(-.act %wallet-create-fundedpsbt)
+          =(-.act %wallet-process-psbt)
+          =(-.act %wallet-passphrase)
       ==
       endpoint
+  ?:  =(-.act %dump-wallet)
+     ?>  ?=([%dump-wallet filename=@t] act)
+     (crip "{(trip endpoint)}wallet/{(trip filename.act)}")
   ::  FIXME: fails when default-wallet is '' and more than 1 wallet
   ::  has been created
   ::
-  ::    url='http://127.0.0.1:8332/wallet/'
+  ::    url='http://127.0.0.1:18443/wallet/'
   ::
-  ::  this example works with curl:
-  ::
+  ::  although this example works with curl:
   ::
   :: curl --user XXX:YYY
   ::      --data-binary '{
@@ -225,16 +319,16 @@
   ::        "params": []
   ::      }'
   ::      -H 'content-type: text/plain;'
-  ::      http://127.0.0.1:8332/wallet/
+  ::      http://127.0.0.1:18443/wallet/
   ::
   ::  A %switch-wallet command needs to be issued against the store app
   ::  when a wallet is created
-  ::  e.g.  > btc-node-store|command [%switch-wallet 'local']
+  ::  e.g.  > :btc-node-store|command [%switch-wallet 'local']
   ::
   ?:  (lte n-wallets 1)
     endpoint
   %-  crip  %+  weld
-    "{(trip endpoint)}/wallet/"
+    "{(trip endpoint)}wallet/"
   ?:  =('' default-wallet)  ~
   "{(trip default-wallet)}"
 --

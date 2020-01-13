@@ -3,7 +3,7 @@
     |%
     ::  +address: base58check encoded public key (20 bytes)
     ::
-    ++  address  @uc
+    ++  address    @uc
     ++  blockhash  @ux
     ::  $estimate-mode
     ::
@@ -12,8 +12,10 @@
     ::      - %estimate-smart-fee
     ::      - %bump-fee
     ::      - %wallet-create-fundedpsbt
+    ::      - %send-to-address
+    ::      - %send-many
     ::
-    +$  estimate-mode  (unit ?(%'ECONOMICAL' %'CONSERVATIVE' %'UNSET'))
+    +$  estimate-mode  ?(%'UNSET' %'ECONOMICAL' %'CONSERVATIVE')
     ::  $category:
     ::
     ::    Used in:
@@ -70,22 +72,22 @@
     ::  $sig-hash:
     ::
     ::    Used in:
+    ::      - %wallet-process-psbt
     ::      - $sig-hash-type
     ::
     +$  sig-hash
-      $?  %'ALL'
-          %'NONE'
+      $?  %'NONE'
           %'SINGLE'
           %'ALL|ANYONECANPAY'
           %'NONE|ANYONECANPAY'
           %'SINGLE|ANYONECANPAY'
+          %'ALL'
       ==
     ::  $sig-hash-type:
     ::
     ::    Used in:
-    ::      - $raw-tx
+    ::      - %sign-raw-transaction-with-wallet
     ::      - %sign-raw-transaction-with-key
-    ::      - %wallet-process-psbt
     ::      - %decode-psbt
     ::
     +$  sig-hash-type  (unit sig-hash)
@@ -100,14 +102,19 @@
     ::    Used in:
     ::      - $utxo
     ::
-    +$  script-pubkey  [asm=@t hex=@ux type=@t =address]
+    +$  script-pubkey
+      $:  asm=@t
+          hex=@ux
+          type=@t
+          address=?(address [%bech32 @t])
+      ==
     ::  $range:
     ::
     ::    Used in:
     ::      - %derive-addresses
     ::      - $scan-object
     ::
-    +$  range  (unit ?(@ud [@ud @ud]))
+    +$  range  ?(@ud [@ud @ud])
     ::  $vin:
     ::
     ::    Used in:
@@ -115,10 +122,10 @@
     ::      - $raw-transaction-rpc-out
     ::
     +$  vin
-      $:  txid=@ux
-          vout=@ud
-          script-sig=[asm=@t hex=@ux]
-          tx-in-witness=(list @ux)
+      $:  txid=(unit @ux)
+          vout=(unit @ud)
+          script-sig=(unit [asm=@t hex=@ux])
+          tx-in-witness=(unit (list @ux))
           sequence=@ud
       ==
     ::  $vout:
@@ -133,9 +140,10 @@
           $=  script-pubkey
           $:  asm=@t
               hex=@ux
-              req-sigs=@ud
+              req-sigs=(unit @ud)
               type=@t
-              addresses=(list address)
+              $=  addresses  %-  unit
+              (list ?(address [%bech32 @t]))
       ==  ==
     ::  $input:
     ::
@@ -156,7 +164,7 @@
     ::
     +$  output
       $:  data=[%data @ux]
-          addresses=(list [=address amount=@t])
+          addresses=(list [address=?(address [%bech32 @t]) amount=@t])
       ==
     ::  $scan-object:
     ::
@@ -167,7 +175,7 @@
       $?  descriptor=@t
           $=  object
           $:  desc=@t
-              =range
+              range=(unit range)
       ==  ==
     ::  $utxo:
     ::
@@ -178,10 +186,24 @@
       $:  amount=@t
           =script-pubkey
       ==
+    ::  $segwit-script:
+    ::
+    ::    Used in:
+    ::      - %decode-script
+    ::
+    +$  segwit-script
+      $:  asm=@t
+          hex=(unit @ux)
+          type=@t
+          req-sigs=(unit @ud)
+          addresses=(list [%bech32 @t])
+          p2sh-segwit=(unit address)
+      ==
     ::  $partially-signed-transaction:
     ::
     ::    Used in:
     ::      - %create-psbt
+    ::      - %create-raw-transaction
     ::
     +$  partially-signed-transaction
       $:  inputs=(list input)
@@ -195,21 +217,21 @@
     ::      - %import-multi
     ::
     +$  import-request
-      $:  desc=@t
+      $:  desc=(unit @t)
           $=  script-pubkey
           $%  [%script s=@t]
-              [%address a=address]
+              [%address a=?(address [%bech32 @t])]
           ==
           timestamp=?(@da %now)
-          redeem-script=@t
-          witness-script=@t
+          redeem-script=(unit @t)
+          witness-script=(unit @t)
           pubkeys=(unit (list @t))
           keys=(unit (list @t))
-          range=?(@ud [@ud @ud])
-          internal=?
-          watchonly=?
-          label=@t
-          keypool=?
+          range=(unit ?(@ud [@ud @ud]))
+          internal=(unit ?)
+          watchonly=(unit ?)
+          label=(unit @t)
+          keypool=(unit ?)
       ==
     ::  $serialized-tx:
     ::
@@ -231,7 +253,7 @@
     ::  $prev-tx:
     ::
     ::    Used in:
-    ::      - $raw-tx
+    ::      - %sign-raw-transaction-with-wallet
     ::      - %sign-raw-transaction-with-key
     ::
     +$  prev-tx
@@ -242,16 +264,6 @@
           witness-script=@ux
           amount=@t
       ==
-    ::  $raw-tx:
-    ::
-    ::    Used in:
-    ::      - %sign-raw-transaction-with-wallet
-    ::
-    +$  raw-tx
-      $:  hex-string=@ux
-          prev-txs=(unit (list prev-tx))
-          =sig-hash-type
-      ==
     ::  $raw-transaction-rpc-out:
     ::
     ::    Used in:
@@ -259,7 +271,7 @@
     ::      - %get-raw-transaction
     ::
     +$  raw-transaction-rpc-out
-      $:  in-active-chain=?
+      $:  in-active-chain=(unit ?)
           hex=@ux
           txid=@ux
           hash=@ux
@@ -270,35 +282,36 @@
           locktime=@ud
           vin=(list vin)
           vout=(list vout)
-          =blockhash
-          confirmations=@ud
-          blocktime=@ud
-          time=@ud
+          blockhash=(unit @ux)
+          confirmations=(unit @ud)
+          blocktime=(unit @ud)
+          time=(unit @ud)
       ==
     ::  $tx-in-block:
     ::
     ::    Used in:
     ::      - %lists-in-ceblock
+    ::      - %list-transactions
     ::
     +$  tx-in-block
-      $:  =address
+      $:  address=(unit ?(address [%bech32 @t]))
           =category
           amount=@t
-          label=@t
+          label=(unit @t)
           vout=@ud
-          fee=@t
+          fee=(unit @t)
           confirmations=@ud
-          blockhash=@ux
-          blockindex=@ud
-          blocktime=@ud
+          blockhash=(unit @ux)
+          blockindex=(unit @ud)
+          blocktime=(unit @ud)
           txid=@ux
           time=@ud
-          time-received=@ud
+          time-received=(unit @ud)
+          wallet-conflicts=(unit (list @ux))
           =bip125-replaceable
-          abandoned=?
-          comment=@t
-          label=@t
-          to=@t
+          abandoned=(unit ?)
+          comment=(unit @t)
+          to=(unit @t)
       ==
     ::  $errors:
     ::
@@ -353,7 +366,7 @@
     ::
     +$  mem-pool-response  %-  list
       ::  FIXME: a list for ux and map for the cell
-      ::  produce a fish-loop
+      ::  produces a fish-loop
       ::
       $?  ::  (for verbose = false)
           ::
@@ -470,7 +483,7 @@
         ::  in a block, returning the transaction it commits to
         :: and throwing an RPC error if the block is not in our best chain
         ::
-        [%verify-tx-out-proof proof=@t]
+        [%verify-tx-out-proof proof=@ux]
     ::  Control
     ::
         [%help command=(unit @t)]
@@ -535,9 +548,9 @@
                 subtract-fee-from-outputs=(unit (list @ud))
                 replaceable=(unit ?)
                 conf-target=(unit @ud)
-                =estimate-mode
+                mode=(unit estimate-mode)
             ==
-            is-witness=(unit ?)
+            is-witness=?
         ==
         ::  %getrawtransaction: Return the raw transaction data.
         ::
@@ -550,7 +563,7 @@
         ::  %sendrawtransaction: Submits raw transaction
         ::  (serialized, hex-encoded) to local node and network.
         ::
-        [%send-raw-transaction hex-string=@ux allow-high-fees=(unit ?)]
+        [%send-raw-transaction hex-string=@ux allow-high-fees=?]
         ::  %signrawtransactionwithkey: Sign inputs for raw transaction
         ::  (serialized, hex-encoded).
         ::
@@ -564,7 +577,7 @@
         ::  indicating if raw transaction (serialized, hex-encoded) would be
         ::  accepted by mempool.
         ::
-        [%test-mempool-accept raw-txs=(list @ux) allow-high-fees=(unit ?)]
+        [%test-mempool-accept raw-txs=(list @ux) allow-high-fees=?]
         ::  %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from
         ::  the UTXO set or the mempool.
         ::
@@ -579,11 +592,11 @@
             n-required=@ud
             keys=(list @ux)
             address-type=(unit address-type)
-        ==
+            ==
         ::  %deriveaddresses: Derives one or more addresses corresponding to an
-        ::  output descriptor. Examples of output descriptors are:
+        ::  output descriptor.
         ::
-        [%derive-addresses descriptor=@t =range]
+        [%derive-addresses descriptor=@t range=(unit range)]
         ::  %estimatesmartfee: Estimates the approximate fee per kilobyte
         ::  needed for a transaction to begin confirmation within conf_target
         ::  blocks if possible and return the number of blocks for which the
@@ -600,10 +613,10 @@
         ::  %validateaddress: Return information about the given
         ::  bitcoin address.
         ::
-        [%validate-address =address]
+        [%validate-address address=?(address [%bech32 @t])]
         ::  %verifymessage: Verify a signed message
         ::
-        [%verify-message =address signature=@t message=@t]
+        [%verify-message address=?(address [%bech32 @t]) signature=@t message=@t]
     ::  Wallet
     ::
         ::  %abandon-transaction: Mark in-wallet transaction as abandoned.
@@ -618,7 +631,7 @@
         ::
         $:  %add-multisig-address
             n-required=@ud
-            keys=(list address)
+            keys=(list ?(address [%bech32 @t]))
             label=(unit @t)
             =address-type
         ==
@@ -631,12 +644,11 @@
         $:  %bump-fee
             txid=@ux
             $=  options  %-  unit
-            $:  conf-target=(unit @t)
+            $:  conf-target=(unit @ud)
                 total-fee=(unit @t)
                 replaceable=(unit ?)
-                =estimate-mode
-            ==
-        ==
+                mode=(unit estimate-mode)
+        ==  ==
         ::  %create-wallet: Creates and loads a new wallet.
         ::
         ::    - %name: The name for the new wallet.
@@ -649,7 +661,7 @@
         [%create-wallet name=@t disable-private-keys=(unit ?) blank=(unit ?)]
         ::  %dump-privkey: Reveals the private key corresponding to 'address'.
         ::
-        [%dump-privkey =address]
+        [%dump-privkey address=?(address [%bech32 @t])]
         ::  %dump-wallet: Dumps all wallet keys in a human-readable format to
         ::  a server-side file.
         ::
@@ -664,12 +676,12 @@
         ::  %get-address-info: Return information about the given bitcoin
         ::  address.
         ::
-        [%get-address-info =address]
+        [%get-address-info address=?(address [%bech32 @t])]
         ::  %get-balance: Returns the total available balance.
         ::
         $:  %get-balance
             $?  ~
-                $:  dummy=(unit @t)
+                $:  dummy=(unit %'*')
                     minconf=(unit @ud)
                     include-watch-only=(unit ?)
         ==  ==  ==
@@ -684,7 +696,7 @@
         ::  %get-received-by-address:  Returns the total amount received by the
         ::  given address in transactions with at least minconf confirmations.
         ::
-        [%get-received-by-address =address minconf=@ud]
+        [%get-received-by-address address=?(address [%bech32 @t]) minconf=@ud]
         ::  %get-received-by-label:  Returns the total amount received by
         ::  addresses with <label> in transactions with at least [minconf]
         ::  confirmations.
@@ -706,7 +718,11 @@
         ::  watched as if it were in your wallet but cannot be used to spend.
         ::
         $:  %import-address
-            =address
+            $=  address
+            $%  [%addr address]
+                [%bech32 @t]
+                [%script @ux]
+            ==
             label=(unit @t)
             rescan=(unit ?)
             p2sh=(unit ?)
@@ -725,7 +741,7 @@
         [%import-privkey privkey=@t label=(unit @t) rescan=(unit ?)]
         ::  %import-pruned-funds:  Imports funds without rescan.
         ::
-        [%import-pruned-funds raw-transaction=@t tx-out-proof=@t]
+        [%import-pruned-funds raw-transaction=@ux tx-out-proof=@ux]
         ::  %import-pubkey:  Adds a public key (in hex) that can be watched as
         ::  if it were in your wallet but cannot be used to spend.
         ::
@@ -756,7 +772,7 @@
                 $:  minconf=(unit @ud)
                     include-empty=(unit ?)
                     include-watch-only=(unit ?)
-                    address-filter=(unit @t)
+                    address-filter=(unit address=?(address [%bech32 @t]))
         ==  ==  ==
         ::  %list-received-by-label: List received transactions by label.
         ::
@@ -792,15 +808,15 @@
         ::
         $:  %list-unspent
             $?  ~
-                $:  minconf=(unit @t)
+                $:  minconf=(unit @ud)
                     maxconf=(unit @ud)
-                    addresses=(unit (list @t))
+                    addresses=(unit (list ?(address [%bech32 @t])))
                     include-unsafe=(unit ?)
                     $=  query-options  %-  unit
-                    $:  minimum-amount=(unit @t)
-                        maximum-amount=(unit @t)
-                        maximum-count=(unit @t)
-                        minimum-sum-amount=(unit @t)
+                    $:  minimum-amount=(unit @ud)
+                        maximum-amount=(unit @ud)
+                        maximum-count=(unit @ud)
+                        minimum-sum-amount=(unit @ud)
         ==  ==  ==  ==
         ::  %list-wallet-dir  Returns a list of wallets in the wallet directory.
         ::
@@ -831,25 +847,25 @@
         ::
         $:  %send-many
             dummy=%''
-            amounts=(list [=address amount=@t])
+            amounts=(list [address=?(address [%bech32 @t]) amount=@t])
             minconf=(unit @ud)
             comment=(unit @t)
-            subtract-fee-from=(unit (list address))
-            :: subtract-fee-from=(unit (list address))
+            subtract-fee-from=(unit (list ?(address [%bech32 @t])))
+            replaceable=(unit ?)
             conf-target=(unit @ud)
-            estimate-mode=(unit @t)
+            mode=(unit estimate-mode)
         ==
         ::  %send-to-address: Send an amount to a given address.
         ::
         $:  %send-to-address
-            =address
+            address=?(address [%bech32 @t])
             amount=@t
             comment=(unit @t)
             comment-to=(unit @t)
             subtract-fee-from-amount=(unit ?)
             replaceable=(unit ?)
             conf-target=(unit @ud)
-            estimate-mode=(unit @t)
+            mode=(unit estimate-mode)
         ==
         ::  %set-hd-seed: Set or generate a new HD wallet seed.
         ::  Non-HD wallets will not be upgraded to being a HD wallet.
@@ -857,17 +873,21 @@
         [%set-hd-seed ~]
         ::  %set-label:   Sets the label associated with the given address.
         ::
-        [%set-label =address label=@t]
+        [%set-label address=?(address [%bech32 @t]) label=@t]
         ::  %set-tx-fee: Set the transaction fee per kB for this wallet.
         ::
         [%set-tx-fee amount=@t]
         ::  %sign-message:   Sign a message with the private key of an address
         ::
-        [%sign-message =address message=@t]
+        [%sign-message address=?(address [%bech32 @t]) message=@t]
         ::  %sign-raw-transaction-with-wallet: Sign inputs for raw transaction
         ::  (serialized, hex-encoded).
         ::
-        [%sign-raw-transaction-with-wallet raw-tx]
+        $:  %sign-raw-transaction-with-wallet
+            hex-string=@ux
+            prev-txs=(unit (list prev-tx))
+            =sig-hash-type
+        ==
         ::  %unload-wallet:   Unloads the wallet referenced by the request
         ::  endpoint otherwise unloads the wallet specified in the argument.
         ::
@@ -890,7 +910,7 @@
                 subtract-fee-from-outputs=(unit (list @ud))
                 replaceable=(unit ?)
                 conf-target=(unit @ud)
-                =estimate-mode
+                mode=(unit estimate-mode)
             ==
             bip32-derivs=(unit ?)
         ==
@@ -902,7 +922,7 @@
         ::  for 'timeout' seconds.
         ::
         [%wallet-passphrase passphrase=@t timeout=@ud]
-        ::  C%wallet-passphrase-changehange: s the wallet passphrase from
+        ::  %wallet-passphrase-changehange: s the wallet passphrase from
         ::  'oldpassphrase' to 'newpassphrase'.
         ::
         $:  %wallet-passphrase-change
@@ -914,8 +934,8 @@
         ::
         $:  %wallet-process-psbt
             psbt=@t
-            sign=(unit ?)
-            =sig-hash-type
+            sign=?
+            =sig-hash
             bip32-derivs=(unit ?)
         ==
     ::  ZMQ management
@@ -963,7 +983,7 @@
                     chain-work=@ux
                     n-tx=@ud
                     previous-blockhash=@ux
-                    next-blockhash=@ux
+                    next-blockhash=(unit @ux)
         ==  ==  ==
       ::
         $:  %get-blockchain-info
@@ -1000,7 +1020,7 @@
                         count=@ud
                         possible=?
                 ==  ==
-            warnings=(list @t)
+            warnings=@t
         ==
       ::
         [%get-block-count count=@ud]
@@ -1027,7 +1047,7 @@
                     chain-work=@ux
                     n-tx=@ud
                     previous-blockhash=@ux
-                    next-blockhash=@ux
+                    next-blockhash=(unit @ux)
         ==  ==  ==
       ::
         $:  %get-block-stats
@@ -1082,7 +1102,7 @@
             window-block-count=@ud
             window-tx-count=(unit @ud)
             window-interval=(unit @ud)
-            tx-rate=(unit @ud)
+            tx-rate=(unit @t)
         ==
       ::
         [%get-difficulty n=@t]
@@ -1105,18 +1125,20 @@
         [%get-raw-mempool mem-pool-response]
       ::
         $:  %get-tx-out
-            best-block=@ux
-            confirmations=@ud
-            value=@t
-            $=  script-pubkey
-            $:  asm=@t
-                hex=@ux
-                req-sigs=@ud
-                type=@t
-                addresses=(list address)
-            ==
-            coinbase=?
-        ==
+            $?  ~
+              ::
+                $:  best-block=@ux
+                    confirmations=@ud
+                    value=@t
+                    $=  script-pubkey
+                    $:  asm=@t
+                        hex=@ux
+                        req-sigs=@ud
+                        type=@t
+                        addresses=(list ?(address [%bech32 @t]))
+                    ==
+                    coinbase=?
+        ==  ==  ==
       ::
         [%get-tx-out-proof data=@ux]
       ::
@@ -1138,6 +1160,11 @@
         [%save-mempool ~]
       ::
         $:  %scan-tx-outset
+            success=(unit ?)
+            searched-items=(unit @ud)
+            txouts=(unit @ud)
+            height=(unit @ud)
+            best-blocks=(unit @ux)
             $=  unspents  %-  list
             $:  txid=@ux
                 vout=@ud
@@ -1163,7 +1190,7 @@
             $=  inputs  %-  list
             $:  has-utxo=?
                 is-final=?
-                $=  missing  %-  unit  %-  list
+                $=  missing  %-  unit
                 $:  pubkeys=(unit (list @ux))
                     signatures=(unit (list @ux))
                     redeem-script=(unit @ux)
@@ -1205,7 +1232,7 @@
                 ==
                 final-script-sig=(unit [asm=@t hex=@ux])
                 final-script-witness=(unit (list @ux))
-                unknown=(map @t @t)
+                unknown=(unit (map @t @t))
             ==
             $=  outputs  %-  list
             $:  redeem-script=(unit script)
@@ -1215,7 +1242,7 @@
                 $:  master-fingerprint=@t
                     path=@t
                 ==
-                unknown=(map @t @t)
+                unknown=(unit (map @t @t))
             ==
             fee=(unit @t)
         ==
@@ -1224,14 +1251,15 @@
       ::
         $:  %decode-script
             asm=@t
-            hex=@ux
+            hex=(unit @ux)
             type=@t
-            req-sigs=@ud
-            addresses=(list address)
-            p2sh=address
+            req-sigs=(unit @ud)
+            addresses=(unit (list ?(address [%bech32 @t])))
+            p2sh=(unit address)
+            segwit=(unit segwit-script)
         ==
       ::
-        [%finalize-psbt psbt=@t hex=@ux complete=?]
+        [%finalize-psbt psbt=@t hex=(unit @ux) complete=?]
       ::
         [%fund-raw-transaction hex=@ux fee=@t change-pos=?(@ud %'-1')]
       ::
@@ -1244,7 +1272,7 @@
         $:  %sign-raw-transaction-with-key
             hex=@ux
             complete=?
-            =errors
+            errors=(unit errors)
         ==
       ::
         $:  %test-mempool-accept  %-  list
@@ -1254,14 +1282,17 @@
         ==  ==
       ::
         [%utxo-update-psbt psbt=@t]
-      ::
     ::  Util
     ::
-        [%create-multi-sig =address redeem-script=@t]
+        [%create-multi-sig address=?(address [%bech32 @t]) redeem-script=@t]
       ::
-        [%derive-addresses (list address)]
+        [%derive-addresses (list address=?(address [%bech32 @t]))]
       ::
-        [%estimate-smart-fee fee-rate=@t errors=(unit (list @t)) blocks=@ud]
+        $:  %estimate-smart-fee
+            fee-rate=(unit @t)
+            errors=(unit (list @t))
+            blocks=@ud
+        ==
       ::
         $:  %get-descriptor-info
             descriptor=@t
@@ -1274,7 +1305,7 @@
       ::
         $:  %validate-address
             is-valid=?
-            =address
+            address=?(address [%bech32 @t])
             script-pubkey=@ux
             is-script=?
             is-witness=?
@@ -1283,14 +1314,16 @@
         ==
       ::
         [%verify-message ?]
-      ::
     ::  Wallet
     ::
         [%abandon-transaction ~]
       ::
         [%abort-rescan ~]
       ::
-        [%add-multisig-address =address redeem-script=@t]
+        $:  %add-multisig-address
+            address=?(address [%bech32 @t])
+            redeem-script=@t
+        ==
       ::
         [%backup-wallet ~]
       ::
@@ -1304,10 +1337,12 @@
       ::
         [%encrypt-wallet ~]
       ::
-        [%get-addresses-by-label addresses=(list [=address =purpose])]
+        $:  %get-addresses-by-label
+            addresses=(list [?(address [%bech32 @t]) =purpose])
+        ==
       ::
         $:  %get-address-info
-            =address
+            address=?(address [%bech32 @t])
             script-pubkey=@ux
             is-mine=?
             is-watchonly=?
@@ -1325,10 +1360,10 @@
             pubkey=(unit @ux)
             $=  embedded  %-  unit
             $:  script-pubkey=@ux
-                solvable=?
+                solvable=(unit ?)
                 desc=(unit @t)
                 is-script=?
-                is-change=?
+                is-change=(unit ?)
                 is-witness=?
                 witness-version=(unit @t)
                 witness-program=(unit @ux)
@@ -1340,11 +1375,11 @@
                 is-compressed=(unit ?)
                 label=(unit @t)
                 hd-master-finger-print=(unit @ux)
-                labels=(list [name=@t =purpose])
+                labels=(unit (list [name=@t =purpose]))
             ==
             is-compressed=(unit ?)
             label=(unit @t)
-            timestamp=(unit @t)
+            timestamp=(unit @ud)
             hd-key-path=(unit @t)
             hd-seed-id=(unit @ux)
             hd-master-finger-print=(unit @ux)
@@ -1353,9 +1388,9 @@
       ::
         [%get-balance amount=@t]
       ::
-        [%get-new-address =address]
+        [%get-new-address address=?(address [%bech32 @t])]
       ::
-        [%get-raw-change-address =address]
+        [%get-raw-change-address address=?(address [%bech32 @t])]
       ::
         [%get-received-by-address amount=@t]
       ::
@@ -1363,28 +1398,28 @@
       ::
         $:  %get-transaction
             amount=@t
-            fee=@t
+            fee=(unit @t)
             confirmations=@ud
-            blockhash=@ux
-            blockindex=@ud
-            blocktime=@ud
+            blockhash=(unit @ux)
+            blockindex=(unit @ud)
+            blocktime=(unit @ud)
             txid=@ux
             time=@ud
             time-received=@ud
             =bip125-replaceable
             $=  details  %-  list
-            $:  =address
+            $:  address=?(address [%bech32 @t])
                 =category
                 amount=@t
-                label=@t
+                label=(unit @t)
                 vout=@ud
-                fee=@t
-                abandoned=?
+                fee=(unit @t)
+                abandoned=(unit ?)
             ==
             hex=@ux
         ==
       ::
-        [%get-unconfirmed-balance @t]
+        [%get-unconfirmed-balance amount=@t]
       ::
         $:  %get-wallet-info
             wallet-name=@t
@@ -1423,8 +1458,8 @@
         [%key-pool-refill ~]
       ::
         $:  %list-address-groupings
-           $=  address  %-  list
-           (list [=address amount=@t label=(unit @t)])
+           $=  groups  %-  list  %-  list
+           (list [?(address [%bech32 @t]) amount=@t label=(unit @t)])
         ==
       ::
         [%list-labels labels=(list @t)]
@@ -1433,7 +1468,7 @@
       ::
         $:  %list-received-by-address  %-  list
             $:  involves-watch-only=(unit %&)
-                =address
+                address=?(address [%bech32 @t])
                 amount=@t
                 confirmations=@ud
                 label=@t
@@ -1450,40 +1485,22 @@
         $:  %lists-in-ceblock
             transactions=(list tx-in-block)
             removed=(unit (list tx-in-block))
-            lastblock=@ux
+            last-block=@ux
         ==
       ::
-        $:  %list-transactions  %-  list
-            $:  =address
-                =category
-                amount=@t
-                label=@t
-                vout=@ud
-                fee=@t
-                confirmations=@ud
-                trusted=?
-                blockhash=@ux
-                blockindex=@ud
-                blocktime=@ud
-                txid=@ux
-                time=@ud
-                time-received=@ud
-                comment=@t
-                =bip125-replaceable
-                abandoned=?
-        ==  ==
+        [%list-transactions transactions=(list tx-in-block)]
       ::
         $:  %list-unspent
         $=  txs  %-  list
             $:  txid=@ux
                 vout=@ud
-                =address
+                address=?(address [%bech32 @t])
                 label=@t
                 script-pubkey=@ux
                 amount=@t
                 confirmations=@ud
                 redeem-script=@ux
-                witness-script=@ux
+                witness-script=(unit @ux)
                 spendable=?
                 solvable=?
                 desc=(unit @t)
@@ -1517,7 +1534,7 @@
         $:  %sign-raw-transaction-with-wallet
             hex=@ux
             complete=?
-            =errors
+            errors=(unit errors)
         ==
       ::
         [%unload-wallet ~]
@@ -1536,7 +1553,7 @@
     ::
         $:  %get-zmq-notifications  %-  list
             $:  type=@t
-                =address
+                address=?(address [%bech32 @t])
                 hwm=@ud
     ==  ==  ==
   --

@@ -1,9 +1,9 @@
 /-  *btc-node-hook
 /+  base64
 =,  format
-=>  ::  Helper gates used for parsing or for avoiding
-    ::  repetition or common idioms
+=>  ::  Helper gates
     ::
+    =,  dejs
     |%
     ::  Checks the unit for null and returns a json e.g. [%s @ta]
     ::
@@ -27,10 +27,10 @@
     ::
     ++  groups
       |=  l=(list @t)
-      ^-  (list [@uc @t (unit @t)])
+      ^-  (list [?(@uc [%bech32 @t]) @t (unit @t)])
       ?>  ?=([@t @t *] l)
       :_  ~
-      :*  `@uc`(rash i.l fim:ag)
+      :*  (addr-type-validator i.l)
           i.t.l
           ?~  t.t.l  ~
           (some i.t.t.l)
@@ -48,16 +48,23 @@
     ++  hex-to-cord
       |=  h=@ux
       ^-  @t
-      ::  Removes leading 0x
-      ::
-      =-  (rsh 3 2 -)
-      ::  Removes .
-      ::
-      %+  scan  (scow %ux h)
-        ((slug |=(a=[@ @t] (cat 3 a))) (star dot) alp)
+      %-  crip
+      =-  ((x-co:co (mul 2 p.-)) q.-)
+      (as-octs:mimes:html h)
+    ::
+    ++  addr-type-validator
+      |=  addr=@t
+      ^-  ?(@uc [%bech32 @t])
+      =,  dejs
+      ?~  (rush addr fim:ag)
+        ::  TODO: fim:ag doesn't parse %bech32 addresses
+        ::
+        bech32+addr
+      `@uc`(rash addr fim:ag)
     ::
     ++  to-hex
-      |=  c=@t
+      |=  h=@t
+      ?:  =('' h)  0x0
       ::  Parse hexadecimal to atom
       ::
       =-  `@ux`(rash - hex)
@@ -66,9 +73,119 @@
       =-  (rsh 3 2 -)
       ::  Add leading 00
       ::
-      (lsh 3 2 c)
+      (lsh 3 2 h)
     ::
     ++  ux-to-base  |=(h=@ux `@uc`h)
+    ::
+    ++  vin-parser
+      =-  (ar (ou -))
+      :~  =-  ['txid' (uf ~ (mu -))]
+          (cu to-hex so)
+          ['vout' (uf ~ (mu ni))]
+          =-  ['scriptSig' (uf ~ (mu (ot -)))]
+          :~  ['asm' so]
+              =-  ['hex' -]
+              (cu to-hex so)
+          ==
+          =-  ['txinwitness' (uf ~ (mu -))]
+          (ar (cu to-hex so))
+          ['sequence' (un ni)]
+      ==
+    ::
+    ++  vout-parser
+      =-  (ar (ot -))
+      :~  ['value' no]
+          ['n' ni]
+          =-  ['scriptPubKey' (ou -)]
+          :~  ['asm' (un so)]
+              ['hex' (un (cu to-hex so))]
+              ['req-sigs' (uf ~ (mu ni))]
+              ['type' (un so)]
+              =-  ['addresses' (uf ~ (mu (ar -)))]
+              (cu addr-type-validator so)
+      ==  ==
+    ::
+    ++  script-parser
+      =-  (uf ~ (mu (ot -)))
+      :~  ['asm' so]
+          ['hex' (cu to-hex so)]
+          ['type' so]
+      ==
+    ::
+    ++  utxo-parser
+      =-  (uf ~ (mu (ot -)))
+      :~  ['amount' no]
+      =-  ['scriptPubKey' (ot -)]
+          :~  ['asm' so]
+              ['hex' (cu to-hex so)]
+              ['type' so]
+              ['address' (cu addr-type-validator so)]
+      ==  ==
+    ::
+    ++  raw-transaction-parser
+      :~  ['in_active_chain' (uf ~ (mu bo))]
+          ['hex' (un (cu to-hex so))]
+          ['txid' (un (cu to-hex so))]
+          ['hash' (un (cu to-hex so))]
+          ['size' (un ni)]
+          ['vsize' (un ni)]
+          ['weight' (un ni)]
+          ['version' (un no)]
+          ['locktime' (un ni)]
+          ['vin' (un vin-parser)]
+          ['vout' (un vout-parser)]
+          ['blockhash' (uf ~ (mu (cu to-hex so)))]
+          ['confirmations' (uf ~ (mu ni))]
+          ['blocktime' (uf ~ (mu ni))]
+          ['time' (uf ~ (mu ni))]
+      ==
+    ::
+    ++  mem-pool-parser
+      :~  ['size' ni]
+          ['fee' no]
+          ['modifiedfee' no]
+          ['time' ni]
+          ['height' ni]
+          ['descendantcount' ni]
+          ['descendantsize' ni]
+          ['descendantfees' no]
+          ['ancestorcount' ni]
+          ['ancestorsize' ni]
+          ['ancestorfees' no]
+          ['wtxid' (cu to-hex so)]
+          =-  ['fees' (ot -)]
+          :~  ['base' no]
+              ['modified' no]
+              ['ancestor' no]
+              ['descendant' no]
+          ==
+          ['depends' (ar (cu to-hex so))]
+          ['spentby' (ar (cu to-hex so))]
+          ['bip125-replaceable' bo]
+      ==
+    ::
+    ++  tx-in-block-parser
+      :~  =-  ['address' (uf ~ (mu -))]
+          (cu addr-type-validator so)
+          ['category' (un (cu category so))]
+          ['amount' (un no)]
+          ['label' (uf ~ (mu so))]
+          ['vout' (un ni)]
+          ['fee' (uf ~ (mu no))]
+          ['confirmations' (un ni)]
+          ['blockhash' (uf ~ (mu (cu to-hex so)))]
+          ['blockindex' (uf ~ (mu ni))]
+          ['blocktime' (uf ~ (mu ni))]
+          ['txid' (un (cu to-hex so))]
+          ['time' (un ni)]
+          ['timereceived' (uf ~ (mu ni))]
+          =-  ['walletconflicts' (uf ~ (mu -))]
+          (ar (cu to-hex so))
+          ['bip125-replaceable' (un (cu bip125-replaceable so))]
+          ['abandoned' (uf ~ (mu bo))]
+          ['comment' (uf ~ (mu so))]
+          ['to' (uf ~ (mu so))]
+      ==
     --
 |%
 ++  btc-rpc
@@ -79,9 +196,6 @@
     |=  req=request
     ^-  request:rpc:jstd
     :^  -.req  (method -.req)  %list
-    ::  Remove null parameters
-    ::
-    =-  (skip - |=(a=json =(~ a)))
     ^-  (list json)
     ?+    -.req  ~|([%unsupported-request -.req] !!)
     ::  Blockchain
@@ -177,7 +291,7 @@
             ^-  json
             ?@  s-o
               s+s-o
-            ?>  ?=([@t range] s-o)
+            ?>  ?=([@t (unit range)] s-o)
             %-  pairs
               :~  ['desc' s+desc.object.s-o]
                   :-  'range'
@@ -193,7 +307,7 @@
       ~[(feud check-level.req) (feud n-blocks.req)]
     ::
         %verify-tx-out-proof
-      ~[s+proof.req]
+      ~[s+(hex-to-cord proof.req)]
     ::  Generating
     ::
         %generate
@@ -247,12 +361,16 @@
             %-  pairs
               [-.data.out s+(hex-to-cord +.data.out)]~
             %+  turn  addresses.out
-              |=  [=address amount=@t]
-              ^-  json
-              %-  pairs
-                :~  ['address' s+(base58-to-cord address)]
-                    ['amount' n+amount]
-                ==
+            |=  [address=?(address [%bech32 @t]) amount=@t]
+            ^-  json
+            %-  pairs
+              :~  :-  'address'
+                  :-  %s
+                  ?^  address
+                    +.address
+                  (base58-to-cord address)
+                  ['amount' n+amount]
+              ==
         ::
           (feud locktime.req)
         ::
@@ -276,13 +394,15 @@
             %-  pairs
               [-.data.out s+(hex-to-cord +.data.out)]~
           ::
-            %+  turn  addresses.out
-              |=  [=address amount=@t]
-              ^-  json
-              %-  pairs
-                :~  ['address' s+(base58-to-cord address)]
-                    ['amount' n+amount]
-                ==
+          %+  turn  addresses.out
+          |=  [address=?(address [%bech32 @t]) amount=@t]
+          ^-  json
+          %-  pairs
+            :~  :_  n+amount
+                ?^  address
+                  +.address
+                (base58-to-cord address)
+            ==
         ::
           (feud locktime.req)
         ::
@@ -337,10 +457,10 @@
               (turn u.subtract-fee-from-outputs.opts numb)
               ['replaceable' (ferm replaceable.opts %b)]
               ['conf_target' (feud conf-target.opts)]
-              ['estimate_mode' (ferm estimate-mode.opts %s)]
+              ['estimate_mode' (ferm mode.opts %s)]
           ==
         ::
-          (ferm is-witness.req %b)
+          b+is-witness.req
       ==
     ::
         %get-raw-transaction
@@ -355,7 +475,7 @@
     ::
         %send-raw-transaction
       :~  s+(hex-to-cord hex-string.req)
-          (ferm allow-high-fees.req %b)
+          b+allow-high-fees.req
       ==
     ::
         %sign-raw-transaction-with-key
@@ -391,7 +511,7 @@
           %+  turn  raw-txs.req
             |=(a=@ux s+(hex-to-cord a))
         ::
-          (ferm allow-high-fees.req %b)
+          b+allow-high-fees.req
       ==
     ::
         %utxo-update-psbt
@@ -400,7 +520,6 @@
       ?^  (de:base64 psbt.req)
         psbt.req
       (en:base64 (as-octs:mimes:html psbt.req))
-    ::
     ::  Util
     ::
         %create-multi-sig
@@ -424,7 +543,7 @@
     ::
         %estimate-smart-fee
       :~  (numb conf-target.req)
-          (ferm estimate-mode.req %s)
+          s+estimate-mode.req
       ==
     ::
         %get-descriptor-info
@@ -434,10 +553,17 @@
       ~[s+privkey.req s+message.req]
     ::
         %validate-address
-      ~[s+(base58-to-cord address.req)]
+      :_  ~
+      :-  %s
+      ?^  address.req
+        +.address.req
+      (base58-to-cord address.req)
     ::
         %verify-message
-      :~  s+(base58-to-cord address.req)
+      :~  :-  %s
+          ?^  address.req
+            +.address.req
+          (base58-to-cord address.req)
           s+signature.req
           s+message.req
       ==
@@ -453,8 +579,11 @@
       :~  (numb n-required.req)
           :-  %a
           %+  turn  keys.req
-            |=  a=@uc
-            s+(base58-to-cord a)
+            |=  a=?(address [%bech32 @t])
+            :-  %s
+            ?^  a
+              +.a
+            (base58-to-cord a)
           (ferm label.req %s)
           s+address-type.req
       ==
@@ -471,12 +600,11 @@
             ::
             =-  (skip - |=([@t a=json] =(a ~)))
             ^-  (list (pair @t json))
-            :~  ['confTarget' (ferm conf-target.opts %s)]
+            :~  ['confTarget' (feud conf-target.opts)]
                 ['totalFee' (ferm total-fee.opts %n)]
                 ['replaceable' (ferm replaceable.opts %b)]
-                ['estimate_mode' (ferm estimate-mode.opts %s)]
-            ==
-      ==
+                ['estimate_mode' (ferm mode.opts %s)]
+      ==    ==
     ::
         %create-wallet
       :~  s+name.req
@@ -485,7 +613,11 @@
       ==
     ::
         %dump-privkey
-      ~[s+(base58-to-cord address.req)]
+      :_  ~
+      :-  %s
+      ?^  address.req
+        +.address.req
+      (base58-to-cord address.req)
     ::
         %dump-wallet
       ~[s+filename.req]
@@ -497,7 +629,11 @@
       ~[s+label.req]
     ::
         %get-address-info
-      ~[s+(base58-to-cord address.req)]
+      :_  ~
+      :-  %s
+      ?^  address.req
+        +.address.req
+      (base58-to-cord address.req)
     ::
         %get-balance
       ?~  +.req  ~
@@ -515,7 +651,12 @@
       ~[(ferm address-type.req %s)]
     ::
         %get-received-by-address
-      ~[s+(base58-to-cord address.req) (numb minconf.req)]
+      :~  :-  %s
+          ?^  address.req
+            +.address.req
+          (base58-to-cord address.req)
+          (numb minconf.req)
+      ==
     ::
         %get-received-by-label
       ~[s+label.req (feud minconf.req)]
@@ -530,7 +671,17 @@
       ~
     ::
         %import-address
-      :~  s+(base58-to-cord address.req)
+      :~  :-  %s
+          ?-  -.address.req
+              %addr
+            (base58-to-cord +.address.req)
+          ::
+              %bech32
+            +.address.req
+          ::
+              %script
+            (hex-to-cord +.address.req)
+          ==
           (ferm label.req %s)
           (ferm rescan.req %b)
           (ferm p2sh.req %b)
@@ -547,7 +698,7 @@
               ::
               =-  (skip - |=([@t a=json] =(a ~)))
               ^-  (list (pair @t json))
-              :~  ['desc' s+desc.r]
+              :~  ['desc' (ferm desc.r %s)]
                 ::
                   :-  'scriptPubKey'
                   =*  scri  script-pubkey.r
@@ -557,17 +708,25 @@
                   ::
                       %address
                     %-  pairs
-                      ['address' s+(base58-to-cord a.script-pubkey.r)]~
+                      :: ['address' s+(base58-to-cord a.script-pubkey.r)]~
+                      :_  ~
+                      :-  'address'
+                      :-  %s
+                      =*  a  a.script-pubkey.r
+                      ?^  a
+                        +.a
+                      (base58-to-cord a)
                   ==
                 ::
                   :-  'timestamp'
+                  :-  %s
                   ?:  ?=(%now timestamp.r)
-                    s+timestamp.r
-                  s+(scot %da timestamp.r)
+                    %now
+                  (scot %da timestamp.r)
                 ::
-                  ['redeemScript' s+redeem-script.r]
+                  ['redeemScript' (ferm redeem-script.r %s)]
                 ::
-                  ['witnessScript' s+witness-script.r]
+                  ['witnessScript' (ferm witness-script.r %s)]
                 ::
                   :-  'pubkeys'
                   ?~  pubkeys.r  ~
@@ -580,18 +739,19 @@
                   a+(turn u.keys.r |=(a=@t s+a))
                 ::
                   :-  'range'
-                  =+  range.r
+                  ?~  range.r  ~
+                  =+  u.range.r
                   ?@  -
                     (numb -)
                   a+~[(numb -<) (numb ->)]
                 ::
-                  ['internal' b+internal.r]
+                  ['internal' (ferm internal.r %b)]
                 ::
-                  ['watchonly' b+watchonly.r]
+                  ['watchonly' (ferm watchonly.r %b)]
                 ::
-                  ['label' s+label.r]
+                  ['label' (ferm label.r %s)]
                 ::
-                  ['keypool' b+keypool.r]
+                  ['keypool' (ferm keypool.r %b)]
                 ::
               ==
           ?~  options.req  ~
@@ -606,8 +766,8 @@
       ==
     ::
         %import-pruned-funds
-      :~  s+raw-transaction.req
-          s+tx-out-proof.req
+      :~  s+(hex-to-cord raw-transaction.req)
+          s+(hex-to-cord tx-out-proof.req)
       ==
     ::
         %import-pubkey
@@ -636,7 +796,12 @@
       :~  (feud minconf.req)
           (ferm include-empty.req %b)
           (ferm include-watch-only.req %b)
-          (ferm address-filter.req %s)
+          =*  addr  address-filter.req
+          ?~  addr  ~
+          :-  %s
+          ?^  u.addr
+            +.u.addr
+          (base58-to-cord u.addr)
       ==
     ::
         %list-received-by-label
@@ -665,13 +830,20 @@
     ::
         %list-unspent
       ?~  +.req  ~
-      :~  (ferm minconf.req %s)
+      :~  (feud minconf.req)
         ::
           (feud maxconf.req)
         ::
           ?~  addresses.req  ~
           =*  addrs  u.addresses.req
-          a+(turn addrs |=(a=@t s+a))
+          :-  %a
+          %+  turn  addrs
+          |=  a=?(address [%bech32 @t])
+          ^-  json
+          :-  %s
+          ?^  a
+            +.a
+          (base58-to-cord a)
         ::
           (ferm include-unsafe.req %b)
         ::
@@ -685,12 +857,11 @@
           ::
           =-  (skip - |=([@t a=json] =(a ~)))
           ^-  (list (pair @t json))
-          :~  ['minimumAmount' (ferm minimum-amount.opts %n)]
-              ['maximumAmount' (ferm maximum-amount.opts %n)]
-              ['minimumCount' (ferm maximum-count.opts %n)]
-              ['minimumSumAmount' (ferm minimum-sum-amount.opts %n)]
-          ==
-      ==
+          :~  ['minimumAmount' (feud minimum-amount.opts)]
+              ['maximumAmount' (feud maximum-amount.opts)]
+              ['minimumCount' (feud maximum-count.opts)]
+              ['minimumSumAmount' (feud minimum-sum-amount.opts)]
+      ==  ==
     ::
         %list-wallet-dir
       ~
@@ -725,12 +896,15 @@
       :~  s+dummy.req
         ::
           ?~  amounts.req  ~
-          :-  %a
+          :-  %o
+          %-  molt
           %+  turn  amounts.req
-            |=  [addr=@uc amount=@t]
-            ^-  json
-            %-  pairs
-              [(base58-to-cord addr) n+amount]~
+            |=  [addr=?(address [%bech32 @t]) amount=@t]
+            ^-  [@t json]
+              :_  n+amount
+              ?^  addr
+                +.addr
+              (base58-to-cord addr)
         ::
           (feud minconf.req)
         ::
@@ -738,37 +912,57 @@
         ::
           ?~  subtract-fee-from.req  ~
           =*  addrs  u.subtract-fee-from.req
-          a+(turn addrs |=(a=address s+(base58-to-cord a)))
+          :-  %a
+          %+  turn  addrs
+          |=  a=?(address [%bech32 @t])
+          ^-  json
+          :-  %s
+          ?^  a
+            +.a
+          (base58-to-cord a)
+        ::
+          (ferm replaceable.req %b)
         ::
           (feud conf-target.req)
         ::
-          (ferm estimate-mode.req %s)
+          (ferm mode.req %s)
       ==
     ::
         %send-to-address
-      :~  s+(base58-to-cord address.req)
+      :~  :-  %s
+          ?^  address.req
+            +.address.req
+          (base58-to-cord address.req)
           n+amount.req
           (ferm comment.req %s)
           (ferm comment-to.req %s)
           (ferm subtract-fee-from-amount.req %b)
           (ferm replaceable.req %b)
           (feud conf-target.req)
-          (ferm estimate-mode.req %s)
+          (ferm mode.req %s)
       ==
     ::
         %set-hd-seed
       ~
     ::
         %set-label
-      :~  s+(base58-to-cord address.req)
+      :~  :-  %s
+          =*  a  address.req
+          ?^  a
+            +.a
+          (base58-to-cord a)
           s+label.req
       ==
     ::
         %set-tx-fee
-      ~[s+amount.req]
+      ~[n+amount.req]
     ::
         %sign-message
-      :~  s+(base58-to-cord address.req)
+      :~  :-  %s
+          =*  a  address.req
+          ?^  a
+            +.a
+          (base58-to-cord a)
           s+message.req
       ==
     ::
@@ -812,12 +1006,16 @@
             %-  pairs
               [-.data.out s+(hex-to-cord +.data.out)]~
             %+  turn  addresses.out
-              |=  [=address amount=@t]
-              ^-  json
-              %-  pairs
-                :~  ['address' s+(base58-to-cord address)]
-                    ['amount' n+amount]
-                ==
+            |=  [address=?(address [%bech32 @t]) amount=@t]
+            ^-  json
+            %-  pairs
+              :~  :-  'address'
+                  :-  %s
+                  ?^  address
+                    +.address
+                  (base58-to-cord address)
+                  ['amount' n+amount]
+              ==
         ::
           (feud locktime.req)
         ::
@@ -839,7 +1037,7 @@
               a+(turn u.subtract-fee-from-outputs.opts numb)
               ['replaceable' (ferm replaceable.opts %b)]
               ['conf-target' (feud conf-target.opts)]
-              ['estimate-mode' (ferm estimate-mode.opts %s)]
+              ['estimate-mode' (ferm mode.opts %s)]
           ==
           (ferm bip32-derivs.req %b)
       ==
@@ -860,8 +1058,8 @@
           ?^  (de:base64 psbt.req)
             psbt.req
           (en:base64 (as-octs:mimes:html psbt.req))
-          (ferm sign.req %b)
-          (ferm sig-hash-type.req %s)
+          b+sign.req
+          s+sig-hash.req
           (ferm bip32-derivs.req %b)
       ==
     :: ZMQ
@@ -888,70 +1086,40 @@
         %get-block
       :-  id.res
       %.  res.res
-      ?+  -.res.res  ~|([%non-valid-format -.res.res] !!)
+      ?+  -.res.res  ~|([%format-not-valid -.res.res] !!)
             %s
           (cu to-hex so)
         ::
             %o
-          =-  (ot -)
-          :~  ['hash' (cu to-hex so)]
-              ['confirmations' ni]
-              ['size' ni]
-              ['strippedsize' ni]
-              ['weight' ni]
-              ['height' ni]
-              ['version' so]
-              ['versionHex' (cu to-hex so)]
-              ['merkleroot' (cu to-hex so)]
-              =-  ['tx' (ar -)]
+          =-  (ou -)
+          :~  ['hash' (un (cu to-hex so))]
+              ['confirmations' (un ni)]
+              ['size' (un ni)]
+              ['strippedsize' (un ni)]
+              ['weight' (un ni)]
+              ['height' (un ni)]
+              ['version' (un no)]
+              ['versionHex' (un (cu to-hex so))]
+              ['merkleroot' (un (cu to-hex so))]
+              =-  ['tx' (un (ar -))]
               |=  =json
               %.  json
+              ::  verbosity = 1
+              ::
               ?:  =(%s -.json)  (cu to-hex so)
               ?.  =(%o -.json)  !!
-              =-  (ot -)
-              :~  ['in_active_chain' bo]
-                  ['hex' (cu to-hex so)]
-                  ['txid' (cu to-hex so)]
-                  ['hash' (cu to-hex so)]
-                  ['size' ni]
-                  ['vsize' ni]
-                  ['weight' ni]
-                  ['version' no]
-                  ['locktime' ni]
-                  =-  ['vin' (ar (ot -))]
-                  :~  ['txid' (cu to-hex so)]
-                      ['vout' ni]
-                      =-  ['scriptSig' (ot -)]
-                      :~  ['asm' so]
-                          ['hex' (cu to-hex so)]
-                      ==
-                      ['txinwitness' (ar (cu to-hex so))]
-                      ['sequence' ni]
-                  ==
-                  =-  ['vout' (ar (ot -))]
-                  :~  ['value' no]
-                      ['n' ni]
-                      =-  ['scriptPubKey' (ot -)]
-                      :~  ['asm' so]
-                          ['hex' (cu to-hex so)]
-                          ['req-sigs' ni]
-                          ['type' so]
-                          ['addresses' (ar (cu ux-to-base (su fim:ag)))]
-                  ==  ==
-                  ['blockhash' (cu to-hex so)]
-                  ['confirmations' ni]
-                  ['blocktime' ni]
-                  ['time' ni]
-              ==
-              ['time' ni]
-              ['mediantime' ni]
-              ['nonce' ni]
-              ['bits' (cu to-hex so)]
-              ['difficulty' so]
-              ['chainwork' (cu to-hex so)]
-              ['nTx' ni]
-              ['previousblockhash' (cu to-hex so)]
-              ['nextblockhash' (cu to-hex so)]
+              ::  verbosity = 2
+              ::
+              (ou raw-transaction-parser)
+              ['time' (un ni)]
+              ['mediantime' (un ni)]
+              ['nonce' (un ni)]
+              ['bits' (un (cu to-hex so))]
+              ['difficulty' (un no)]
+              ['chainwork' (un (cu to-hex so))]
+              ['nTx' (un ni)]
+              ['previousblockhash' (un (cu to-hex so))]
+              ['nextblockhash' (uf ~ (mu (cu to-hex so)))]
       ==  ==
     ::
         %get-blockchain-info
@@ -962,7 +1130,7 @@
           ['blocks' (un ni)]
           ['headers' (un ni)]
           ['bestblockhash' (un (cu to-hex so))]
-          ['difficulty' (un so)]
+          ['difficulty' (un no)]
           ['mediantime' (un ni)]
           ['verificationprogress' (un ni)]
           ['initialblockdownload' (un bo)]
@@ -974,13 +1142,13 @@
           ['prune_target_size' (uf ~ (mu ni))]
           =-  ['softforks' (un (ar (ot -)))]
           :~  ['id' so]
-              ['version' so]
+              ['version' no]
               ['reject' (ot ['status' bo]~)]
           ==
           =-  ['bip9_softforks' (un (om (ou -)))]
           :~  ['status' (un (cu soft-fork-status so))]
               ['bit' (uf ~ (mu ni))]
-              =-  ['start-time' (un (cu - no))]
+              =-  ['startTime' (un (cu - no))]
               |=  a=@t
               ^-  ?(@ud %'-1')
               ?:  =(a '-1')
@@ -995,7 +1163,7 @@
                   ['count' ni]
                   ['possible' bo]
           ==  ==
-          ['warnings' (un (ar so))]
+          ['warnings' (un so)]
       ==
     ::
         %get-block-count
@@ -1010,22 +1178,23 @@
         ((cu to-hex so) res.res)
       ?.  =(%o -.res.res)  !!
       %.  res.res
-      =-  (ot -)
-      :~  ['hash' (cu to-hex so)]
-          ['confirmations' ni]
-          ['height' ni]
-          ['version' so]
-          ['versionHex' (cu to-hex so)]
-          ['merkleroot' (cu to-hex so)]
-          ['time' ni]
-          ['mediantime' ni]
-          ['nonce' ni]
-          ['bits' (cu to-hex so)]
-          ['difficulty' so]
-          ['chainwork' (cu to-hex so)]
-          ['nTx' ni]
-          ['previousblockhash' (cu to-hex so)]
-          ['nextblockhash' (cu to-hex so)]
+      ~&  res.res
+      =-  (ou -)
+      :~  ['hash' (un (cu to-hex so))]
+          ['confirmations' (un ni)]
+          ['height' (un ni)]
+          ['version' (un no)]
+          ['versionHex' (un (cu to-hex so))]
+          ['merkleroot' (un (cu to-hex so))]
+          ['time' (un ni)]
+          ['mediantime' (un ni)]
+          ['nonce' (un ni)]
+          ['bits' (un (cu to-hex so))]
+          ['difficulty' (un no)]
+          ['chainwork' (un (cu to-hex so))]
+          ['nTx' (un ni)]
+          ['previousblockhash' (un (cu to-hex so))]
+          ['nextblockhash' (uf ~ (mu (cu to-hex so)))]
       ==
     ::
         %get-block-stats
@@ -1098,14 +1267,15 @@
           ['window_block_count' (un ni)]
           ['window_tx_count' (uf ~ (mu ni))]
           ['window_interval' (uf ~ (mu ni))]
-          ['txrate' (uf ~ (mu ni))]
+          ['txrate' (uf ~ (mu no))]
       ==
     ::
         %get-difficulty
-      [id.res (ni res.res)]
+      [id.res (no res.res)]
     ::
         %get-mempool-ancestors
       :-  id.res
+      ~&  res.res
       ?:  =(%a -.res.res)
         %.  res.res
         =-  (ar -)
@@ -1117,32 +1287,11 @@
       ::
       =-  (turn ~(tap by -) |*([a=@ b=*] [`@ux`a b]))
       %.  res.res
-      =-  (op hex (ot -))
-      :~  ['size' ni]
-          ['fee' no]
-          ['modifiedfee' no]
-          ['time' ni]
-          ['height' ni]
-          ['descendantcount' ni]
-          ['descendantsize' ni]
-          ['descendantfees' so]
-          ['ancestorcount' ni]
-          ['ancestorsize' ni]
-          ['ancestorfees' so]
-          ['wtxid' (cu to-hex so)]
-          =-  ['fees' (ot -)]
-          :~  ['base' so]
-              ['modified' so]
-              ['ancestor' so]
-              ['descendant' so]
-          ==
-          ['depends' (ar (cu to-hex so))]
-          ['spentby' (ar (cu to-hex so))]
-          ['bip125-replaceable' bo]
-      ==
+      (op hex (ot mem-pool-parser))
     ::
         %get-mempool-descendants
       :-  id.res
+      ~&  res.res
       ?:  =(%a -.res.res)
         %.  res.res
         =-  (ar -)
@@ -1154,56 +1303,12 @@
       ::
       =-  (turn ~(tap by -) |*([a=@ b=*] [`@ux`a b]))
       %.  res.res
-      =-  (op hex (ot -))
-      :~  ['size' ni]
-          ['fee' no]
-          ['modifiedfee' no]
-          ['time' ni]
-          ['height' ni]
-          ['descendantcount' ni]
-          ['descendantsize' ni]
-          ['descendantfees' so]
-          ['ancestorcount' ni]
-          ['ancestorsize' ni]
-          ['ancestorfees' so]
-          ['wtxid' (cu to-hex so)]
-          =-  ['fees' (ot -)]
-          :~  ['base' so]
-              ['modified' so]
-              ['ancestor' so]
-              ['descendant' so]
-          ==
-          ['depends' (ar (cu to-hex so))]
-          ['spentby' (ar (cu to-hex so))]
-          ['bip125-replaceable' bo]
-      ==
+      (op hex (ot mem-pool-parser))
     ::
         %get-mempool-entry
       :-  id.res
       %.  res.res
-      =-  (ot -)
-      :~  ['size' ni]
-          ['fee' no]
-          ['modifiedfee' no]
-          ['time' ni]
-          ['height' ni]
-          ['descendantcount' ni]
-          ['descendantsize' ni]
-          ['descendantfees' so]
-          ['ancestorcount' ni]
-          ['ancestorsize' ni]
-          ['ancestorfees' so]
-          ['wtxid' (cu to-hex so)]
-          =-  ['fees' (ot -)]
-          :~  ['base' so]
-              ['modified' so]
-              ['ancestor' so]
-              ['descendant' so]
-          ==
-          ['depends' (ar (cu to-hex so))]
-          ['spentby' (ar (cu to-hex so))]
-          ['bip125-replaceable' bo]
-      ==
+      (ot mem-pool-parser)
     ::
         %get-mempool-info
       :-  id.res
@@ -1230,43 +1335,22 @@
       ::
       =-  (turn ~(tap by -) |*([a=@ b=*] [`@ux`a b]))
       %.  res.res
-      =-  (op hex (ot -))
-      :~  ['size' ni]
-          ['fee' no]
-          ['modifiedfee' no]
-          ['time' ni]
-          ['height' ni]
-          ['descendantcount' ni]
-          ['descendantsize' ni]
-          ['descendantfees' so]
-          ['ancestorcount' ni]
-          ['ancestorsize' ni]
-          ['ancestorfees' so]
-          ['wtxid' (cu to-hex so)]
-          =-  ['fees' (ot -)]
-          :~  ['base' so]
-              ['modified' so]
-              ['ancestor' so]
-              ['descendant' so]
-          ==
-          ['depends' (ar (cu to-hex so))]
-          ['spentby' (ar (cu to-hex so))]
-          ['bip125-replaceable' bo]
-      ==
+      (op hex (ot mem-pool-parser))
     ::
         %get-tx-out
       :-  id.res
+      ?~  res.res  ~
       %.  res.res
       =-  (ot -)
       :~  ['bestblock' (cu to-hex so)]
           ['confirmations' ni]
-          ['value' so]
+          ['value' no]
           =-  ['scriptPubKey' (ot -)]
           :~  ['asm' so]
               ['hex' (cu to-hex so)]
               ['reqSigs' ni]
               ['type' so]
-              ['addresses' (ar (cu ux-to-base (su fim:ag)))]
+              ['addresses' (ar (cu addr-type-validator so))]
           ==
           ['coinbase' bo]
       ==
@@ -1285,7 +1369,7 @@
           ['bogosize' ni]
           ['hash_serialized_2' (cu to-hex so)]
           ['disk_size' ni]
-          ['total_amount' so]
+          ['total_amount' no]
       ==
     ::
         %precious-block
@@ -1300,8 +1384,13 @@
         %scan-tx-outset
       :-  id.res
       %.  res.res
-      =-  (ot -)
-      :~  =-  ['unspents' (ar (ot -))]
+      =-  (ou -)
+      :~  ['success' (uf ~ (mu bo))]
+          ['searched_items' (uf ~ (mu ni))]
+          ['txouts' (uf ~ (mu ni))]
+          ['height' (uf ~ (mu ni))]
+          ['best-blocks' (uf ~ (mu (cu to-hex so)))]
+          =-  ['unspents' (un (ar (ot -)))]
           :~  ['txid' (cu to-hex so)]
               ['vout' ni]
               ['scriptPubKey' (cu to-hex so)]
@@ -1309,7 +1398,7 @@
               ['amount' so]
               ['height' ni]
           ==
-          ['total_amount' so]
+          ['total_amount' (un no)]
       ==
     ::
         %verify-chain
@@ -1334,7 +1423,7 @@
       :~   =-  ['inputs' (un (ar (ou -)))]
           :~  ['has_utxo' (un bo)]
               ['is_final' (un bo)]
-              =-  ['missing' (uf ~ (mu (ar (ou -))))]
+              =-  ['missing' (uf ~ (mu (ou -)))]
               :~  ['pubkeys' (uf ~ (mu (ar (cu to-hex so))))]
                   ['signatures' (uf ~ (mu (ar (cu to-hex so))))]
                   ['redeemscript' (uf ~ (mu (cu to-hex so)))]
@@ -1342,9 +1431,9 @@
               ==
               ['next' (uf ~ (mu so))]
           ==
-          ['estimated_vsize' (uf ~ (mu so))]
-          ['estimated_feerate' (uf ~ (mu so))]
-          ['fee' (uf ~ (mu so))]
+          ['estimated_vsize' (uf ~ (mu no))]
+          ['estimated_feerate' (uf ~ (mu no))]
+          ['fee' (uf ~ (mu no))]
           ['next' (un so)]
       ==
     ::
@@ -1375,45 +1464,14 @@
               ['weight' ni]
               ['version' ni]
               ['locktime' ni]
-              =-  ['vin' (ar (ot -))]
-              :~  ['txid' (cu to-hex so)]
-                  ['vout' ni]
-                  =-  ['scriptSig' (ot -)]
-                  :~  ['asm' so]
-                      ['hex' (cu to-hex so)]
-                  ==
-                  ['txinwitness' (ar (cu to-hex so))]
-                  ['sequence' ni]
-              ==
-              =-  ['vout' (ar (ot -))]
-              :~  ['value' so]
-                  ['n' ni]
-                  =-  ['scriptPubKey' (ot -)]
-                  :~  ['asm' so]
-                      ['hex' (cu to-hex so)]
-                      ['reqSigs' ni]
-                      ['type' so]
-                      ['addresses' (ar (cu ux-to-base (su fim:ag)))]
-          ==  ==  ==
+              ['vin' vin-parser]
+              ['vout' vout-parser]
+          ==
           ['unknown' (un (om so))]
           =-  ['inputs' (un (ar (ou -)))]
-          :~  =-  ['non_witness_utxo' (uf ~ (mu (ot -)))]
-              :~  ['amount' so]
-                  =-  ['scriptPubKey' (ot -)]
-                  :~  ['asm' so]
-                      ['hex' (cu to-hex so)]
-                      ['type' so]
-                      ['address' (cu ux-to-base (su fim:ag))]
-              ==  ==
+          :~  ['non_witness_utxo' utxo-parser]
             ::
-              =-  ['witness_utxo' (uf ~ (mu (ot -)))]
-              :~  ['amount' so]
-                  =-  ['scriptPubKey' (ot -)]
-                  :~  ['asm' so]
-                      ['hex' (cu to-hex so)]
-                      ['type' so]
-                      ['address' (cu ux-to-base (su fim:ag))]
-              ==  ==
+              ['witness_utxo' utxo-parser]
             ::
               =-  ['partial_signatures' (uf ~ (mu -))]
                 (op hex (cu to-hex so))
@@ -1421,17 +1479,9 @@
               =-  ['sighash' (uf ~ (mu -))]
               (cu sig-hash so)
             ::
-              =-  ['redeem_script' (uf ~ (mu (ot -)))]
-              :~  ['asm' so]
-                  ['hex' (cu to-hex so)]
-                  ['type' so]
-              ==
+              ['redeem_script' script-parser]
             ::
-              =-  ['witness_script' (uf ~ (mu (ot -)))]
-              :~  ['asm' so]
-                  ['hex' (cu to-hex so)]
-                  ['type' so]
-              ==
+              ['witness_script' script-parser]
             ::
               =-  ['bip32_derivs' (uf ~ (mu -))]
               =-  (op hex (ot -))
@@ -1447,20 +1497,12 @@
               =-  ['final_scriptwitness' (uf ~ (mu -))]
               (ar (cu to-hex so))
             ::
-              ['unknown' (un (om so))]
+              ['unknown' (uf ~ (mu (om so)))]
           ==
           =-  ['outputs' (un (ar (ou -)))]
-          :~  =-  ['redeem_script' (uf ~ (mu (ot -)))]
-              :~  ['asm' so]
-                  ['hex' (cu to-hex so)]
-                  ['type' so]
-              ==
+          :~  ['redeem_script' script-parser]
             ::
-              =-  ['witness_script' (uf ~ (mu (ot -)))]
-              :~  ['asm' so]
-                  ['hex' (cu to-hex so)]
-                  ['type' so]
-              ==
+              ['witness_script' script-parser]
             ::
               =-  ['bip32_derivs' (uf ~ (mu -))]
               =-  (op hex (ot -))
@@ -1468,9 +1510,9 @@
                   ['path' so]
               ==
             ::
-              ['unknown' (un (om so))]
+              ['unknown' (uf ~ (mu (om so)))]
           ==
-          ['fee' (uf ~ (mu so))]
+          ['fee' (uf ~ (mu no))]
       ==
     ::
         %decode-raw-transaction
@@ -1484,47 +1526,41 @@
           ['weight' ni]
           ['version' ni]
           ['locktime' ni]
-          =-  ['vin' (ar (ot -))]
-          :~  ['txid' (cu to-hex so)]
-              ['vout' ni]
-              =-  ['scriptSig' (ot -)]
-              :~  ['asm' so]
-                  ['hex' (cu to-hex so)]
-              ==
-              ['txinwitness' (ar (cu to-hex so))]
-              ['sequence' ni]
-          ==
-          =-  ['vout' (ar (ot -))]
-          :~  ['value' so]
-              ['n' ni]
-              =-  ['scriptPubKey' (ot -)]
-              :~  ['asm' so]
-                  ['hex' (cu to-hex so)]
-                  ['reqSigs' ni]
-                  ['type' so]
-                  ['addresses' (ar (cu ux-to-base (su fim:ag)))]
-      ==  ==  ==
+          ['vin' vin-parser]
+          ['vout' vout-parser]
+      ==
     ::
         %decode-script
       :-  id.res
       %.  res.res
-      =-  (ot -)
-      :~  ['asm' so]
-          ['hex' (cu to-hex so)]
-          ['type' so]
-          ['reqSigs' ni]
-          ['addresses' (ar (cu ux-to-base (su fim:ag)))]
-          ['p2sh' (cu ux-to-base (su fim:ag))]
-      ==
+      =-  (ou -)
+      :~  ['asm' (un so)]
+          ['hex' (uf ~ (mu (cu to-hex so)))]
+          ['type' (un so)]
+          ['reqSigs' (uf ~ (mu ni))]
+          =-  ['addresses' (uf ~ (mu (ar -)))]
+          (cu addr-type-validator so)
+          =-  ['p2sh' (uf ~ (mu -))]
+          (cu @uc so)
+          =-  ['segwit' (uf ~ (mu (ou -)))]
+          :~  ['asm' (un so)]
+              ['hex' (uf ~ (mu (cu to-hex so)))]
+              ['type' (un so)]
+              ['reqSigs' (uf ~ (mu ni))]
+              =-  ['addresses' (un (ar -))]
+              (cu |=(a=@t bech32+a) so)
+              =-  ['p2sh-segwit' (uf ~ (mu -))]
+              (cu @uc (su fim:ag))
+      ==  ==
     ::
         %finalize-psbt
       :-  id.res
       %.  res.res
-      =-  (ot -)
-      :~  =-  ['psbt' (cu - so)]
-          |=(a=@t ?>(?=(de:base64 a) a))
-          ['hex' (cu to-hex so)]
-          ['complete' bo]
+      =-  (ou -)
+      :~  =-  ['psbt' (un (cu - so))]
+          |=(a=@t ?>(?=(^ (de:base64 a)) a))
+          ['hex' (uf ~ (mu (cu to-hex so)))]
+          ['complete' (un bo)]
       ==
     ::
         %fund-raw-transaction
@@ -1547,47 +1583,13 @@
       ?:  =(%s -.res.res)
         (cu to-hex so)
       ?.  =(%o -.res.res)  !!
-      =-  (ot -)
-      :~  ['in_active_chain' bo]
-          ['hex' (cu to-hex so)]
-          ['txid' (cu to-hex so)]
-          ['hash' (cu to-hex so)]
-          ['size' ni]
-          ['vsize' ni]
-          ['weight' ni]
-          ['version' no]
-          ['locktime' ni]
-          =-  ['vin' (ar (ot -))]
-          :~  ['txid' (cu to-hex so)]
-              ['vout' ni]
-              =-  ['scriptSig' (ot -)]
-              :~  ['asm' so]
-                  ['hex' (cu to-hex so)]
-              ==
-              ['txinwitness' (ar (cu to-hex so))]
-              ['sequence' ni]
-          ==
-          =-  ['vout' (ar (ot -))]
-          :~  ['value' no]
-              ['n' ni]
-              =-  ['scriptPubKey' (ot -)]
-              :~  ['asm' so]
-                  ['hex' (cu to-hex so)]
-                  ['req-sigs' ni]
-                  ['type' so]
-                  ['addresses' (ar (cu ux-to-base (su fim:ag)))]
-          ==  ==
-          ['blockhash' (cu to-hex so)]
-          ['confirmations' ni]
-          ['blocktime' ni]
-          ['time' ni]
-      ==
+      (ou raw-transaction-parser)
     ::
         %join-psbts
       :-  id.res
       %.  res.res
       =-  (cu - so)
-      |=(a=@t ?>(?=(de:base64 a) a))
+      |=(a=@t ?>(?=(^ (de:base64 a)) a))
     ::
         %send-raw-transaction
       [id.res ((cu to-hex so) res.res)]
@@ -1595,10 +1597,11 @@
         %sign-raw-transaction-with-key
       :-  id.res
       %.  res.res
-      =-  (ot -)
-      :~  ['hex' (cu to-hex so)]
-          ['complete' bo]
-          =-  ['errors' (ar (ot -))]
+      =-  (ou -)
+      :~  ['hex' (un (cu to-hex so))]
+          ['complete' (un bo)]
+          =-  ['errors' (uf ~ (mu -))]
+          =-  (ar (ot -))
           :~  ['txid' (cu to-hex so)]
               ['vout' ni]
               ['scriptSig' (cu to-hex so)]
@@ -1619,7 +1622,7 @@
       :-  id.res
       %.  res.res
       =-  (cu - so)
-      |=(a=@t ?>(?=(de:base64 a) a))
+      |=(a=@t ?>(?=(^ (de:base64 a)) a))
     ::  Util
     ::
         %create-multi-sig
@@ -1627,20 +1630,20 @@
       %.  res.res
       =-  (ot -)
       :~  :-  'address'
-          (cu ux-to-base (su fim:ag))
+          (cu addr-type-validator so)
           ['redeemScript' so]
       ==
     ::
         %derive-addresses
       :-  id.res
       %.  res.res
-      (ar (cu ux-to-base (su fim:ag)))
+      (ar (cu addr-type-validator so))
     ::
         %estimate-smart-fee
       :-  id.res
       %.  res.res
       =-  (ou -)
-      :~  ['feerate' (un so)]
+      :~  ['feerate' (uf ~ (mu so))]
           ['errors' (uf ~ (mu (ar so)))]
           ['blocks' (un ni)]
       ==
@@ -1664,7 +1667,7 @@
       %.  res.res
       =-  (ou -)
       :~  ['isvalid' (un bo)]
-          ['address' (un (cu ux-to-base (su fim:ag)))]
+          ['address' (un (cu addr-type-validator so))]
           ['scriptPubKey' (un (cu to-hex so))]
           ['isscript' (un bo)]
           ['iswitness' (un bo)]
@@ -1688,7 +1691,7 @@
       %.  res.res
       =-  (ot -)
       :~  :-  'address'
-          (cu ux-to-base (su fim:ag))
+          (cu addr-type-validator so)
           ['redeemScript' so]
       ==
     ::
@@ -1723,11 +1726,15 @@
     ::
         %get-addresses-by-label
       :-  id.res
-      ::  Transforms the keys encoded as @ux to @uc
+      ::  Transforms the keys encoded as tapes to ?(@uc [%bech32 @t])
       ::
-      =-  (turn ~(tap by -) |*([k=@ux v=*] [`@uc`k v]))
+      =-  %+  turn   ~(tap by -)
+        |*  [k=tape v=*]
+        :_  v
+        ^-  ?(@uc [%bech32 @t])
+        (addr-type-validator (crip k))
       %.  res.res
-      =-  (op fim:ag -)
+      =-  (op (star aln) -)
       (ot ['purpose' (cu purpose so)]~)
     ::
         %get-address-info
@@ -1735,7 +1742,7 @@
       %.  res.res
       =-  (ou -)
       :~  =-  ['address' (un -)]
-          (cu ux-to-base (su fim:ag))
+          (cu addr-type-validator so)
           ['scriptPubKey' (un (cu to-hex so))]
           ['ismine' (un bo)]
           ['iswatchonly' (un bo)]
@@ -1744,7 +1751,7 @@
           ['isscript' (un bo)]
           ['ischange' (un bo)]
           ['iswitness' (un bo)]
-          ['witness_version' (uf ~ (mu so))]
+          ['witness_version' (uf ~ (mu no))]
           ['witness_program' (uf ~ (mu (cu to-hex so)))]
           ['script' (uf ~ (mu so))]
           ['hex' (uf ~ (mu (cu to-hex so)))]
@@ -1754,12 +1761,12 @@
           =-  ['embedded' (uf ~ (mu -))]
           =-  (ou -)
           :~  ['scriptPubKey' (un (cu to-hex so))]
-              ['solvable' (un bo)]
+              ['solvable' (uf ~ (mu bo))]
               ['desc' (uf ~ (mu so))]
               ['isscript' (un bo)]
-              ['ischange' (un bo)]
+              ['ischange' (uf ~ (mu bo))]
               ['iswitness' (un bo)]
-              ['witness_version' (uf ~ (mu so))]
+              ['witness_version' (uf ~ (mu no))]
               ['witness_program' (uf ~ (mu (cu to-hex so)))]
               ['script' (uf ~ (mu (cu to-hex so)))]
               ['hex' (uf ~ (mu (cu to-hex so)))]
@@ -1769,7 +1776,7 @@
               ['iscompressed' (uf ~ (mu bo))]
               ['label' (uf ~ (mu so))]
               ['hdmasterfingerprint' (uf ~ (mu (cu to-hex so)))]
-              =-  ['labels' (un -)]
+              =-  ['labels' (uf ~ (mu -))]
               =-  (ar (ot -))
               :~  ['name' so]
                   ['purpose' (cu purpose so)]
@@ -1777,7 +1784,7 @@
           ==
           ['iscompressed' (uf ~ (mu bo))]
           ['label' (uf ~ (mu so))]
-          ['timestamp' (uf ~ (mu so))]
+          ['timestamp' (uf ~ (mu ni))]
           ['hdkeypath' (uf ~ (mu so))]
           ['hdseedid' (uf ~ (mu (cu to-hex so)))]
           ['hdmasterfingerprint' (uf ~ (mu (cu to-hex so)))]
@@ -1789,57 +1796,55 @@
       ==
     ::
         %get-balance
-      :-  id.res
-      (no res.res)
+      [id.res (no res.res)]
     ::
         %get-new-address
       :-  id.res
+      ^-  ?(@uc [%bech32 @t])
       %.  res.res
-      (cu ux-to-base (su fim:ag))
+      (cu addr-type-validator so)
     ::
         %get-raw-change-address
       :-  id.res
       %.  res.res
-      (cu ux-to-base (su fim:ag))
+      (cu addr-type-validator so)
     ::
         %get-received-by-address
-      [id.res (so res.res)]
+      [id.res (no res.res)]
     ::
         %get-received-by-label
-      [id.res (so res.res)]
+      [id.res (no res.res)]
     ::
         %get-transaction
       :-  id.res
       %.  res.res
-      =-  (ot -)
-      :~  ['amount' no]
-          ['fee' no]
-          ['confirmations' ni]
-          ['blockhash' (cu to-hex so)]
-          ['blockindex' ni]
-          ['blocktime' ni]
-          ['txid' (cu to-hex so)]
-          ['time' ni]
-          ['timereceived' ni]
-          ['bip125-replaceable' (cu bip125-replaceable so)]
-          =-  ['details' (ar (ot -))]
-          :~  :-  'address'
-              (cu ux-to-base (su fim:ag))
-              ['category' (cu category so)]
-              ['amount' no]
-              ['label' so]
-              ['vout' ni]
-              ['fee' no]
-              ['abandoned' bo]
+      ~&  res.res
+      =-  (ou -)
+      :~  ['amount' (un no)]
+          ['fee' (uf ~ (mu no))]
+          ['confirmations' (un ni)]
+          ['blockhash' (uf ~ (mu (cu to-hex so)))]
+          ['blockindex' (uf ~ (mu ni))]
+          ['blocktime' (uf ~ (mu ni))]
+          ['txid' (un (cu to-hex so))]
+          ['time' (un ni)]
+          ['timereceived' (un ni)]
+          ['bip125-replaceable' (un (cu bip125-replaceable so))]
+          =-  ['details' (un (ar (ou -)))]
+          :~  =-  ['address' (un -)]
+              (cu addr-type-validator so)
+              ['category' (un (cu category so))]
+              ['amount' (un no)]
+              ['label' (uf ~ (mu so))]
+              ['vout' (un ni)]
+              ['fee' (uf ~ (mu no))]
+              ['abandoned' (uf ~ (mu bo))]
           ==
-          ['hex' (cu to-hex so)]
+          ['hex' (un (cu to-hex so))]
       ==
     ::
-        %list-wallets
-      [id.res ((ar so) res.res)]
-    ::
         %get-unconfirmed-balance
-      [id.res (so res.res)]
+      [id.res (no res.res)]
     ::
         %get-wallet-info
       :-  id.res
@@ -1859,6 +1864,9 @@
           ['hdseedid' (uf ~ (mu (cu to-hex so)))]
           ['private_keys_enabled' (un bo)]
       ==
+    ::
+        %list-wallets
+      [id.res ((ar so) res.res)]
     ::
         %import-address
       [id.res ~]
@@ -1893,8 +1901,13 @@
         %list-address-groupings
       :-  id.res
       %.  res.res
-      =-  (ar -)
-      (cu groups (ar so))
+      =-  (ar (ar -))
+      =-  (cu groups (ar -))
+      |=  =json
+      %.  json
+      ?:  =(%s -.json)  so
+      ?.  =(%n -.json)  !!
+      no
     ::
         %list-labels
       [id.res ((ar so) res.res)]
@@ -1907,6 +1920,7 @@
     ::
         %list-received-by-address
       :-  id.res
+      ~&  res.res
       %.  res.res
       =-  (ar (ou -))
       :~  :-  'involvesWatchonly'
@@ -1916,7 +1930,7 @@
             ?~  b  ~
             ?>(=(u.b &) (some %&))
           =-  ['address' (un -)]
-          (cu ux-to-base (su fim:ag))
+          (cu addr-type-validator so)
           ['amount' (un no)]
           ['confirmations' (un ni)]
           ['label' (un so)]
@@ -1939,34 +1953,13 @@
     ::
         %lists-in-ceblock
       :-  id.res
-      =/  tx-in-block
-        :~  :-  'address'
-            (cu ux-to-base (su fim:ag))
-            ['category' (cu category so)]
-            ['amount' no]
-            ['label' so]
-            ['vout' ni]
-            ['fee' no]
-            ['confirmations' ni]
-            ['blockhash' (cu to-hex so)]
-            ['blockindex' ni]
-            ['blocktime' ni]
-            ['txid' (cu to-hex so)]
-            ['time' ni]
-            ['timereceived' ni]
-            ['bip125-replaceable' (cu bip125-replaceable so)]
-            ['abandoned' bo]
-            ['comment' so]
-            ['label' so]
-            ['to' so]
-        ==
       %.  res.res
       =-  (ou -)
       :~  =-  ['transactions' (un -)]
-          (ar (ot tx-in-block))
+          (ar (ou tx-in-block-parser))
           ::
-          =-  ['removed' (un (mu -))]
-          (ar (ot tx-in-block))
+          =-  ['removed' (uf ~ (mu -))]
+          (ar (ou tx-in-block-parser))
           ::
           ['lastblock' (un (cu to-hex so))]
       ==
@@ -1974,26 +1967,7 @@
         %list-transactions
       :-  id.res
       %.  res.res
-      =-  (ar (ot -))
-      :~  :-  'address'
-          (cu ux-to-base (su fim:ag))
-          ['category' (cu category so)]
-          ['amount' no]
-          ['label' so]
-          ['vout' ni]
-          ['fee' no]
-          ['confirmations' ni]
-          ['trusted' bo]
-          ['blockhash' (cu to-hex so)]
-          ['blockindex' ni]
-          ['blocktime' ni]
-          ['txid' (cu to-hex so)]
-          ['time' ni]
-          ['timereceived' ni]
-          ['comment' so]
-          ['bip125-replaceable' (cu bip125-replaceable so)]
-          ['abandoned' bo]
-      ==
+      (ar (ou tx-in-block-parser))
     ::
         %list-unspent
       :-  id.res
@@ -2002,13 +1976,13 @@
       :~  ['txid' (un (cu to-hex so))]
           ['vout' (un ni)]
           =-  ['address' (un -)]
-          (cu ux-to-base (su fim:ag))
+          (cu addr-type-validator so)
           ['label' (un so)]
           ['scriptPubKey' (un (cu to-hex so))]
           ['amount' (un no)]
           ['confirmations' (un ni)]
           ['redeemScript' (un (cu to-hex so))]
-          ['witnessScript' (un (cu to-hex so))]
+          ['witnessScript' (uf ~ (mu (cu to-hex so)))]
           ['spendable' (un bo)]
           ['solvable' (un bo)]
           ['desc' (uf ~ (mu so))]
@@ -2069,10 +2043,11 @@
         %sign-raw-transaction-with-wallet
       :-  id.res
       %.  res.res
-      =-  (ot -)
-      :~  ['hex' (cu to-hex so)]
-          ['complete' bo]
+      =-  (ou -)
+      :~  ['hex' (un (cu to-hex so))]
+          ['complete' (un bo)]
           :-  'errors'
+          =-  (uf ~ (mu -))
           =-  (ar (ot -))
           :~  ['txid' (cu to-hex so)]
               ['vout' ni]
@@ -2123,7 +2098,7 @@
       =-  (ar (ot -))
       :~  ['type' so]
          :-  'address'
-         (cu ux-to-base (su fim:ag))
+         (cu addr-type-validator so)
          ['hwm' ni]
       ==
     ==
