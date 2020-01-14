@@ -32,12 +32,9 @@
       ^-  (quip card _this)
       :-  ~
       %=  this
-        endpoint  'http://127.0.0.1:18443/'
-        headers
-          :~  ::['Accept' 'application/json']
-              ['Content-Type' 'application/json']
-              ['Authorization' 'Basic dXJiaXRjb2luZXI6dXJiaXRjb2luZXI']
-      ==  ==
+        endpoint  ''
+        headers   ~
+      ==
     ::
     ++  on-save   !>(state)
     ++  on-load
@@ -49,11 +46,13 @@
       ^-  (quip card _this)
       |^
       ?+    mark    (on-poke:def mark vase)
-          %btc-node-hook-action  (hook-action !<(btc-node-hook-action vase))
+          %btc-node-hook-action   (hook-action !<(btc-node-hook-action vase))
+          %btc-node-hook-command  (hook-command !<(btc-node-hook-command vase))
       ==
       ::
       ++  hook-action
         |=  act=btc-node-hook-action
+        ^-  (quip card _this)
         =/  body=request:rpc:jstd
           (request-to-rpc:btc-rpc:lib act)
         =/  req=request:http
@@ -66,8 +65,18 @@
                   (en-json (request-to-json:rpc:jstd body))
           ==
         =/  out  *outbound-config:iris
+        ~&  req
         :_  this
         [%pass /[(scot %da now.bowl)] %arvo %i %request req out]~
+      ::
+      ++  hook-command
+        |=  comm=btc-node-hook-command
+        ^-  (quip card _this)
+        ?+    -.comm  ~|  [%unsupported-hook-command -.comm]  !!
+            %credentials
+          :_  this(endpoint url.comm, headers heads.comm)
+          [%pass / %arvo %d %flog [%text "credentials updated..."]]~
+        ==
       --
     ::
     ++  on-watch  on-watch:def
@@ -263,14 +272,20 @@
 ++  endpoint-url
   |=  [act=btc-node-hook-action]
   ?.  ?|  =(-.act %abandon-transaction)
+          =(-.act %add-multisig-address)
+          =(-.act %backup-wallet)
+          =(-.act %bump-fee)
           =(-.act %dump-privkey)
           =(-.act %dump-wallet)
+          =(-.act %encrypt-wallet)
           =(-.act %fund-raw-transaction)
           =(-.act %get-balance)
           =(-.act %get-addresses-by-label)
           =(-.act %get-address-info)
           =(-.act %get-balance)
           =(-.act %get-new-address)
+          =(-.act %get-raw-change-address)
+          =(-.act %get-received-by-address)
           =(-.act %get-received-by-label)
           =(-.act %get-transaction)
           =(-.act %get-unconfirmed-balance)
@@ -281,6 +296,7 @@
           =(-.act %import-pruned-funds)
           =(-.act %import-pubkey)
           =(-.act %key-pool-refill)
+          =(-.act %lock-unspent)
           =(-.act %list-address-groupings)
           =(-.act %list-labels)
           =(-.act %list-lock-unspent)
@@ -290,15 +306,19 @@
           =(-.act %list-transactions)
           =(-.act %list-unspent)
           =(-.act %remove-pruned-funds)
+          =(-.act %rescan-blockchain)
           =(-.act %send-many)
           =(-.act %send-to-address)
+          =(-.act %set-hd-seed)
           =(-.act %set-label)
           =(-.act %set-tx-fee)
           =(-.act %sign-message)
           =(-.act %sign-raw-transaction-with-wallet)
           =(-.act %wallet-create-fundedpsbt)
-          =(-.act %wallet-process-psbt)
+          =(-.act %wallet-lock)
           =(-.act %wallet-passphrase)
+          =(-.act %wallet-passphrase-change)
+          =(-.act %wallet-process-psbt)
       ==
       endpoint
   ?:  =(-.act %dump-wallet)

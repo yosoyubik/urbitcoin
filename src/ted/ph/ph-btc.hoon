@@ -94,7 +94,7 @@
   ":btc-node-hook|action [%get-mempool-descendants txid-a `&]"                  ::  Y
   ::  %getmempoolentry: Returns mempool data for given transaction
   ::
-  ":btc-node-hook|action [%get-mempool-entry txid]"                             ::  Y
+  ":btc-node-hook|action [%get-mempool-entry txid-a]"                           ::  Y
   ::  %getmempoolinfo: Returns details on the active state of the
   ::  TX memory pool.
   ::  info: https://bitcoindev.network/bitcoin-transaction-mempool-statistics/
@@ -135,7 +135,7 @@
   ::
   "=desc 'pkh([ca8a7ee5/0\'/0\'/3\']03137b4f2d8457209d894f8252fa797f3d619a042e76c0eb7da081aeb9c822b12a)#02m2zsxq'"
   "=s-o [desc ~]"
-  ":btc-node-hook|action [%scan-tx-outset %start desc]"                         ::  Y
+  ":btc-node-hook|action [%scan-tx-outset %start ~[desc]]"                      ::  Y
   ":btc-node-hook|action [%scan-tx-outset %start s-o]"                          ::  Y
   ::  %verifychain: Verifies blockchain database.
   ::
@@ -182,7 +182,8 @@
   ::  %decoderawtransaction: Return a JSON object representing the
   ::  serialized, hex-encoded transaction.
   ::
-  ":btc-node-hook|action [%decode-raw-transaction hex-string=@ux is-witness=(unit ?)]"
+  ":btc-node-hook|action [%decode-raw-transaction hex &]"                       ::  Y
+  ":btc-node-hook|action [%decode-raw-transaction hex |]"                       ::  Y
   ::  %decodescript: Decode a hex-encoded script.
   ::
   ":btc-node-hook|action [%decode-script hex]"                                  ::  Y
@@ -250,7 +251,8 @@
   ::  indicating if raw transaction (serialized, hex-encoded) would be
   ::  accepted by mempool.
   ::
-  ":btc-node-hook|action [%test-mempool-accept ~[hex] ~]"                       ::  Y
+  ":btc-node-hook|action [%test-mempool-accept ~[hex] &]"                       ::  Y
+  ":btc-node-hook|action [%test-mempool-accept ~[hex] |]"                       ::  Y
   ::  %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from
   ::  the UTXO set or the mempool.
   ::
@@ -600,14 +602,14 @@
   ::        conf-target=(unit @ud)
   ::        estimate-mode=(unit @t)
   ::
-  ":btc-node-hook|action [%send-to-address *@uc '1' `'comm' `'comm' `0 `| `~[*@uc] `1 `'UNSET']"
+  ":btc-node-hook|action [%send-to-address address '1' `'comm' `'comm' `| `|  `1 `%'UNSET']"
   ::  %set-hd-seed: Set or generate a new HD wallet seed.
   ::  Non-HD wallets will not be upgraded to being a HD wallet.
   ::
   ":btc-node-hook|action [%set-hd-seed ~]"                                      ::  Y
   ::  %set-label:   Sets the label associated with the given address.
   ::
-  ":btc-node-hook|action [%set-label *@uc 'label']"                             ::  Y
+  ":btc-node-hook|action [%set-label address 'label']"                          ::  Y
   ::  %set-tx-fee: Set the transaction fee per kB for this wallet.
   ::
   ":btc-node-hook|action [%set-tx-fee '5']"                                     ::  Y
@@ -626,10 +628,14 @@
   ::
   "=hex 0x2.0000.0000.0101.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.ffff.ffff.0502.ca00.0101.ffff.ffff.0200.f902.9500.0000.0017.a914.fa37.cc22.f14f.189b.73e8.5ad0.9f29.e415.5d38.defa.8700.0000.0000.0000.0026.6a24.aa21.a9ed.e2f6.1c3f.71d1.defd.3fa9.99df.a369.5375.5c69.0689.7999.62b4.8beb.d836.974e.8cf9.0120.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000"
   ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex ~ ~]"           ::  Y
+  "=prevtx 0xefd3.369e.1338.6cd7.357d.d2bc.249f.8d0a.a9e2.a1c7.4271.0693.bf16.e45f.81b9.4433"
+  "=script-pubkey 0xa9.1476.03a9.eabd.c983.6eb8.dc6c.4ed0.8d92.106d.2c97.aa87"
+  "=prev ~[prevtx 0 script-pubkey ~ ~ ~]"
+  ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex `prev ~]"       ::  Y
   ::  %unload-wallet:   Unloads the wallet referenced by the request
   ::  endpoint otherwise unloads the wallet specified in the argument.
   ::
-  ":btc-node-hook|action [%unload-wallet 'test']"                               ::  Y
+  ":btc-node-hook|action [%unload-wallet `'test']"                              ::  Y
   ::  %wallet-create-fundedpsbt: Creates and funds a transaction in the
   ::  Partially Signed Transaction format.
   ::  Inputs will be added if supplied inputs are not enough
@@ -656,7 +662,9 @@
   "=txid 0xba65.3237.6ca2.4f29.b52e.4abe.3f00.187f.fba8.8a04.1fad.955e.ff84.a44d.dbb5.3cee"
   "=inputs [txid 0 0]~"
   "=outputs [[%data 0x1.0203] ~]"
-  ":btc-node-hook|action [%wallet-create-fundedpsbt inputs outputs ~ ~ ~]"      ::  Y
+  "=options `[~ `1 `%legacy `& `& ~ `~[1] `& `1 `%'ECONOMICAL']"
+  "=options `[~ `1 `%legacy `& `& ~ `~[1] `& `1 `%'ECONOMICAL']"
+  ":btc-node-hook|action [%wallet-create-fundedpsbt inputs outputs ~ options ~]"      ::  Y
   ::>=
   :: [ %wallet-create-fundedpsbt
   ::     psbt

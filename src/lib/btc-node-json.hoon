@@ -5,17 +5,13 @@
     ::
     =,  dejs
     |%
-    ::  Checks the unit for null and returns a json e.g. [%s @ta]
+    ::  %ferm: Checks the unit for ~ and returns a json e.g. [%s @ta]
     ::
     ++  ferm  |*([a=(unit) t=term] ?~(a ~ t^u.a))
-    ::  %feud:
-    ::  We want to make sure that numbers are @ud but JSON
-    ::  defines numbers as @ta, so we need to do a re-parse
+    ::  %feud: Checks the unit for ~ and returns a [%n @ud] json
     ::
     ++  feud  |=(a=(unit @u) ?~(a ~ (numb:enjs u.a)))
-    ::  %method:
-    ::  Removes 'hep' (-) from a %tas producing the RPC
-    ::   method to use in a call
+    ::  %method: Removes 'hep' (-) from a %tas producing the RPC method
     ::
     ::  (e.g. %add-multisig-address -> 'addmultisigaddress')
     ::
@@ -24,6 +20,7 @@
       ^-  @t
       %+  scan  (scow %tas t)
         ((slug |=(a=[@ @t] (cat 3 a))) (star hep) alp)
+    ::  %groups: used in %list-address-groupings
     ::
     ++  groups
       |=  l=(list @t)
@@ -74,8 +71,6 @@
       ::  Add leading 00
       ::
       (lsh 3 2 h)
-    ::
-    ++  ux-to-base  |=(h=@ux `@uc`h)
     ::
     ++  vin-parser
       =-  (ar (ou -))
@@ -185,6 +180,18 @@
           ['abandoned' (uf ~ (mu bo))]
           ['comment' (uf ~ (mu so))]
           ['to' (uf ~ (mu so))]
+      ==
+    ++  prev-txs-parser
+      |=  t=prev-tx
+      ^-  (list (pair @t json))
+      :~  ['txid' s+(hex-to-cord txid.t)]
+          ['vout' (numb:enjs:format vout.t)]
+          ['scriptPubKey' s+(hex-to-cord script-pubkey.t)]
+          :-  'redeemScript'
+          ?~(redeem-script.t ~ s+(hex-to-cord u.redeem-script.t))
+          :-  'witnessScript'
+          ?~(witness-script.t ~ s+(hex-to-cord u.witness-script.t))
+          ['amount' n+amount.t]
       ==
     --
 |%
@@ -418,7 +425,7 @@
     ::
         %decode-raw-transaction
       :~  s+(hex-to-cord hex-string.req)
-          (ferm is-witness.req %b)
+          b+is-witness.req
       ==
     ::
         %decode-script
@@ -445,7 +452,8 @@
           ^-  (list (pair @t json))
           :~  :-  'changeAddress'
               ?~  change-address.opts  ~
-              s+(base58-to-cord u.change-address.opts)
+              =*  a  u.change-address.opts
+              [%s ?^(a +.a (base58-to-cord a))]
               ['changePosition' (feud change-position.opts)]
               ['change_type' (ferm change-type.opts %s)]
               ['includeWatching' (ferm include-watching.opts %b)]
@@ -494,14 +502,15 @@
           :-  %a  ^-  (list json)
           %+  turn  txs
             |=  a=prev-tx
-            %-  pairs  ^-  (list (pair @t json))
-              :~  ['txid' s+(hex-to-cord txid.a)]
-                  ['vout' (numb vout.a)]
-                  ['scriptPubKey' s+(hex-to-cord script-pubkey.a)]
-                  ['redeemScript' s+(hex-to-cord redeem-script.a)]
-                  ['witnessScript' s+(hex-to-cord witness-script.a)]
-                  ['amount' n+amount.a]
-              ==
+            (pairs (prev-txs-parser a))
+            :: ^-  (list (pair @t json))
+              :: :~  ['txid' s+(hex-to-cord txid.a)]
+              ::     ['vout' (numb vout.a)]
+              ::     ['scriptPubKey' s+(hex-to-cord script-pubkey.a)]
+              ::     ['redeemScript' s+(hex-to-cord redeem-script.a)]
+              ::     ['witnessScript' s+(hex-to-cord witness-script.a)]
+              ::     ['amount' n+amount.a]
+              :: ==
         ::
           (ferm sig-hash-type.req %s)
       ==
@@ -533,6 +542,12 @@
       ==
     ::
         %derive-addresses
+      ::  Sending a (unit range), resulting in a "null" parameter,
+      ::  returns this from the RPC node
+      ::  "Range should not be specified for an un-ranged descriptor"
+      ::
+      =-  (skip - |=(a=json =(a ~)))
+      ^-  (list json)
       :~  s+descriptor.req
           ?~  range.req  ~
           =*  range  u.range.req
@@ -542,8 +557,10 @@
       ==
     ::
         %estimate-smart-fee
+      =-  (skip - |=(a=json =(a ~)))
+      ^-  (list json)
       :~  (numb conf-target.req)
-          s+estimate-mode.req
+          (ferm mode.req %s)
       ==
     ::
         %get-descriptor-info
@@ -793,12 +810,18 @@
     ::
         %list-received-by-address
       ?~  +.req  ~
+      ::  BTC node can't take a null as the address
+      ::    "JSON value is not a string as expected"
+      ::  so we remove it from the parameters
+      ::
+      =-  (skip - |=(a=json =(a s+'null')))
+      ^-  (list json)
       :~  (feud minconf.req)
           (ferm include-empty.req %b)
           (ferm include-watch-only.req %b)
           =*  addr  address-filter.req
-          ?~  addr  ~
           :-  %s
+          ?~  addr  'null'
           ?^  u.addr
             +.u.addr
           (base58-to-cord u.addr)
@@ -973,14 +996,8 @@
           :-  %a
           %+  turn  ^-  (list prev-tx)  txs
             |=  a=prev-tx
-            %-  pairs
-              :~  ['txid' s+(hex-to-cord txid.a)]
-                  ['vout' (numb vout.a)]
-                  ['scriptPubKey' s+(hex-to-cord script-pubkey.a)]
-                  ['redeemScript' s+(hex-to-cord redeem-script.a)]
-                  ['witnessScript' s+(hex-to-cord witness-script.a)]
-                  ['amount' n+amount.a]
-              ==
+            ^-  json
+            (pairs (prev-txs-parser a))
         ::
           (ferm sig-hash-type.req %s)
       ==
@@ -1006,15 +1023,13 @@
             %-  pairs
               [-.data.out s+(hex-to-cord +.data.out)]~
             %+  turn  addresses.out
-            |=  [address=?(address [%bech32 @t]) amount=@t]
+            |=  [address=?(@uc [%bech32 @t]) amount=@t]
             ^-  json
             %-  pairs
-              :~  :-  'address'
-                  :-  %s
+              :~  :_  n+amount
                   ?^  address
                     +.address
                   (base58-to-cord address)
-                  ['amount' n+amount]
               ==
         ::
           (feud locktime.req)
@@ -1026,9 +1041,10 @@
           ^-  (list (pair @t json))
           :~  :-  'changeAddress'
               ?~  change-address.opts  ~
-              s+(base58-to-cord u.change-address.opts)
+              =*  a  u.change-address.opts
+              [%s ?^(a +.a (base58-to-cord a))]
               ['changePosition' (feud change-position.opts)]
-              ['change-type' (ferm change-type.opts %s)]
+              ['change_type' (ferm change-type.opts %s)]
               ['includeWatching' (ferm include-watching.opts %b)]
               ['lockUnspents' (ferm lock-unspents.opts %b)]
               ['feeRate' (ferm fee-rate.opts %n)]
@@ -1036,8 +1052,8 @@
               ?~  subtract-fee-from-outputs.opts  ~
               a+(turn u.subtract-fee-from-outputs.opts numb)
               ['replaceable' (ferm replaceable.opts %b)]
-              ['conf-target' (feud conf-target.opts)]
-              ['estimate-mode' (ferm mode.opts %s)]
+              ['conf_target' (feud conf-target.opts)]
+              ['estimate_mode' (ferm mode.opts %s)]
           ==
           (ferm bip32-derivs.req %b)
       ==
@@ -1146,7 +1162,7 @@
               ['reject' (ot ['status' bo]~)]
           ==
           =-  ['bip9_softforks' (un (om (ou -)))]
-          :~  ['status' (un (cu soft-fork-status so))]
+          :~  ['status' (uf ~ (mu (cu soft-fork-status so)))]
               ['bit' (uf ~ (mu ni))]
               =-  ['startTime' (un (cu - no))]
               |=  a=@t
@@ -1178,7 +1194,6 @@
         ((cu to-hex so) res.res)
       ?.  =(%o -.res.res)  !!
       %.  res.res
-      ~&  res.res
       =-  (ou -)
       :~  ['hash' (un (cu to-hex so))]
           ['confirmations' (un ni)]
@@ -1275,7 +1290,6 @@
     ::
         %get-mempool-ancestors
       :-  id.res
-      ~&  res.res
       ?:  =(%a -.res.res)
         %.  res.res
         =-  (ar -)
@@ -1291,7 +1305,6 @@
     ::
         %get-mempool-descendants
       :-  id.res
-      ~&  res.res
       ?:  =(%a -.res.res)
         %.  res.res
         =-  (ar -)
@@ -1818,7 +1831,6 @@
         %get-transaction
       :-  id.res
       %.  res.res
-      ~&  res.res
       =-  (ou -)
       :~  ['amount' (un no)]
           ['fee' (uf ~ (mu no))]
@@ -1831,7 +1843,7 @@
           ['timereceived' (un ni)]
           ['bip125-replaceable' (un (cu bip125-replaceable so))]
           =-  ['details' (un (ar (ou -)))]
-          :~  =-  ['address' (un -)]
+          :~  =-  ['address' (uf ~ (mu -))]
               (cu addr-type-validator so)
               ['category' (un (cu category so))]
               ['amount' (un no)]
@@ -1920,7 +1932,6 @@
     ::
         %list-received-by-address
       :-  id.res
-      ~&  res.res
       %.  res.res
       =-  (ar (ou -))
       :~  :-  'involvesWatchonly'

@@ -1,9 +1,11 @@
-=>  ::  Helper types used within and outside the library
+=>  ::  Helper types
     ::
     |%
     ::  +address: base58check encoded public key (20 bytes)
     ::
-    ++  address    @uc
+    ::  FIXME: %bech32 is not parsed by fim:ag
+    ::
+    +$  address    ?(@uc [%bech32 @t])
     ++  blockhash  @ux
     ::  $estimate-mode
     ::
@@ -41,7 +43,7 @@
     ::    Used in:
     ::      - %get-blockchain-info/$bip9-softforks
     ::
-    +$  soft-fork-status  ?(%defined %started %locked-in %active %failed)
+    +$  soft-fork-status  ?(%defined %started %'locked_in' %active %failed)
     ::  $purpose:
     ::
     ::    Used in:
@@ -73,7 +75,9 @@
     ::
     ::    Used in:
     ::      - %wallet-process-psbt
-    ::      - $sig-hash-type
+    ::      - %sign-raw-transaction-with-wallet
+    ::      - %sign-raw-transaction-with-key
+    ::      - %decode-psbt
     ::
     +$  sig-hash
       $?  %'NONE'
@@ -83,14 +87,6 @@
           %'SINGLE|ANYONECANPAY'
           %'ALL'
       ==
-    ::  $sig-hash-type:
-    ::
-    ::    Used in:
-    ::      - %sign-raw-transaction-with-wallet
-    ::      - %sign-raw-transaction-with-key
-    ::      - %decode-psbt
-    ::
-    +$  sig-hash-type  (unit sig-hash)
     ::  $script:
     ::
     ::    Used in:
@@ -106,7 +102,7 @@
       $:  asm=@t
           hex=@ux
           type=@t
-          address=?(address [%bech32 @t])
+          =address
       ==
     ::  $range:
     ::
@@ -164,7 +160,7 @@
     ::
     +$  output
       $:  data=[%data @ux]
-          addresses=(list [address=?(address [%bech32 @t]) amount=@t])
+          addresses=(list [=address amount=@t])
       ==
     ::  $scan-object:
     ::
@@ -197,7 +193,7 @@
           type=@t
           req-sigs=(unit @ud)
           addresses=(list [%bech32 @t])
-          p2sh-segwit=(unit address)
+          p2sh-segwit=(unit @uc)
       ==
     ::  $partially-signed-transaction:
     ::
@@ -260,8 +256,8 @@
       $:  txid=@ux
           vout=@ud
           script-pubkey=@ux
-          redeem-script=@ux
-          witness-script=@ux
+          redeem-script=(unit @ux)
+          witness-script=(unit @ux)
           amount=@t
       ==
     ::  $raw-transaction-rpc-out:
@@ -294,7 +290,7 @@
     ::      - %list-transactions
     ::
     +$  tx-in-block
-      $:  address=(unit ?(address [%bech32 @t]))
+      $:  address=(unit address)
           =category
           amount=@t
           label=(unit @t)
@@ -380,6 +376,7 @@
 ::
 +$  btc-node-hook-action    request:btc-rpc
 +$  btc-node-hook-response  response:btc-rpc
++$  btc-node-hook-command   command:btc-rpc
 ::
 ++  btc-rpc
   |%
@@ -526,7 +523,7 @@
         ::  %decoderawtransaction: Return a JSON object representing the
         ::  serialized, hex-encoded transaction.
         ::
-        [%decode-raw-transaction hex-string=@ux is-witness=(unit ?)]
+        [%decode-raw-transaction hex-string=@ux is-witness=?]
         ::  %decodescript: Decode a hex-encoded script.
         ::
         [%decode-script hex-string=@ux]
@@ -571,7 +568,7 @@
             hex-string=@ux
             priv-keys=(list @t)
             prev-txs=(unit (list prev-tx))
-            =sig-hash-type
+            sig-hash-type=(unit sig-hash)
         ==
         ::  %testmempoolaccept: Returns result of mempool acceptance tests
         ::  indicating if raw transaction (serialized, hex-encoded) would be
@@ -602,7 +599,7 @@
         ::  blocks if possible and return the number of blocks for which the
         ::  estimate is valid.
         ::
-        [%estimate-smart-fee conf-target=@ud =estimate-mode]
+        [%estimate-smart-fee conf-target=@ud mode=(unit estimate-mode)]
         ::  %getdescriptorinfo: Analyses a descriptor.
         ::
         [%get-descriptor-info descriptor=@t]
@@ -613,10 +610,10 @@
         ::  %validateaddress: Return information about the given
         ::  bitcoin address.
         ::
-        [%validate-address address=?(address [%bech32 @t])]
+        [%validate-address =address]
         ::  %verifymessage: Verify a signed message
         ::
-        [%verify-message address=?(address [%bech32 @t]) signature=@t message=@t]
+        [%verify-message =address signature=@t message=@t]
     ::  Wallet
     ::
         ::  %abandon-transaction: Mark in-wallet transaction as abandoned.
@@ -661,7 +658,7 @@
         [%create-wallet name=@t disable-private-keys=(unit ?) blank=(unit ?)]
         ::  %dump-privkey: Reveals the private key corresponding to 'address'.
         ::
-        [%dump-privkey address=?(address [%bech32 @t])]
+        [%dump-privkey =address]
         ::  %dump-wallet: Dumps all wallet keys in a human-readable format to
         ::  a server-side file.
         ::
@@ -676,7 +673,7 @@
         ::  %get-address-info: Return information about the given bitcoin
         ::  address.
         ::
-        [%get-address-info address=?(address [%bech32 @t])]
+        [%get-address-info =address]
         ::  %get-balance: Returns the total available balance.
         ::
         $:  %get-balance
@@ -696,7 +693,7 @@
         ::  %get-received-by-address:  Returns the total amount received by the
         ::  given address in transactions with at least minconf confirmations.
         ::
-        [%get-received-by-address address=?(address [%bech32 @t]) minconf=@ud]
+        [%get-received-by-address =address minconf=@ud]
         ::  %get-received-by-label:  Returns the total amount received by
         ::  addresses with <label> in transactions with at least [minconf]
         ::  confirmations.
@@ -719,7 +716,7 @@
         ::
         $:  %import-address
             $=  address
-            $%  [%addr address]
+            $%  [%addr @uc]
                 [%bech32 @t]
                 [%script @ux]
             ==
@@ -772,7 +769,7 @@
                 $:  minconf=(unit @ud)
                     include-empty=(unit ?)
                     include-watch-only=(unit ?)
-                    address-filter=(unit address=?(address [%bech32 @t]))
+                    address-filter=(unit =address)
         ==  ==  ==
         ::  %list-received-by-label: List received transactions by label.
         ::
@@ -810,7 +807,7 @@
             $?  ~
                 $:  minconf=(unit @ud)
                     maxconf=(unit @ud)
-                    addresses=(unit (list ?(address [%bech32 @t])))
+                    addresses=(unit (list address))
                     include-unsafe=(unit ?)
                     $=  query-options  %-  unit
                     $:  minimum-amount=(unit @ud)
@@ -847,7 +844,7 @@
         ::
         $:  %send-many
             dummy=%''
-            amounts=(list [address=?(address [%bech32 @t]) amount=@t])
+            amounts=(list [=address amount=@t])
             minconf=(unit @ud)
             comment=(unit @t)
             subtract-fee-from=(unit (list ?(address [%bech32 @t])))
@@ -858,7 +855,7 @@
         ::  %send-to-address: Send an amount to a given address.
         ::
         $:  %send-to-address
-            address=?(address [%bech32 @t])
+            =address
             amount=@t
             comment=(unit @t)
             comment-to=(unit @t)
@@ -873,20 +870,20 @@
         [%set-hd-seed ~]
         ::  %set-label:   Sets the label associated with the given address.
         ::
-        [%set-label address=?(address [%bech32 @t]) label=@t]
+        [%set-label =address label=@t]
         ::  %set-tx-fee: Set the transaction fee per kB for this wallet.
         ::
         [%set-tx-fee amount=@t]
         ::  %sign-message:   Sign a message with the private key of an address
         ::
-        [%sign-message address=?(address [%bech32 @t]) message=@t]
+        [%sign-message =address message=@t]
         ::  %sign-raw-transaction-with-wallet: Sign inputs for raw transaction
         ::  (serialized, hex-encoded).
         ::
         $:  %sign-raw-transaction-with-wallet
             hex-string=@ux
             prev-txs=(unit (list prev-tx))
-            =sig-hash-type
+            sig-hash-type=(unit sig-hash)
         ==
         ::  %unload-wallet:   Unloads the wallet referenced by the request
         ::  endpoint otherwise unloads the wallet specified in the argument.
@@ -901,7 +898,7 @@
             outputs=output
             locktime=(unit @ud)
             $=  options  %-  unit
-            $:  change-address=(unit @uc)
+            $:  change-address=(unit address)
                 change-position=(unit @ud)
                 change-type=(unit address-type)
                 include-watching=(unit ?)
@@ -1008,7 +1005,7 @@
             ==
             $=  bip9-softforks  %+  map
                 name=@t
-                $:  status=soft-fork-status
+                $:  status=(unit soft-fork-status)
                     bit=(unit @ud)
                     start-time=?(%'-1' @ud)
                     timeout=@ud
@@ -1135,7 +1132,7 @@
                         hex=@ux
                         req-sigs=@ud
                         type=@t
-                        addresses=(list ?(address [%bech32 @t]))
+                        addresses=(list address)
                     ==
                     coinbase=?
         ==  ==  ==
@@ -1222,7 +1219,7 @@
                 witness-utxo=utxo
                 $=  partial-signatures  %-  unit
                   (map pubkey=@ux signature=@ux)
-                =sig-hash-type
+                sig-hash-type=(unit sig-hash)
                 redeem-script=(unit script)
                 witness-script=(unit script)
                 $=  bip32-derivs  %-  unit  %+  map
@@ -1255,7 +1252,7 @@
             type=@t
             req-sigs=(unit @ud)
             addresses=(unit (list ?(address [%bech32 @t])))
-            p2sh=(unit address)
+            p2sh=(unit @uc)
             segwit=(unit segwit-script)
         ==
       ::
@@ -1284,9 +1281,9 @@
         [%utxo-update-psbt psbt=@t]
     ::  Util
     ::
-        [%create-multi-sig address=?(address [%bech32 @t]) redeem-script=@t]
+        [%create-multi-sig =address redeem-script=@t]
       ::
-        [%derive-addresses (list address=?(address [%bech32 @t]))]
+        [%derive-addresses (list address)]
       ::
         $:  %estimate-smart-fee
             fee-rate=(unit @t)
@@ -1305,7 +1302,7 @@
       ::
         $:  %validate-address
             is-valid=?
-            address=?(address [%bech32 @t])
+            =address
             script-pubkey=@ux
             is-script=?
             is-witness=?
@@ -1321,7 +1318,7 @@
         [%abort-rescan ~]
       ::
         $:  %add-multisig-address
-            address=?(address [%bech32 @t])
+            =address
             redeem-script=@t
         ==
       ::
@@ -1342,7 +1339,7 @@
         ==
       ::
         $:  %get-address-info
-            address=?(address [%bech32 @t])
+            =address
             script-pubkey=@ux
             is-mine=?
             is-watchonly=?
@@ -1388,9 +1385,9 @@
       ::
         [%get-balance amount=@t]
       ::
-        [%get-new-address address=?(address [%bech32 @t])]
+        [%get-new-address =address]
       ::
-        [%get-raw-change-address address=?(address [%bech32 @t])]
+        [%get-raw-change-address =address]
       ::
         [%get-received-by-address amount=@t]
       ::
@@ -1408,7 +1405,7 @@
             time-received=@ud
             =bip125-replaceable
             $=  details  %-  list
-            $:  address=?(address [%bech32 @t])
+            $:  address=(unit address)
                 =category
                 amount=@t
                 label=(unit @t)
@@ -1468,7 +1465,7 @@
       ::
         $:  %list-received-by-address  %-  list
             $:  involves-watch-only=(unit %&)
-                address=?(address [%bech32 @t])
+                =address
                 amount=@t
                 confirmations=@ud
                 label=@t
@@ -1494,7 +1491,7 @@
         $=  txs  %-  list
             $:  txid=@ux
                 vout=@ud
-                address=?(address [%bech32 @t])
+                =address
                 label=@t
                 script-pubkey=@ux
                 amount=@t
@@ -1553,8 +1550,17 @@
     ::
         $:  %get-zmq-notifications  %-  list
             $:  type=@t
-                address=?(address [%bech32 @t])
+                =address
                 hwm=@ud
     ==  ==  ==
+  ::
+  +$  command
+    $%  ::  Loads RPC node URL+credentials
+        ::
+        [%credentials url=@t heads=(list [@t @t])]
+        ::  TODO: Sync data/wallets...
+        ::
+        [%sync ~]
+    ==
   --
 --
