@@ -8,5 +8,5 @@
     ==
 :-  %btc-node-store-command
 ?+  -.comm  ~|  [%unsupported-command -.comm]  !!
-    %switch-wallet  [%switch-wallet +.comm]
+    %switch-wallet  [-.comm  +.comm]
 ==

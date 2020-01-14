@@ -1,9 +1,7 @@
 /-  *btc-node-hook
 /+  base64
 =,  format
-=>  ::  Helper gates
-    ::
-    =,  dejs
+=>  =,  dejs
     |%
     ::  %ferm: Checks the unit for ~ and returns a json e.g. [%s @ta]
     ::

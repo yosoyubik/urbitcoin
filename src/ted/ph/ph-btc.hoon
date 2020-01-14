@@ -13,10 +13,12 @@
 ;<  ~  bind:m  (dojo ~bud "|start %btc-node-store")
 ;<  ~  bind:m  (dojo ~bud "|start %btc-node-hook")
 ::
-;<  ~  bind:m  (dojo ~bud ":btc-node-hook|actiosn [%get-balance ~]")
+;<  ~  bind:m  %+  dojo   ~bud
+  "=credentials credentials+['http://127.0.0.1:18443/' ~[['Content-Type' 'application/json'] ['Authorization' 'Basic dXJiaXRjb2luZXI6dXJiaXRjb2luZXI']]]"
+::
+;<  ~  bind:m  (dojo ~bud ":btc-node-hook|action [%get-balance ~]")
 ;<  ~  bind:m  (wait-for-output ~bud "amount=0.00000000")
-;<  ~  bind:m  end-simple
-(pure:m *vase)
+::  FIXME
 ::  Blockchain
   ::  %getbestblockhash: Returns the hash of the
   ::  best (tip) block in the longest blockchain.
@@ -702,7 +704,10 @@
   ::  ZMQ management
   ::
   ":btc-node-hook|action [%get-zmq-notifications ~]"                            ::  ?
-::
+
+;<  ~  bind:m  end-simple
+(pure:m *vase)
+
 :: ;<  ~  bind:m  (just-events (dojo ~bud "|start %btc-node-store"))
 :: ;<  ~  bind:m  (just-events (dojo ~bud "|start %btc-node-hook"))
 :: ::

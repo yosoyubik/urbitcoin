@@ -65,7 +65,6 @@
                   (en-json (request-to-json:rpc:jstd body))
           ==
         =/  out  *outbound-config:iris
-        ~&  req
         :_  this
         [%pass /[(scot %da now.bowl)] %arvo %i %request req out]~
       ::
@@ -342,7 +341,8 @@
   ::      http://127.0.0.1:18443/wallet/
   ::
   ::  A %switch-wallet command needs to be issued against the store app
-  ::  when a wallet is created
+  ::  after a wallet is created, in order to use it.
+  ::
   ::  e.g.  > :btc-node-store|command [%switch-wallet 'local']
   ::
   ?:  (lte n-wallets 1)
