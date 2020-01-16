@@ -103,8 +103,8 @@
   |=  hit=httr:eyre
   ^-  response:rpc:jstd
   ~|  hit
-  ?.  ?=(%2 (div p.hit 100))
-    fail+hit
+  :: ?.  ?=(%2 (div p.hit 100))
+  ::   fail+hit
   =/  jon=json  (need (de-json:html q:(need r.hit)))
   =,  dejs-soft:format
   ^-  response:rpc:jstd
@@ -153,14 +153,10 @@
       response-header.response
     full-file.response
   ?.  ?=([%result *] rpc-resp)
-    ~&  :-  %error
-    ?.  ?=([%fail httr:eyre] rpc-resp)
-      +.rpc-resp
-    %-  handle-error
-    (need (de-json:html q:(need r.rpc-resp)))
+    ~&  [%error +.rpc-resp]
     [~ state]
   %-  handle-btc-response
-  (parse-response:btc-rpc:lib rpc-resp)
+    (parse-response:btc-rpc:lib rpc-resp)
 ::
 ++  handle-btc-response
   |=  btc-resp=btc-node-hook-response
