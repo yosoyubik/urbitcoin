@@ -1,8 +1,11 @@
+::   This is a placeholder test template for the RPC calls.
+::   TODO: expand unit tests and add missing cases
+::
 /-  *btc-node-hook
 /+  *test, lib=btc-node-json
 ::
-=/  addr     '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
-=/  en-addr=@uc  (to-base58:btc-rpc:lib addr)
+=/  addr=@t      '1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA'
+=/  en-addr=@uc  `@uc`(rash addr fim:ag)
 ::
 =,  format
 ::
@@ -140,7 +143,7 @@
           ['isscript' b+&]
           ['ischange' b+&]
           ['iswitness' b+&]
-          ['witness_version' s+'23']
+          ['witness_version' n+'23']
           ['witness_program' s+'23']
           ['script' s+'23']
           ['hex' s+'23']
@@ -155,7 +158,7 @@
                 ['isscript' b+&]
                 ['ischange' b+&]
                 ['iswitness' b+&]
-                ['witness_version' s+'23']
+                ['witness_version' n+'23']
                 ['witness_program' s+'23']
                 ['script' s+'23']
                 ['hex' s+'23']
@@ -169,23 +172,23 @@
             ==
           ['iscompressed' b+&]
           ['label' s+'23']
-          ['timestamp' s+'23']
+          ['timestamp' n+'23']
           ['hdkeypath' s+'23']
           ['hdseedid' s+'23']
           ['hdmasterfingerprint' s+'23']
           label-result
       ==
   =/  embedded
-    :*  0x23  &  (some '23')  &  &  &
+    :*  0x23  (some &)  (some '23')  &  (some &)  &
         (some '23')  (some 0x23)  (some 0x23)  (some 0x23)
         (some [0x23]~)  (some 2)  (some 0x23)  (some &)
-        (some '23')  (some 0x23)  ['label1' %send]~
+        (some '23')  (some 0x23)  (some ['label1' %send]~)
     ==
   =/  exp=response:btc-rpc
     :*  op  en-addr  0x23  &  &  &  (some '23')  &  &  &
         (some '23')  (some 0x23)  (some '23')  (some 0x23)
         (some [0x23]~)  (some 2)  (some 0x23)  (some embedded)
-        (some &)  (some '23')  (some '23')  (some '23')
+        (some &)  (some '23')  (some 23)  (some '23')
         (some 0x23)  (some 0x23)
         ['label1' %send]~
     ==
@@ -216,14 +219,14 @@
 ::
 ++  test-get-received-by-address  ^-  tang
   =/  op  %get-received-by-address
-  =/  result=response:rpc:jstd  [%result op s+'23']
+  =/  result=response:rpc:jstd  [%result op n+'23']
   %+  expect-eq
     !>  [op '23']
     !>  (parse-response:btc-rpc:lib result)
 ::
 ++  test-get-received-by-label  ^-  tang
   =/  op  %get-received-by-label
-  =/  result=response:rpc:jstd  [%result op s+'23']
+  =/  result=response:rpc:jstd  [%result op n+'23']
   %+  expect-eq
     !>  [op '23']
     !>  (parse-response:btc-rpc:lib result)
@@ -258,9 +261,9 @@
         ['hex' s+'23']
     ==
   =/  exp=response:btc-rpc
-    :*  op  '23'  '23'  23  0x23  23
-        23  0x23  23  23  %yes
-        [en-addr %send '23.23' '23' 23 '23' %.n]~
+    :*  op  '23'  (some '23')  23  (some 0x23)  (some 23)
+        (some 23)  0x23  23  23  %yes
+        [(some en-addr) %send '23.23' (some '23') 23 (some '23') (some %.n)]~
         0x23
     ==
   %+  expect-eq
@@ -269,7 +272,7 @@
 ::
 ++  test-get-unconfirmed-balance  ^-  tang
   =/  op  %get-unconfirmed-balance
-  =/  result=response:rpc:jstd  [%result op s+'99']
+  =/  result=response:rpc:jstd  [%result op n+'99']
   %+  expect-eq
     !>  [op '99']
     !>  (parse-response:btc-rpc:lib result)
@@ -369,12 +372,12 @@
   =/  op  %list-address-groupings
   =/  result=response:rpc:jstd
     :+  %result  op
-    :-  %a
-    [%a ~[s+addr s+'amount' s+'label']]~
+    a+[a+[%a ~[s+addr n+'1' s+'label']]~]~
   =/  exp=response:btc-rpc
     :-  op
-    :~  :~  [en-addr 'amount' (some 'label')]
-    ==  ==
+    :_  ~
+    :_  ~
+    [en-addr '1' (some 'label')]~
   %+  expect-eq
       !>  exp
       !>  (parse-response:btc-rpc:lib result)
@@ -457,7 +460,6 @@
         ['bip125-replaceable' s+'yes']
         ['abandoned' b+&]
         ['comment' s+'23']
-        ['label' s+'23']
         ['to' s+'23']
     ==
   =/  result=response:rpc:jstd
@@ -474,30 +476,30 @@
           ['lastblock' s+'23']
       ==
   =/  exp-tx-response
-    :*  address=en-addr
+    :*  (some address=en-addr)
         category=%send
         amount='23.23'
-        label='23'
+        (some label='23')
         vout=23
-        fee='23.23'
+        (some fee='23.23')
         confirmations=23
-        blockhash=0x23
-        blockindex=23
-        blocktime=23
+        (some blockhash=0x23)
+        (some blockindex=23)
+        (some blocktime=23)
         txid=0x23
         time=23
-        time-received=23
+        (some time-received=23)
+        wallet-conflicts=~
         bip125-replaceable=%yes
-        abandoned=&
-        comment='23'
-        label='23'
-        to='23'
+        (some abandoned=&)
+        (some comment='23')
+        (some to='23')
     ==
   =/  exp=response:btc-rpc
     :*  op
         [exp-tx-response]~
         (some [exp-tx-response]~)
-       0x23
+        0x23
     ==
   %+  expect-eq
       !>  exp
@@ -512,27 +514,43 @@
     :~  %-  pairs:enjs
         :~  ['address' s+addr]
             ['category' s+'send']
-            ['amount' n+'23']
+            ['amount' n+'23.23']
             ['label' s+'23']
             ['vout' n+~.23]
-            ['fee' n+'23']
+            ['fee' n+'23.23']
             ['confirmations' n+~.23]
-            ['trusted' b+|]
             ['blockhash' s+'23']
             ['blockindex' n+~.23]
             ['blocktime' n+~.23]
             ['txid' s+'23']
             ['time' n+~.23]
             ['timereceived' n+~.23]
-            ['comment' s+'23']
             ['bip125-replaceable' s+'yes']
-            ['abandoned' b+|]
+            ['abandoned' b+&]
+            ['comment' s+'23']
+            ['to' s+'23']
     ==  ==
   =/  exp=response:btc-rpc
     :-  op
     :_  ~
-    :*  en-addr  %send  '23'  '23'  23  '23'  23  %.n
-        0x23  23  23  0x23  23  23  '23'  %yes  %.n
+    :*  (some address=en-addr)
+        category=%send
+        amount='23.23'
+        (some label='23')
+        vout=23
+        (some fee='23.23')
+        confirmations=23
+        (some blockhash=0x23)
+        (some blockindex=23)
+        (some blocktime=23)
+        txid=0x23
+        time=23
+        (some time-received=23)
+        wallet-conflicts=~
+        bip125-replaceable=%yes
+        (some abandoned=&)
+        (some comment='23')
+        (some to='23')
     ==
   %+  expect-eq
       !>  exp
@@ -560,7 +578,7 @@
     ==  ==
   =/  exp=response:btc-rpc
     :-  op
-    [0x23 23 en-addr '23' 0x23 '23' 23 0x23 0x23 %.n %.n (some '23') %.n]~
+    [0x23 23 en-addr '23' 0x23 '23' 23 0x23 (some 0x23) %.n %.n (some '23') %.n]~
   %+  expect-eq
     !>  exp
     !>  (parse-response:btc-rpc:lib result)
@@ -697,7 +715,7 @@
                 ['error' s+'34']
     ==  ==  ==
   =/  exp=response:btc-rpc
-    [op 0x34 | [0x34 34 0x34 34 '34']~]
+    [op 0x34 | (some [0x34 34 0x34 34 '34']~)]
   %+  expect-eq
     !>  exp
     !>  (parse-response:btc-rpc:lib result)

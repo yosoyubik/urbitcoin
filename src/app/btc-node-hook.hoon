@@ -313,6 +313,7 @@
           ?=([%import-privkey *] act)
           ?=([%import-pruned-funds *] act)
           ?=([%import-pubkey *] act)
+          ?=([%import-wallet *] act)
           ?=([%key-pool-refill *] act)
           ?=([%list-address-groupings *] act)
           ?=([%list-labels *] act)
@@ -339,7 +340,7 @@
           ?=([%wallet-process-psbt *] act)
       ==
     endpoint
-  ?:  ?=([%dump-wallet filename=@t] act)
+  ?:  ?=([?(%dump-wallet %import-wallet) filename=@t] act)
     (crip "{(trip endpoint)}wallet/{(trip filename.act)}")
   ::  FIXME: fails when default-wallet is '' and more than 1 wallet
   ::  has been created

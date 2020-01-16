@@ -564,7 +564,7 @@
   ":btc-node-hook|action [%list-wallets ~]"                                     ::  Y
   ::  %load-wallet  Loads a wallet from a wallet file or directory.
   ::
-  ":btc-node-hook|action [%load-wallet 'uno']"
+    ":btc-node-hook|action [%load-wallet 'uno']"
   ::  %lock-unspent: Updates list of temporarily unspendable outputs.
   ::  unlock=?
   ::   transactions=(unit (list [txid=@ux vout=@ud]))

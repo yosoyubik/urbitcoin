@@ -11,13 +11,13 @@
 =/  test-pit=vase  !>(..zuse)
 =/  http-client-gate  (http-client-raw test-pit)
 ::
-=/  endpoint  'http://127.0.0.1:8332'
+=/  endpoint  'http://127.0.0.1:18443/'
 =/  headers=header-list:http
   :~  ['Accept' 'application/json']
       ['Content-Type' 'text/plain']
       ['Authorization' 'Basic dXJiaXRjb2luZXI6dXJiaXRjb2luZXI']
   ==
-=/  app-state=state:app  [%0 endpoint headers [*bone *sole-share:sole]]
+=/  app-state=state-zero:app  [%0 endpoint headers]
 ::
 |%
 ::  Others
