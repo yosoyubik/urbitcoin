@@ -213,7 +213,7 @@
   ":btc-node-hook|action [%fund-raw-transaction hex ~ |]"                       ::  Y
   "=options `[~ `1 `%legacy ~ ~ ~ ~ ~ `1 `%'ECONOMICAL']"
   ":btc-node-hook|action [%fund-raw-transaction hex options |]"                 ::  Y
-  ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex & ~]"
+  ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex ~ ~]"
   ":btc-node-hook|action [%send-raw-transaction signed-hex *?]"
   ::  %getrawtransaction: Return the raw transaction data.
   ::
@@ -379,7 +379,7 @@
   ::  include-watch-only=(unit ?)
   ::
   ":btc-node-hook|action [%get-balance ~]"                                      ::  Y
-  ":btc-node-hook|action [%get-balance `%'*' `23 `%.n]"                         ::  Y
+  ":btc-node-hook|action [%get-balance `[`%'*' `23 `%.n]]"                         ::  Y
   ::  %get-new-address: Returns a new Bitcoin address for receiving
   ::  payments.
   ::  label=(unit @t) address-type=(unit address-type)
@@ -617,7 +617,7 @@
   ":btc-node-hook|action [%set-tx-fee '5']"                                     ::  Y
   ::  %sign-message:   Sign a message with the private key of an address
   ::
-  ":btc-node-hook|action [%get-new-address 'sign' `%legacy]"
+  ":btc-node-hook|action [%get-new-address `'sign' `%legacy]"
   "=address 0cmjiSfqxQeMsRgkEAddmdANrSVC6NU98wWF"
   ":btc-node-hook|action [%sign-message address 'message']"                     ::  Y
   ::  %sign-raw-transaction-with-wallet: Sign inputs for raw transaction

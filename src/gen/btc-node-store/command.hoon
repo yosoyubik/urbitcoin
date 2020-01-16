@@ -1,5 +1,9 @@
 ::  Sends a command to the BTC store app
 ::
+::  Commands:
+::
+::  > :btc-node-store|command [%switch-wallet 'local']
+::
 /-  *btc-node-store
 ::
 :-  %say
@@ -8,5 +12,5 @@
     ==
 :-  %btc-node-store-command
 ?+  -.comm  ~|  [%unsupported-command -.comm]  !!
-    %switch-wallet  [-.comm  +.comm]
+    %switch-wallet  comm
 ==

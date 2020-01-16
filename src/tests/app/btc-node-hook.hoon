@@ -28,22 +28,23 @@
   =/  expected-body  [op (method:btc-rpc:lib op) %list ~]
   =^  request  app
     (~(poke-noun app *bowl:gall app-state) action)
-  :: ~&  endpoint.app-state
+  =/  expected-request
+    ^-  (list move:app)
+    :~  :*  ost.bol.app
+            %request
+            /~2000.1.1
+            :*  %'POST'
+                endpoint.app-state
+                headers.app-state
+                %-  some
+                  %-  as-octt:mimes:html
+                    (en-json:html (request-to-json:rpc:jstd expected-body))
+            ==
+            *outbound-config:iris
+    ==  ==
   ;:  weld
     %+  expect-eq
-      !>  ^-  (list move:app)
-          :~  :*  ost.bol.app
-                  %request
-                  /~2000.1.1
-                  :*  %'POST'
-                      endpoint.app-state
-                      headers.app-state
-                      %-  some
-                        %-  as-octt:mimes:html
-                          (en-json:html (request-to-json:rpc:jstd expected-body))
-                  ==
-                  *outbound-config:iris
-          ==  ==
+      !>  expected-request
       !>  request
   ==
 ::

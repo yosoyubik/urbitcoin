@@ -31,7 +31,7 @@
     ++  on-init
       ^-  (quip card _this)
       :-  ~
-      %=  this
+      %_  this
         endpoint  ''
         headers   ~
       ==
@@ -44,11 +44,13 @@
     ++  on-poke
       |=  [=mark =vase]
       ^-  (quip card _this)
-      |^
-      ?+    mark    (on-poke:def mark vase)
-          %btc-node-hook-action   (hook-action !<(btc-node-hook-action vase))
-          %btc-node-hook-command  (hook-command !<(btc-node-hook-command vase))
-      ==
+      |^  ?+    mark    (on-poke:def mark vase)
+              %btc-node-hook-action
+            (hook-action !<(btc-node-hook-action vase))
+          ::
+              %btc-node-hook-command
+            (hook-command !<(btc-node-hook-command vase))
+          ==
       ::
       ++  hook-action
         |=  act=btc-node-hook-action
@@ -101,32 +103,44 @@
   |=  hit=httr:eyre
   ^-  response:rpc:jstd
   ~|  hit
-  ?.  ?=($2 (div p.hit 100))
+  ?.  ?=(%2 (div p.hit 100))
     fail+hit
-  =/  a=json  (need (de-json:html q:(need r.hit)))
+  =/  jon=json  (need (de-json:html q:(need r.hit)))
   =,  dejs-soft:format
   ^-  response:rpc:jstd
   =;  dere
-    =+  res=((ar dere) a)
-    ?~  res  (need (dere a))
+    =+  res=((ar dere) jon)
+    ?~  res  (need (dere jon))
     [%batch u.res]
-  |=  a=json
+  |=  jon=json
   ^-  (unit response:rpc:jstd)
-  =/  res=(unit [@t json])
-    ::  TODO  breaks when no id present
-    ::
-    ((ot id+so result+some ~) a)
-    ::  TODO: Modify to use dejs instead of dejs-soft
-    ::
-    :: %.  a
-    :: =-  (ou -)
-    :: :~  ['id' (uf ~ (mu so))]
-    ::     ['result' some]
-    :: ==
-  ?^  res  `[%result u.res]
-  ~|  a
-  :+  ~  %error  %-  need
-  ((ot id+so error+(ot code+no message+so ~) ~) a)
+  =/  res=[id=(unit @t) res=(unit json) err=(unit json)]
+    %.  jon
+    =,  dejs:format
+    =-  (ou -)
+    :~  ['id' (uf ~ (mu so))]
+        ['result' (uf ~ (mu same))]
+        ['error' (uf ~ (mu same))]
+    ==
+  ?:  ?=([^ * ~] res)
+    `[%result [u.id.res ?~(res.res ~ u.res.res)]]
+  ~|  jon
+  `[%error (handle-error jon)]
+  ::%-  need
+  :: ((ot id+so error+(ot code+no message+so ~) ~) jon)
+::
+++  handle-error
+  |=  =json
+  ?~  json  ['' '' '']
+  %.  json
+  =,  dejs:format
+  =-  (ou -)
+  :~  ['id' (uf '' so)]
+      :-  'error'
+      =-  (uf ['' ''] (ou -))
+      :~  ['code' (uf '' no)]
+          ['message' (uf '' so)]
+  ==  ==
 ::
 ++  http-response
   |=  [=wire response=client-response:iris]
@@ -135,120 +149,119 @@
   =*  status    status-code.response-header.response
   =/  rpc-resp=response:rpc:jstd
     %-  httr-to-rpc-response
-      %+  to-httr:iris
-        response-header.response
-      full-file.response
-  ::  Only (FOR NOW) parse successful responses
-  ::
-  ?.  =(%result -.rpc-resp)
-    ::  TODO: parse error response properly
-    ::
-    ~&  [%error +.rpc-resp]
+    %+  to-httr:iris
+      response-header.response
+    full-file.response
+  ?.  ?=([%result *] rpc-resp)
+    ~&  :-  %error
+    ?.  ?=([%fail httr:eyre] rpc-resp)
+      +.rpc-resp
+    %-  handle-error
+    (need (de-json:html q:(need r.rpc-resp)))
     [~ state]
   %-  handle-btc-response
-    (parse-response:btc-rpc:lib rpc-resp)
+  (parse-response:btc-rpc:lib rpc-resp)
 ::
 ++  handle-btc-response
   |=  btc-resp=btc-node-hook-response
   ^-  (quip card _state)
   :_  state
   ^-  (list card)
-  ;:  weld
-      ::  Print term for each succesful RPC request (used by :ph)
+  ?+    -.btc-resp
+      ::  By default we just print all RPC responses that are not
+      ::  considered here explicitly for proper format printing or
+      ::  for being passed on to the store app.
       ::
-      ^-  (list card)
-      [%pass / %arvo %d %flog [%text (trip -.btc-resp)]]~
-      ?+    -.btc-resp  ::  ~|  [%unsupported-response -.btc-resp]  !!
-          ~&  btc-resp
-          ~
-      ::
-          :: %abandon-transaction
-          :: %abort-rescan
-          :: %add-multisig-address
-          :: %backup-wallet
-          :: %bump-fee
-          %create-wallet
-        ^-  (list card)
-        =/  btc-store-req=btc-node-store-action
-          :+  %add-wallet   name.btc-resp
-          ?:(=('' warning.btc-resp) ~ (some warning.btc-resp))
-        [(btc-node-store-poke /store btc-store-req)]~
-      ::
-          :: %dump-privkey
-          :: %dump-wallet
-          :: %encrypt-wallet
-          :: %get-addresses-by-label
-      ::
-          %get-address-info
-        ^-  (list card)
-        ~&  [%address-info +.btc-resp]
-        ~
-      ::
-          %get-balance
-        ^-  (list card)
-        :_  ~
-        :*  %pass  /  %arvo  %d  %flog
-            %text  "amount={(trip +.btc-resp)}"
-        ==
-      ::
-          :: %get-balance
-          :: %get-new-address
-          :: %get-raw-change-address
-          :: %get-received-by-address
-          :: %get-received-by-label
-          :: %get-transaction
-          :: %get-unconfirmed-balance
-      ::
-          %get-wallet-info
-        ^-  (list card)
-        =/  btc-store-req=btc-node-store-action
-          [%update-wallet wallet-name.btc-resp +>:btc-resp]
-        [(btc-node-store-poke /update btc-store-req)]~
-      ::
-          :: %import-address
-          :: %import-multi
-          :: %import-privkey
-          :: %import-pruned-funds
-          :: %import-pubkey
-          :: %import-wallet
-          :: %key-pool-refill
-          :: %list-address-groupings
-          :: %list-labels
-          :: %list-lock-unspent
-          :: %list-received-by-address
-          :: %list-received-by-label
-          :: %lists-in-ceblock
-      ::
-          %list-transactions
-        ^-  (list card)
-        ~&  [%transactions +.btc-resp]
-        ~
-      ::
-          :: %list-unspent
-          :: %list-wallet-dir
-      ::
-          %list-wallets
-        ^-  (list card)
-        [(btc-node-store-poke /list [%list-wallets ~])]~
-      ::
-          :: %load-wallet
-          :: %lock-unspent
-          :: %remove-pruned-funds
-          :: %rescan-blockchain
-          :: %send-many
-          :: %send-to-address
-          :: %set-hd-seed
-          :: %set-label
-          :: %set-tx-fee
-          :: %sign-message
-          :: %sign-raw-transaction-with-wallet
-          :: %unload-wallet
-          :: %wallet-create-fundedpsbt
-          :: %wallet-lock
-          :: %wallet-passphrase
-          :: %wallet-passphrase-change
-          :: %wallet-process-psbt
-  ==  ==
+      ~&  btc-resp
+      ~
+  ::
+      :: %abandon-transaction
+      :: %abort-rescan
+      :: %add-multisig-address
+      :: %backup-wallet
+      :: %bump-fee
+      %create-wallet
+    ^-  (list card)
+    =/  btc-store-req=btc-node-store-action
+      :+  %add-wallet   name.btc-resp
+      ?:(=('' warning.btc-resp) ~ (some warning.btc-resp))
+    [(btc-node-store-poke /store btc-store-req)]~
+  ::
+      :: %dump-privkey
+      :: %dump-wallet
+      :: %encrypt-wallet
+      :: %get-addresses-by-label
+  ::
+      %get-address-info
+    ^-  (list card)
+    ~&  [%address-info +.btc-resp]
+    ~
+  ::
+      %get-balance
+    ^-  (list card)
+    :_  ~
+    :*  %pass  /  %arvo  %d  %flog
+        %text  "amount={(trip +.btc-resp)}"
+    ==
+  ::
+      :: %get-balance
+      :: %get-new-address
+      :: %get-raw-change-address
+      :: %get-received-by-address
+      :: %get-received-by-label
+      :: %get-transaction
+      :: %get-unconfirmed-balance
+  ::
+      %get-wallet-info
+    ^-  (list card)
+    =/  btc-store-req=btc-node-store-action
+      [%update-wallet wallet-name.btc-resp +>:btc-resp]
+    [(btc-node-store-poke /update btc-store-req)]~
+  ::
+      :: %import-address
+      :: %import-multi
+      :: %import-privkey
+      :: %import-pruned-funds
+      :: %import-pubkey
+      :: %import-wallet
+      :: %key-pool-refill
+      :: %list-address-groupings
+      :: %list-labels
+      :: %list-lock-unspent
+      :: %list-received-by-address
+      :: %list-received-by-label
+      :: %lists-in-ceblock
+  ::
+      %list-transactions
+    ^-  (list card)
+    ~&  [%transactions +.btc-resp]
+    ~
+  ::
+      :: %list-unspent
+      :: %list-wallet-dir
+  ::
+      %list-wallets
+    ^-  (list card)
+    [(btc-node-store-poke /list [%list-wallets ~])]~
+  ::
+      :: %load-wallet
+      :: %lock-unspent
+      :: %remove-pruned-funds
+      :: %rescan-blockchain
+      :: %send-many
+      :: %send-to-address
+      :: %set-hd-seed
+      :: %set-label
+      :: %set-tx-fee
+      :: %sign-message
+      :: %sign-raw-transaction-with-wallet
+      :: %unload-wallet
+      :: %wallet-create-fundedpsbt
+      :: %wallet-lock
+      :: %wallet-passphrase
+      :: %wallet-passphrase-change
+      :: %wallet-process-psbt
+  ==
 ::
 ++  btc-node-store-poke
   |=  [pax=path act=btc-node-store-action]
@@ -259,70 +272,77 @@
   ==
 ::
 ++  default-wallet
-  =-  .^(@t %gx -)
-  %+  weld  /(scot %p our.bowl)/btc-node-store
-  /(scot %da now.bowl)/default-wallet/noun
+  .^  @t
+      %gx
+      (scot %p our.bowl)
+      %btc-node-store
+      (scot %da now.bowl)
+      /default-wallet/noun
+  ==
 ::
 ++  n-wallets
-  =-  .^(@ud %gx -)
-  %+  weld  /(scot %p our.bowl)/btc-node-store
-  /(scot %da now.bowl)/n-wallets/noun
+  .^  @ud
+    %gx
+    (scot %p our.bowl)
+    %btc-node-store
+    (scot %da now.bowl)
+    /n-wallets/noun
+  ==
 ::
 ++  endpoint-url
   |=  [act=btc-node-hook-action]
-  ?.  ?|  =(-.act %abandon-transaction)
-          =(-.act %add-multisig-address)
-          =(-.act %backup-wallet)
-          =(-.act %bump-fee)
-          =(-.act %dump-privkey)
-          =(-.act %dump-wallet)
-          =(-.act %encrypt-wallet)
-          =(-.act %fund-raw-transaction)
-          =(-.act %get-balance)
-          =(-.act %get-addresses-by-label)
-          =(-.act %get-address-info)
-          =(-.act %get-balance)
-          =(-.act %get-new-address)
-          =(-.act %get-raw-change-address)
-          =(-.act %get-received-by-address)
-          =(-.act %get-received-by-label)
-          =(-.act %get-transaction)
-          =(-.act %get-unconfirmed-balance)
-          =(-.act %get-wallet-info)
-          =(-.act %import-address)
-          =(-.act %import-multi)
-          =(-.act %import-privkey)
-          =(-.act %import-pruned-funds)
-          =(-.act %import-pubkey)
-          =(-.act %key-pool-refill)
-          =(-.act %lock-unspent)
-          =(-.act %list-address-groupings)
-          =(-.act %list-labels)
-          =(-.act %list-lock-unspent)
-          =(-.act %list-received-by-address)
-          =(-.act %list-received-by-label)
-          =(-.act %lists-in-ceblock)
-          =(-.act %list-transactions)
-          =(-.act %list-unspent)
-          =(-.act %remove-pruned-funds)
-          =(-.act %rescan-blockchain)
-          =(-.act %send-many)
-          =(-.act %send-to-address)
-          =(-.act %set-hd-seed)
-          =(-.act %set-label)
-          =(-.act %set-tx-fee)
-          =(-.act %sign-message)
-          =(-.act %sign-raw-transaction-with-wallet)
-          =(-.act %wallet-create-fundedpsbt)
-          =(-.act %wallet-lock)
-          =(-.act %wallet-passphrase)
-          =(-.act %wallet-passphrase-change)
-          =(-.act %wallet-process-psbt)
+  ?.  ?|  ?=([%abandon-transaction *] act)
+          ?=([%abort-rescan *] act)
+          ?=([%add-multisig-address *] act)
+          ?=([%backup-wallet *] act)
+          ?=([%bump-fee *] act)
+          ?=([%dump-privkey *] act)
+          ?=([%dump-wallet *] act)
+          ?=([%encrypt-wallet *] act)
+          ?=([%fund-raw-transaction *] act)
+          ?=([%get-balance *] act)
+          ?=([%get-addresses-by-label *] act)
+          ?=([%get-address-info *] act)
+          ?=([%get-new-address *] act)
+          ?=([%get-raw-change-address *] act)
+          ?=([%get-received-by-address *] act)
+          ?=([%get-received-by-label *] act)
+          ?=([%get-transaction *] act)
+          ?=([%get-unconfirmed-balance *] act)
+          ?=([%get-wallet-info *] act)
+          ?=([%import-address *] act)
+          ?=([%import-multi *] act)
+          ?=([%import-privkey *] act)
+          ?=([%import-pruned-funds *] act)
+          ?=([%import-pubkey *] act)
+          ?=([%key-pool-refill *] act)
+          ?=([%list-address-groupings *] act)
+          ?=([%list-labels *] act)
+          ?=([%list-lock-unspent *] act)
+          ?=([%list-received-by-address *] act)
+          ?=([%list-received-by-label *] act)
+          ?=([%lists-in-ceblock *] act)
+          ?=([%list-transactions *] act)
+          ?=([%list-unspent *] act)
+          ?=([%lock-unspent *] act)
+          ?=([%remove-pruned-funds *] act)
+          ?=([%rescan-blockchain *] act)
+          ?=([%send-many *] act)
+          ?=([%send-to-address *] act)
+          ?=([%set-hd-seed *] act)
+          ?=([%set-label *] act)
+          ?=([%set-tx-fee *] act)
+          ?=([%sign-message *] act)
+          ?=([%sign-raw-transaction-with-wallet *] act)
+          ?=([%wallet-create-fundedpsbt *] act)
+          ?=([%wallet-lock *] act)
+          ?=([%wallet-passphrase *] act)
+          ?=([%wallet-passphrase-change *] act)
+          ?=([%wallet-process-psbt *] act)
       ==
-      endpoint
-  ?:  =(-.act %dump-wallet)
-     ?>  ?=([%dump-wallet filename=@t] act)
-     (crip "{(trip endpoint)}wallet/{(trip filename.act)}")
+    endpoint
+  ?:  ?=([%dump-wallet filename=@t] act)
+    (crip "{(trip endpoint)}wallet/{(trip filename.act)}")
   ::  FIXME: fails when default-wallet is '' and more than 1 wallet
   ::  has been created
   ::

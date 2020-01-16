@@ -1,5 +1,11 @@
 ::  btc-node-store: data store for state received from a bitcoin full node
 ::
+::    data            scry command
+::    --------------  ------------------------------------------------
+::    default-wallet  .^(@t %gx /=btc-node-store=/default-wallet/noun)
+::    n-wallets       .^(@ud %gx /=btc-node-store=/n-wallets/noun)
+::
+::
 /-  *btc-node-store
 /+  *btc-node-json, default-agent, verb
 ::
@@ -58,7 +64,7 @@
         |=  action=btc-node-store-action
         ^-  (quip card _this)
         =^  cards  state
-          ?+  -.action  ~|  [%unsupported-action -.action]  !!
+          ?+  -.action  ~|([%unsupported-action -.action] !!)
             %add-wallet     (handle-add:bc +.action)
             %list-wallets   handle-list-wallet:bc
             %update-wallet  (handle-update-wallet:bc +.action)
@@ -69,7 +75,7 @@
         |=  command=btc-node-store-command
         ^-  (quip card _this)
         =^  cards  state
-          ?+  -.command  ~|  [%unsupported-command -.command]  !!
+          ?+  -.command  ~|([%unsupported-command -.command] !!)
               %switch-wallet  (handle-switch:bc +.command)
           ==
         [cards this]
@@ -77,9 +83,6 @@
     ++  on-watch  on-watch:def
     ++  on-leave  on-leave:def
     ::  +on-peek: read from app state
-    ::
-    ::    default-wallet  .^(@t %gx /=btc-node-store=/default-wallet/noun)
-    ::    n-wallets       .^(@ud %gx /=btc-node-store=/n-wallets/noun)
     ::
     ++  on-peek
       |=  =path
@@ -104,7 +107,7 @@
     [~ state]
   :-  ~
   ~&  "Wallet {<name>} added succesfully..."
-  %=    state
+  %_    state
     wallets  (~(put by wallets) [name name ~])
   ==
 ::
