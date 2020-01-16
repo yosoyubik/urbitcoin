@@ -125,9 +125,9 @@
   ?:  ?=([^ * ~] res)
     `[%result [u.id.res ?~(res.res ~ u.res.res)]]
   ~|  jon
-  `[%error (handle-error jon)]
   ::%-  need
   :: ((ot id+so error+(ot code+no message+so ~) ~) jon)
+  `[%error (handle-error jon)]
 ::
 ++  handle-error
   |=  =json
@@ -135,9 +135,11 @@
   %.  json
   =,  dejs:format
   =-  (ou -)
-  :~  ['id' (uf '' so)]
+  :~  =-  ['id' (uf '' (cu - (mu so)))]
+      |*(a=(unit) ?~(a '' u.a))
       :-  'error'
-      =-  (uf ['' ''] (ou -))
+      =-  (uf ['' ''] -)
+      =-  (cu |*(a=(unit) ?~(a ['' ''] u.a)) (mu (ou -)))
       :~  ['code' (uf '' no)]
           ['message' (uf '' so)]
   ==  ==
