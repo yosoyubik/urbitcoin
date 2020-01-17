@@ -1,4 +1,4 @@
-# Bitcoin Node JSON RPC API (Part 4)
+# Bitcoin Node JSON RPC API (Part 1/3/4)
 
 ## Background
 To expand Urbit’s Bitcoin-related capabilities, we are building a Gall app which can comprehensively control a Bitcoin Core full node via the JSON RPC API. The app is contained in this branch of the Urbit repo, and the original conception of this idea is discussed here. Our ultimate goal is to create Bitcoin libraries for Urbit, enabling Bitcoin to serve as a "money primitive" for future Gall apps.
@@ -17,3 +17,26 @@ The application will be structured as two Gall agents: one “Store” and one �
 - Bitcoin Core API reference documentation: [Here](https://bitcoincore.org/en/doc/0.18.0/), [here](https://bitcoin.org/en/developer-reference#remote-procedure-calls-rpcs).
 - Distinctions between bitcoind and bitcoin-qt: Differences between them discussed [here](https://bitcoin.stackexchange.com/questions/13368/whats-the-difference-between-bitcoind-and-bitcoin-qt-different-commands)
 - [JSON RPC API standards](https://www.jsonrpc.org/specification)
+
+## Install
+
+`npm install` will install all dependencies.
+
+## Deploy to Urbit
+
+Modify the path to your pier in `.urbitrc` and then, after `|mount /=base=` has been ran in your urbit, run `npm run serve` and then `|commit %base` from your urbit.
+
+## Bitcoin Node
+
+Copy `./bitcoin.conf` to your local path. Documentation can be found [here](https://en.bitcoin.it/wiki/Running_Bitcoin). Then run `./bitcoind`
+
+If something doesn't work, the manual command is:
+```
+bitcoind  -server=1 -rpcuser=urbitcoiner -rpcport=18443 -rpcpassword=urbitcoiner  -regtest  -rpcallowip=127.0.0.1 -daemon
+```
+
+After a named wallet is created from your urbit with `:btc-node-hook|action [%create-wallet 'wallet' ~ ~]`, funding your wallet to get some data onto the blockchain can be done with:
+
+```
+bitcoin-cli -regtest -rpcwallet='wallet' generatetoaddress 101 $(bitcoin-cli -regtest -rpcwallet='wallet' getnewaddress)
+```

@@ -1,7 +1,7 @@
 ::  btc-node-store: data store for state received from a bitcoin full node
 ::
-::    data            scry command
-::    --------------  ------------------------------------------------
+::    data:            scry command:
+::
 ::    default-wallet  .^(@t %gx /=btc-node-store=/default-wallet/noun)
 ::    n-wallets       .^(@ud %gx /=btc-node-store=/n-wallets/noun)
 ::

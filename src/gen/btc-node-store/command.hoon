@@ -11,6 +11,6 @@
         [[comm=btc-node-store-command ~] ~]
     ==
 :-  %btc-node-store-command
-?+  -.comm  ~|  [%unsupported-command -.comm]  !!
+?+  -.comm  ~|([%unsupported-command -.comm] !!)
     %switch-wallet  comm
 ==
