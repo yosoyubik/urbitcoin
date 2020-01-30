@@ -67,15 +67,6 @@
       |=  h=@t
       ^-  @ux
       ?:  =('' h)  0x0
-      ::  Parse hexadecimal to atom
-      ::
-      :: =-  `@ux`(rash - hex)
-      :: ::  Group by 4-size block
-      :: ::
-      :: =-  (rsh 3 2 -)
-      :: ::  Add leading 00
-      :: ::
-      :: (lsh 3 2 h)
       ::  Add leading 00
       ::
       =+  (lsh 3 2 h)
