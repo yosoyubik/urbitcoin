@@ -2,8 +2,10 @@
 ::
 ::    data:            scry command:
 ::
-::    default-wallet  .^(@t %gx /=btc-node-store=/default-wallet/noun)
-::    n-wallets       .^(@ud %gx /=btc-node-store=/n-wallets/noun)
+::  default-wallet    .^(@t %gx /=btc-node-store=/default-wallet/noun)
+::  n-wallets         .^(@ud %gx /=btc-node-store=/n-wallets/noun)
+::  [def-wallet attr] .^((unit wallet) %gx /=btc-node-store=/wallet/noun)
+::  [name attr]       .^((unit wallet) %gx /=btc-node-store=/wallet/<name>/noun)
 ::
 ::
 /-  *btc-node-store
@@ -38,7 +40,7 @@
     ++  on-init
       ^-  (quip card _this)
       :-  ~
-      %=    this
+      %_    this
         wallets  (~(put by wallets) [*@t *wallet])
       ==
     ::
@@ -90,6 +92,8 @@
       ?+  path  (on-peek:def path)
           [%x %default-wallet ~]  ``noun+!>(default-wallet)
           [%x %n-wallets ~]       ``noun+!>(~(wyt by wallets))
+          [%x %wallet @t ~]       ``noun+!>((~(get by wallets) i.t.t.path))
+          [%x %wallet ~]          ``noun+!>((~(get by wallets) default-wallet))
       ==
     ::
     ++  on-agent  on-agent:def
@@ -130,7 +134,7 @@
       wallets
     ?:  (~(has by wallets) name.w)
       ~&  "The wallet exists. Updating..."
-      (~(jab by wallets) name.w |=(* w))
+      (~(put by wallets) name.w w)
     ::
     ~&  "The wallet doesn't exist. Creating..."
     (~(put by wallets) [name.w w])

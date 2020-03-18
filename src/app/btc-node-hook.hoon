@@ -103,9 +103,9 @@
   |=  hit=httr:eyre
   ^-  response:rpc:jstd
   ~|  hit
-  :: ?.  ?=(%2 (div p.hit 100))
-  ::   fail+hit
   =/  jon=json  (need (de-json:html q:(need r.hit)))
+  ?.  =(%2 (div p.hit 100))
+    (parse-error jon)
   =,  dejs-soft:format
   ^-  response:rpc:jstd
   =;  dere
@@ -125,12 +125,12 @@
   ?:  ?=([^ * ~] res)
     `[%result [u.id.res ?~(res.res ~ u.res.res)]]
   ~|  jon
-  ::%-  need
-  :: ((ot id+so error+(ot code+no message+so ~) ~) jon)
-  `[%error (handle-error jon)]
+  `(parse-error jon)
 ::
-++  handle-error
+++  parse-error
   |=  =json
+  ^-  response:rpc:jstd
+  :-  %error
   ?~  json  ['' '' '']
   %.  json
   =,  dejs:format
@@ -146,6 +146,7 @@
 ::
 ++  http-response
   |=  [=wire response=client-response:iris]
+  ^-  (quip card _state)
   ?.  ?=(%finished -.response)
     [~ state]
   =*  status    status-code.response-header.response
@@ -197,10 +198,8 @@
   ::
       %get-balance
     ^-  (list card)
-    :_  ~
-    :*  %pass  /  %arvo  %d  %flog
-        %text  "amount={(trip +.btc-resp)}"
-    ==
+    ~&  [%amount (trip +.btc-resp)]
+    ~
   ::
       :: %get-balance
       :: %get-new-address
@@ -289,55 +288,55 @@
 ::
 ++  endpoint-url
   |=  [act=btc-node-hook-action]
-  ?.  ?|  ?=([%abandon-transaction *] act)
-          ?=([%abort-rescan *] act)
-          ?=([%add-multisig-address *] act)
-          ?=([%backup-wallet *] act)
-          ?=([%bump-fee *] act)
-          ?=([%dump-privkey *] act)
-          ?=([%dump-wallet *] act)
-          ?=([%encrypt-wallet *] act)
-          ?=([%fund-raw-transaction *] act)
-          ?=([%get-balance *] act)
-          ?=([%get-addresses-by-label *] act)
-          ?=([%get-address-info *] act)
-          ?=([%get-new-address *] act)
-          ?=([%get-raw-change-address *] act)
-          ?=([%get-received-by-address *] act)
-          ?=([%get-received-by-label *] act)
-          ?=([%get-transaction *] act)
-          ?=([%get-unconfirmed-balance *] act)
-          ?=([%get-wallet-info *] act)
-          ?=([%import-address *] act)
-          ?=([%import-multi *] act)
-          ?=([%import-privkey *] act)
-          ?=([%import-pruned-funds *] act)
-          ?=([%import-pubkey *] act)
-          ?=([%import-wallet *] act)
-          ?=([%key-pool-refill *] act)
-          ?=([%list-address-groupings *] act)
-          ?=([%list-labels *] act)
-          ?=([%list-lock-unspent *] act)
-          ?=([%list-received-by-address *] act)
-          ?=([%list-received-by-label *] act)
-          ?=([%lists-in-ceblock *] act)
-          ?=([%list-transactions *] act)
-          ?=([%list-unspent *] act)
-          ?=([%lock-unspent *] act)
-          ?=([%remove-pruned-funds *] act)
-          ?=([%rescan-blockchain *] act)
-          ?=([%send-many *] act)
-          ?=([%send-to-address *] act)
-          ?=([%set-hd-seed *] act)
-          ?=([%set-label *] act)
-          ?=([%set-tx-fee *] act)
-          ?=([%sign-message *] act)
-          ?=([%sign-raw-transaction-with-wallet *] act)
-          ?=([%wallet-create-fundedpsbt *] act)
-          ?=([%wallet-lock *] act)
-          ?=([%wallet-passphrase *] act)
-          ?=([%wallet-passphrase-change *] act)
-          ?=([%wallet-process-psbt *] act)
+  ?.  ?|  ?=(%abandon-transaction -.act)
+          ?=(%abort-rescan -.act)
+          ?=(%add-multisig-address -.act)
+          ?=(%backup-wallet -.act)
+          ?=(%bump-fee -.act)
+          ?=(%dump-privkey -.act)
+          ?=(%dump-wallet -.act)
+          ?=(%encrypt-wallet -.act)
+          ?=(%fund-raw-transaction -.act)
+          ?=(%get-balance -.act)
+          ?=(%get-addresses-by-label -.act)
+          ?=(%get-address-info -.act)
+          ?=(%get-new-address -.act)
+          ?=(%get-raw-change-address -.act)
+          ?=(%get-received-by-address -.act)
+          ?=(%get-received-by-label -.act)
+          ?=(%get-transaction -.act)
+          ?=(%get-unconfirmed-balance -.act)
+          ?=(%get-wallet-info -.act)
+          ?=(%import-address -.act)
+          ?=(%import-multi -.act)
+          ?=(%import-privkey -.act)
+          ?=(%import-pruned-funds -.act)
+          ?=(%import-pubkey -.act)
+          ?=(%import-wallet -.act)
+          ?=(%key-pool-refill -.act)
+          ?=(%list-address-groupings -.act)
+          ?=(%list-labels -.act)
+          ?=(%list-lock-unspent -.act)
+          ?=(%list-received-by-address -.act)
+          ?=(%list-received-by-label -.act)
+          ?=(%lists-in-ceblock -.act)
+          ?=(%list-transactions -.act)
+          ?=(%list-unspent -.act)
+          ?=(%lock-unspent -.act)
+          ?=(%remove-pruned-funds -.act)
+          ?=(%rescan-blockchain -.act)
+          ?=(%send-many -.act)
+          ?=(%send-to-address -.act)
+          ?=(%set-hd-seed -.act)
+          ?=(%set-label -.act)
+          ?=(%set-tx-fee -.act)
+          ?=(%sign-message -.act)
+          ?=(%sign-raw-transaction-with-wallet -.act)
+          ?=(%wallet-create-fundedpsbt -.act)
+          ?=(%wallet-lock -.act)
+          ?=(%wallet-passphrase -.act)
+          ?=(%wallet-passphrase-change -.act)
+          ?=(%wallet-process-psbt -.act)
       ==
     endpoint
   ?:  ?=([?(%dump-wallet %import-wallet) filename=@t] act)

@@ -273,11 +273,8 @@
     ::
     +$  script-pubkey
       $:  asm=@t
-        ::
           hex=@ux
-        ::
           type=@t
-        ::
           =address
       ==
     ::  $range:
@@ -295,13 +292,9 @@
     ::
     +$  vin
       $:  txid=(unit @ux)
-        ::
           vout=(unit @ud)
-        ::
           script-sig=(unit [asm=@t hex=@ux])
-        ::
           tx-in-witness=(unit (list @ux))
-        ::
           sequence=@ud
       ==
     ::  $vout:
@@ -312,18 +305,13 @@
     ::
     +$  vout
       $:  value=@t
-        ::
           n=@ud
         ::
           $=  script-pubkey
           $:  asm=@t
-            ::
               hex=@ux
-            ::
               req-sigs=(unit @ud)
-            ::
               type=@t
-            ::
               addresses=(unit (list address))
       ==  ==
     ::  $input:
@@ -334,9 +322,7 @@
     ::
     +$  input
       $:  txid=@ux
-        ::
           vout=@ud
-        ::
           sequence=@ud
       ==
     ::  $output:
@@ -347,7 +333,6 @@
     ::
     +$  output
       $:  data=[%data @ux]
-        ::
           addresses=(list [=address amount=@t])
       ==
     ::  $scan-object:
@@ -360,7 +345,6 @@
         ::
           $=  object
           $:  desc=@t
-            ::
               range=(unit range)
       ==  ==
     ::  $utxo:
@@ -377,15 +361,10 @@
     ::
     +$  segwit-script
       $:  asm=@t
-        ::
           hex=(unit @ux)
-        ::
           type=@t
-        ::
           req-sigs=(unit @ud)
-        ::
           addresses=(list [%bech32 @t])
-        ::
           p2sh-segwit=(unit @uc)
       ==
     ::  $partially-signed-transaction:
@@ -396,11 +375,8 @@
     ::
     +$  partially-signed-transaction
       $:  inputs=(list input)
-        ::
           outputs=output
-        ::
           locktime=(unit @ud)
-        ::
           replaceable=(unit ?)
       ==
     ::  $import-request:
@@ -417,23 +393,14 @@
           ==
         ::
           timestamp=?(@da %now)
-        ::
           redeem-script=(unit @t)
-        ::
           witness-script=(unit @t)
-        ::
           pubkeys=(unit (list @t))
-        ::
           keys=(unit (list @t))
-        ::
           range=(unit ?(@ud [@ud @ud]))
-        ::
           internal=(unit ?)
-        ::
           watchonly=(unit ?)
-        ::
           label=(unit @t)
-        ::
           keypool=(unit ?)
       ==
     ::  $serialized-tx:
@@ -444,21 +411,13 @@
     ::
     +$  serialized-tx
       $:  txid=@ux
-        ::
           hash=@ux
-        ::
           size=@ud
-        ::
           vsize=@ud
-        ::
           weight=@ud
-        ::
           version=@ud
-        ::
           locktime=@ud
-        ::
           vin=(list vin)
-        ::
           vout=(list vout)
       ==
     ::  $prev-tx:
@@ -469,15 +428,10 @@
     ::
     +$  prev-tx
       $:  txid=@ux
-        ::
           vout=@ud
-        ::
           script-pubkey=@ux
-        ::
           redeem-script=(unit @ux)
-        ::
           witness-script=(unit @ux)
-        ::
           amount=@t
       ==
     ::  $raw-transaction-rpc-out:
@@ -488,33 +442,19 @@
     ::
     +$  raw-transaction-rpc-out
       $:  in-active-chain=(unit ?)
-        ::
           hex=@ux
-        ::
           txid=@ux
-        ::
           hash=@ux
-        ::
           size=@ud
-        ::
           vsize=@ud
-        ::
           weight=@ud
-        ::
           version=@t
-        ::
           locktime=@ud
-        ::
           vin=(list vin)
-        ::
           vout=(list vout)
-        ::
           blockhash=(unit @ux)
-        ::
           confirmations=(unit @ud)
-        ::
           blocktime=(unit @ud)
-        ::
           time=(unit @ud)
       ==
     ::  $tx-in-block:
@@ -525,39 +465,22 @@
     ::
     +$  tx-in-block
       $:  address=(unit address)
-        ::
           =category
-        ::
           amount=@t
-        ::
           label=(unit @t)
-        ::
           vout=@ud
-        ::
           fee=(unit @t)
-        ::
           confirmations=@ud
-        ::
           blockhash=(unit @ux)
-        ::
           blockindex=(unit @ud)
-        ::
           blocktime=(unit @ud)
-        ::
           txid=@ux
-        ::
           time=@ud
-        ::
           time-received=(unit @ud)
-        ::
           wallet-conflicts=(unit (list @ux))
-        ::
           =bip125-replaceable
-        ::
           abandoned=(unit ?)
-        ::
           comment=(unit @t)
-        ::
           to=(unit @t)
       ==
     ::  $errors:
@@ -568,14 +491,10 @@
     ::
     +$  errors
       %-  list
-      $:  txid=@ux
-        ::
-          vout=@ud
-        ::
-          script-sig=@ux
-        ::
-          sequence=@ud
-        ::
+      $:  txid=@
+          vout=@
+          script-sig=@
+          sequence=@
           error=@t
       ==
     ::  $mem-pool:
@@ -586,43 +505,27 @@
     ::
     +$  mem-pool
       $:  size=@ud
-        ::
           fee=@t
-        ::
           modified-fee=@t
-        ::
           time=@ud
-        ::
           height=@ud
-        ::
           descendant-count=@ud
-        ::
           descendant-size=@ud
-        ::
           descendant-fees=@t
-        ::
           ancestor-count=@ud
-        ::
           ancestor-size=@ud
-        ::
           ancestor-fees=@t
-        ::
           w-txid=@ux
         ::
           $=  fees
           $:  base=@t
-            ::
               modified=@t
-            ::
               ancestor=@t
-            ::
               descendant=@t
           ==
         ::
           depends=(list @ux)
-        ::
           spent-by=(list @ux)
-        ::
           bip125-replaceable=?
       ==
     ::  $mem-pool-response:
@@ -636,15 +539,13 @@
     ::
     +$  mem-pool-response
       %-  list
-      ::  TODO: use a +map for verbose = true
-      ::
       $@  ::  (for verbose = false)
           ::
-          @ux                      :: (list @ux)
+          @ux
         ::
           ::  (for verbose = true)
           ::
-          [id=@ux =mem-pool]       :: (map id=@ux mem-pool)
+          [id=@ux =mem-pool]
       ::
     --
 |%
@@ -685,7 +586,6 @@
         $:  %get-block-stats
             $=  hash-or-height
             $%  [%hex @ux]
-              ::
                 [%num @ud]
             ==
           ::
@@ -748,7 +648,6 @@
         ::
         $:  %scan-tx-outset
             action=?(%start %abort %status)
-          ::
             scan-objects=(list scan-object)
         ==
         ::  %verify-chain: Verifies blockchain database.
@@ -894,9 +793,7 @@
         ::
         $:  %convert-to-psbt
             hex-string=@ux
-          ::
             permit-sig-data=(unit ?)
-          ::
             is-witness=(unit ?)
         ==
         ::  %create-psbt: Creates a transaction in the Partially Signed
@@ -930,23 +827,14 @@
             $=  options
             %-  unit
             $:  change-address=(unit address)
-              ::
                 change-position=(unit @ud)
-              ::
                 change-type=(unit address-type)
-              ::
                 include-watching=(unit ?)
-              ::
                 lock-unspents=(unit ?)
-              ::
                 fee-rate=(unit @t)
-              ::
                 subtract-fee-from-outputs=(unit (list @ud))
-              ::
                 replaceable=(unit ?)
-              ::
                 conf-target=(unit @ud)
-              ::
                 mode=(unit estimate-mode)
             ==
           ::
@@ -969,11 +857,8 @@
         ::
         $:  %sign-raw-transaction-with-key
             hex-string=@ux
-          ::
             priv-keys=(list @t)
-          ::
             prev-txs=(unit (list prev-tx))
-          ::
             sig-hash-type=(unit sig-hash)
         ==
         ::  %test-mempool-accept: Returns result of mempool acceptance tests
@@ -993,9 +878,7 @@
         ::
         $:  %create-multi-sig
             n-required=@ud
-          ::
             keys=(list @ux)
-          ::
             address-type=(unit address-type)
         ==
         ::  %derive-addresses: Derives one or more addresses corresponding to
@@ -1036,11 +919,8 @@
         ::
         $:  %add-multisig-address
             n-required=@ud
-          ::
             keys=(list address)
-          ::
             label=(unit @t)
-          ::
             =address-type
         ==
         ::  %backupwallet: Safely copies current wallet file to destination.
@@ -1055,11 +935,8 @@
             $=  options
             %-  unit
             $:  conf-target=(unit @ud)
-              ::
                 total-fee=(unit @t)
-              ::
                 replaceable=(unit ?)
-              ::
                 mode=(unit estimate-mode)
         ==  ==
         ::  %create-wallet: Creates and loads a new wallet.
@@ -1095,9 +972,7 @@
         $:  %get-balance
             %-  unit
             $:  dummy=(unit %'*')
-              ::
                 minconf=(unit @ud)
-              ::
                 include-watch-only=(unit ?)
         ==  ==
         ::  %get-new-address: Returns a new Bitcoin address for receiving
@@ -1135,16 +1010,12 @@
         $:  %import-address
             $=  address
             $%  [%addr @uc]
-              ::
                 [%bech32 @t]
-              ::
                 [%script @ux]
             ==
           ::
             label=(unit @t)
-          ::
             rescan=(unit ?)
-          ::
             p2sh=(unit ?)
         ==
         ::  %import-multi: Import addresses/scripts (with private or public
@@ -1153,7 +1024,6 @@
         ::
         $:  %import-multi
             requests=(list import-request)
-          ::
             options=(unit rescan=?)
         ==
         ::  %import-privkey:  Adds a private key (as returned by dumpprivkey)
@@ -1191,11 +1061,8 @@
         $:  %list-received-by-address
             %-  unit
             $:  minconf=(unit @ud)
-              ::
                 include-empty=(unit ?)
-              ::
                 include-watch-only=(unit ?)
-              ::
                 address-filter=(unit =address)
         ==  ==
         ::  %list-received-by-label: List received transactions by label.
@@ -1203,11 +1070,8 @@
         $:  %list-received-by-label
             %-  unit
             $:  minconf=(unit @ud)
-              ::
                 include-empty=(unit ?)
-              ::
                 include-watch-only=(unit ?)
-              ::
         ==  ==
         ::  %lists-in-ceblock: Get all transactions in blocks since block
         ::  [blockhash], or all transactions if omitted.
@@ -1215,11 +1079,8 @@
         $:  %lists-in-ceblock
             %-  unit
             $:  blockhash=(unit blockhash)
-              ::
                 target-confirmations=(unit @ud)
-              ::
                 include-watch-only=(unit ?)
-              ::
                 include-removed=(unit ?)
         ==  ==
         ::  %list-transactions: If a label name is provided, this will return
@@ -1229,11 +1090,8 @@
         $:  %list-transactions
             %-  unit
             $:  label=(unit @t)
-              ::
                 count=(unit @ud)
-              ::
                 skip=(unit @ud)
-              ::
                 include-watch-only=(unit ?)
         ==  ==
         ::  %list-unspent: Returns array of unspent transaction outputs
@@ -1242,21 +1100,15 @@
         $:  %list-unspent
             %-  unit
             $:  minconf=(unit @ud)
-              ::
                 maxconf=(unit @ud)
-              ::
                 addresses=(unit (list address))
-              ::
                 include-unsafe=(unit ?)
               ::
                 $=  query-options
                 %-  unit
                 $:  minimum-amount=(unit @ud)
-                  ::
                     maximum-amount=(unit @ud)
-                  ::
                     maximum-count=(unit @ud)
-                  ::
                     minimum-sum-amount=(unit @ud)
         ==  ==  ==
         ::  %list-wallet-dir  Returns a list of wallets in the wallet directory.
@@ -1273,7 +1125,6 @@
         ::
         $:  %lock-unspent
             unlock=?
-          ::
             transactions=(unit (list [txid=@ux vout=@ud]))
         ==
         ::  %remove-pruned-funds  Deletes the specified transaction from the
@@ -1288,39 +1139,25 @@
         ::  Amounts are double-precision floating point numbers.
         ::
         $:  %send-many
-            dummy=%''
-          ::
+            dummy=%$
             amounts=(list [=address amount=@t])
-          ::
             minconf=(unit @ud)
-          ::
             comment=(unit @t)
-          ::
             subtract-fee-from=(unit (list address))
-          ::
             replaceable=(unit ?)
-          ::
             conf-target=(unit @ud)
-          ::
             mode=(unit estimate-mode)
         ==
         ::  %send-to-address: Send an amount to a given address.
         ::
         $:  %send-to-address
             =address
-          ::
             amount=@t
-          ::
             comment=(unit @t)
-          ::
             comment-to=(unit @t)
-          ::
             subtract-fee-from-amount=(unit ?)
-          ::
             replaceable=(unit ?)
-          ::
             conf-target=(unit @ud)
-          ::
             mode=(unit estimate-mode)
         ==
         ::  %set-hd-seed: Set or generate a new HD wallet seed.
@@ -1341,9 +1178,7 @@
         ::
         $:  %sign-raw-transaction-with-wallet
             hex-string=@ux
-          ::
             prev-txs=(unit (list prev-tx))
-          ::
             sig-hash-type=(unit sig-hash)
         ==
         ::  %unload-wallet:   Unloads the wallet referenced by the request
@@ -1356,31 +1191,20 @@
         ::
         $:  %wallet-create-fundedpsbt
             inputs=(list input)
-          ::
             outputs=output
-          ::
             locktime=(unit @ud)
           ::
             $=  options
             %-  unit
             $:  change-address=(unit address)
-              ::
                 change-position=(unit @ud)
-              ::
                 change-type=(unit address-type)
-              ::
                 include-watching=(unit ?)
-              ::
                 lock-unspents=(unit ?)
-              ::
                 fee-rate=(unit @t)
-              ::
                 subtract-fee-from-outputs=(unit (list @ud))
-              ::
                 replaceable=(unit ?)
-              ::
                 conf-target=(unit @ud)
-              ::
                 mode=(unit estimate-mode)
             ==
           ::
@@ -1399,7 +1223,6 @@
         ::
         $:  %wallet-passphrase-change
             old-passphrase=(unit @t)
-          ::
             new-passphrase=(unit @t)
         ==
         ::  %wallet-process-psbt: Update a PSBT with input information from
@@ -1407,11 +1230,8 @@
         ::
         $:  %wallet-process-psbt
             psbt=@t
-          ::
             sign=?
-          ::
             =sig-hash
-          ::
             bip32-derivs=(unit ?)
         ==
     ::  ZMQ management
@@ -1436,21 +1256,13 @@
                 ::  verbosity > 0
                 ::
                 $:  hash=@ux
-                  ::
                     confirmations=@ud
-                  ::
                     size=@ud
-                  ::
                     stripped-size=@ud
-                  ::
                     weight=@ud
-                  ::
                     height=@ud
-                  ::
                     version=@t
-                  ::
                     version-hex=@ux
-                  ::
                     merkle-root=@ux
                   ::
                     $=  tx
@@ -1465,77 +1277,47 @@
                     ==
                   ::
                     time=@ud
-                  ::
                     median-time=@ud
-                  ::
                     nonce=@ud
-                  ::
                     bits=@ux
-                  ::
                     difficulty=@t
-                  ::
                     chain-work=@ux
-                  ::
                     n-tx=@ud
-                  ::
                     previous-blockhash=@ux
-                  ::
                     next-blockhash=(unit @ux)
         ==  ==  ==
       ::
         $:  %get-blockchain-info
             chain=network-name
-          ::
             blocks=@ud
-          ::
             headers=@ud
-          ::
             best-block-hash=@ux
-          ::
             difficulty=@t
-          ::
             median-time=@ud
-          ::
             verification-progress=@ud
-          ::
             initial-block-download=?
-          ::
             chain-work=@ux
-          ::
             size-on-disk=@ud
-          ::
             pruned=?
-          ::
             pruneheight=(unit @ud)
-          ::
             automatic-pruning=(unit ?)
-          ::
             prune-target-size=(unit @ud)
-          ::
             soft-forks=(list [id=@t version=@t reject-status=?])
           ::
             $=  bip9-softforks  %+  map
                 name=@t
                 $:  status=(unit soft-fork-status)
-                 ::
                     bit=(unit @ud)
-                  ::
                     start-time=?(%'-1' @ud)
-                  ::
                     timeout=@ud
-                  ::
                     since=@ud
                   ::
                     $=  statistics
                     %-  unit
                     $:  period=@ud
-                      ::
                         threshold=@ud
-                      ::
                         elapsed=@ud
-                      ::
                         count=@ud
-                      ::
                         possible=?
                 ==  ==
           ::
@@ -1543,7 +1325,6 @@
         ==
       ::
         [%get-block-count count=@ud]
-      ::
         [%get-block-hash hash=@ux]
       ::
         $:  %get-block-header
@@ -1554,152 +1335,91 @@
                 ::  (for verbose = true)
                 ::
                 $:  hash=@ux
-                  ::
                     confirmations=@ud
-                  ::
                     weight=@ud
-                  ::
                     version=@t
-                  ::
                     version-hex=@ux
-                  ::
                     merkle-root=@ux
-                  ::
                     time=@ud
-                  ::
                     median-time=@ud
-                  ::
                     nonce=@ud
-                  ::
                     bits=@ux
-                  ::
                     difficulty=@t
-                  ::
                     chain-work=@ux
-                  ::
                     n-tx=@ud
-                  ::
                     previous-blockhash=@ux
-                  ::
                     next-blockhash=(unit @ux)
         ==  ==  ==
       ::
         $:  %get-block-stats
             avg-fee=@t
-          ::
             avg-feerate=@ud
-          ::
             avg-tx-size=@ud
-          ::
             block-hash=@ux
           ::
             $=  fee-rate-percentiles
             $:  p-1=@t
-              ::
                 p-2=@t
-              ::
                 p-3=@t
-              ::
                 p-4=@t
-              ::
                 p-5=@t
             ==
           ::
             height=@ud
-          ::
             ins=@ud
-          ::
             max-fee=@t
-          ::
             max-fee-rate=@t
-          ::
             max-tx-size=@ud
-          ::
             median-fee=@t
-          ::
             median-time=@ud
-          ::
             median-tx-size=@ud
-          ::
             min-fee=@t
-          ::
             min-fee-rate=@t
-          ::
             min-tx-size=@ud
-          ::
             outs=@ud
-          ::
             subsidy=@t
-          ::
             swtotal-size=@ud
-          ::
             swtotal-weight=@ud
-          ::
             swtxs=@ud
-          ::
             time=@ud
-          ::
             total-out=@t
-          ::
             total-size=@ud
-          ::
             total-weight=@t
-          ::
             total-fee=@t
-          ::
             txs=@ud
-          ::
             utxo-increase=@ud
-          ::
             utxo-size-inc=@ud
         ==
       ::
         $:  %get-chain-tips
             %-  list
             $:  height=@ud
-              ::
                 hash=@ux
-              ::
                 branch-len=@ud
-              ::
                 status=chain-status
         ==  ==
       ::
         $:  %get-chain-tx-stats
             time=@ud
-          ::
             tx-count=@ud
-          ::
             window-final-block-hash=@ux
-          ::
             window-block-count=@ud
-          ::
             window-tx-count=(unit @ud)
-          ::
             window-interval=(unit @ud)
-          ::
             tx-rate=(unit @t)
         ==
       ::
         [%get-difficulty n=@t]
-      ::
         [%get-mempool-ancestors mem-pool-response]
-      ::
         [%get-mempool-descendants mem-pool-response]
-      ::
         [%get-mempool-entry mem-pool]
       ::
         $:  %get-mempool-info
             size=@ud
-          ::
             bytes=@ud
-          ::
             usage=@ud
-          ::
             max-mem-pool=@ud
-          ::
             mem-pool-min-fee=@t
-          ::
             min-relay-tx-fee=@t
         ==
       ::
@@ -1708,20 +1428,14 @@
         $:  %get-tx-out
             %-  unit
             $:  best-block=@ux
-              ::
                 confirmations=@ud
-              ::
                 value=@t
               ::
                 $=  script-pubkey
                 $:  asm=@t
-                  ::
                     hex=@ux
-                  ::
                     req-sigs=@ud
-                  ::
                     type=@t
-                  ::
                     addresses=(list address)
                 ==
               ::
@@ -1732,51 +1446,33 @@
       ::
         $:  %get-tx-outset-info
             height=@ud
-          ::
             best-block=@ux
-          ::
             transactions=@ud
-          ::
             tx-outs=@ud
-          ::
             bogo-size=@ud
-          ::
             hash-serialized-2=@ux
-          ::
             disk-size=@ud
-          ::
             total-amount=@t
         ==
       ::
         [%precious-block ~]
-      ::
         [%prune-blockchain height=@ud]
-      ::
         [%save-mempool ~]
       ::
         $:  %scan-tx-outset
             success=(unit ?)
-          ::
             searched-items=(unit @ud)
-          ::
             txouts=(unit @ud)
-          ::
             height=(unit @ud)
-          ::
             best-blocks=(unit @ux)
           ::
             $=  unspents
             %-  list
             $:  txid=@ux
-              ::
                 vout=@ud
-              ::
                 script-pubkey=@ux
-              ::
                 desc=@t
-              ::
                 amount=@t
-              ::
                 height=@ud
             ==
           ::
@@ -1784,7 +1480,6 @@
         ==
       ::
         [%verify-chain ?]
-      ::
         [%verify-tx-out-proof (list @ux)]
     ::  Control
     ::
@@ -1798,18 +1493,13 @@
         ==
       ::
         [%get-rpc-info active-commands=(list rpc-command)]
-      ::
         [%help help=wall]
-      ::
         [%logging logging-config=(map @t ?)]
-      ::
         [%stop res=@t]
-      ::
         [%uptime uptime=@dr]
     ::  Generating
     ::
         [%generate blocks=(list blockhash)]
-        ::
         [%generate-to-address blockhashes=(list blockhash)]
     ::  Mining
     ::
@@ -1834,7 +1524,7 @@
             height=@ud
             default-witness-commitment=blockhash
         ==
-        ::
+      ::
         $:  %get-mining-info
             blocks=@ud
             current-block-weight=@ud
@@ -1845,33 +1535,26 @@
             chain=network-name
             warnings=@t
         ==
-        ::
+      ::
         [%get-network-hash-ps hash-ps=@rd]
-        ::
         [%prioritise-transaction res=?]
-        ::
         [%submit-block res=@t]
-        ::
         [%submit-header res=@t]
     ::  Network
     ::
         [%add-node res=null]
-        ::
         [%clear-banned res=null]
-        ::
         [%disconnect-node res=null]
-        ::
         [%get-added-node-info node-info=(list node-info)]
-        ::
         [%get-connection-count connection-count=@ud]
-        ::
+      ::
         $:  %get-net-totals
             total-bytes-recv=@ud
             total-bytes-sent=@ud
             time-millis=@da
             =upload-target
         ==
-        ::
+      ::
         $:  %get-network-info
             version=@ud
             subversion=@t
@@ -1887,26 +1570,19 @@
             local-addresses=(list local-address)
             warnings=@t
         ==
-        ::
+      ::
         [%get-node-addresses (list node-address-info)]
-        ::
         [%get-peer-info (list peer-info)]
-        ::
         [%list-banned (list banned)]
-        ::
         [%ping res=null]
-        ::
         [%set-ban res=null]
-        ::
         [%set-network-active res=?]
-
     ::  Raw Transactions
     ::
         $:  %analyze-psbt
             $=  inputs
             %-  list
             $:  has-utxo=?
-              ::
                 is-final=?
               ::
                 $=  missing
@@ -1921,22 +1597,15 @@
             ==
           ::
             estimated-vsize=(unit @t)
-          ::
             estimated-feerate=(unit @t)
-          ::
             fee=(unit @t)
-          ::
             next=@t
         ==
       ::
         [%combine-psbt psbt=@t]
-      ::
         [%combine-raw-transaction hex=@ux]
-      ::
         [%convert-to-psbt psbt=@t]
-      ::
         [%create-psbt psbt=@t]
-      ::
         [%create-raw-transaction transaction=@ux]
       ::
         $:  %decode-psbt
@@ -1947,15 +1616,10 @@
             $=  inputs
             %-  list
             $:  non-witness-utxo=utxo
-              ::
                 witness-utxo=utxo
-              ::
                 partial-signatures=(unit (map pubkey=@ux signature=@ux))
-              ::
                 sig-hash-type=(unit sig-hash)
-              ::
                 redeem-script=(unit script)
-              ::
                 witness-script=(unit script)
               ::
                 $=  bip32-derivs
@@ -1964,21 +1628,17 @@
                 pubkey=@ux
                 ::
                 $:  master-fingerprint=@t
-                  ::
                     path=@t
                 ==
               ::
                 final-script-sig=(unit [asm=@t hex=@ux])
-              ::
                 final-script-witness=(unit (list @ux))
-              ::
                 unknown=(unit (map @t @t))
             ==
           ::
             $=  outputs
             %-  list
             $:  redeem-script=(unit script)
-              ::
                 witness-script=(unit script)
               ::
                 $=  bip32-derivs
@@ -1987,7 +1647,6 @@
                 pubkey=@ux
                 ::
                 $:  master-fingerprint=@t
-                  ::
                     path=@t
                 ==
               ::
@@ -2001,44 +1660,30 @@
       ::
         $:  %decode-script
             asm=@t
-          ::
             hex=(unit @ux)
-          ::
             type=@t
-          ::
             req-sigs=(unit @ud)
-          ::
             addresses=(unit (list address))
-          ::
             p2sh=(unit @uc)
-          ::
             segwit=(unit segwit-script)
         ==
       ::
         [%finalize-psbt psbt=@t hex=(unit @ux) complete=?]
-      ::
         [%fund-raw-transaction hex=@ux fee=@t change-pos=?(@ud %'-1')]
-      ::
         [%get-raw-transaction data=?(@ux raw-transaction-rpc-out)]
-      ::
         [%join-psbts psbt=@t]
-      ::
         [%send-raw-transaction hex=@ux]
       ::
         $:  %sign-raw-transaction-with-key
             hex=@ux
-          ::
             complete=?
-          ::
             errors=(unit errors)
         ==
       ::
         $:  %test-mempool-accept
             %-  list
             $:  txid=@ux
-              ::
                 allowed=?
-              ::
                 reject-reason=(unit @t)
         ==  ==
       ::
@@ -2046,24 +1691,18 @@
     ::  Util
     ::
         [%create-multi-sig =address redeem-script=@t]
-      ::
         [%derive-addresses (list address)]
       ::
         $:  %estimate-smart-fee
             fee-rate=(unit @t)
-          ::
             errors=(unit (list @t))
-          ::
             blocks=@ud
         ==
       ::
         $:  %get-descriptor-info
             descriptor=@t
-          ::
             is-range=?
-          ::
             is-solvable=?
-          ::
             has-private-keys=?
         ==
       ::
@@ -2071,17 +1710,11 @@
       ::
         $:  %validate-address
             is-valid=?
-          ::
             =address
-          ::
             script-pubkey=@ux
-          ::
             is-script=?
-          ::
             is-witness=?
-          ::
             witness-version=(unit @t)
-          ::
             witness-program=(unit @ux)
         ==
       ::
@@ -2089,7 +1722,6 @@
     ::  Wallet
     ::
         [%abandon-transaction ~]
-      ::
         [%abort-rescan ~]
       ::
         $:  %add-multisig-address
@@ -2098,15 +1730,10 @@
         ==
       ::
         [%backup-wallet ~]
-      ::
         [%bump-fee txid=@ux orig-fee=@t fee=@t errors=(list @t)]
-      ::
         [%create-wallet name=@t warning=@t]
-      ::
         [%dump-privkey key=@t]
-      ::
         [%dump-wallet filename=@t]
-      ::
         [%encrypt-wallet ~]
       ::
         $:  %get-addresses-by-label
@@ -2115,134 +1742,78 @@
       ::
         $:  %get-address-info
             =address
-          ::
             script-pubkey=@ux
-          ::
             is-mine=?
-          ::
             is-watchonly=?
-          ::
             solvable=?
-          ::
             desc=(unit @t)
-          ::
             is-script=?
-          ::
             is-change=?
-          ::
             is-witness=?
-          ::
             witness-version=(unit @t)
-          ::
             witness-program=(unit @ux)
-          ::
             script=(unit @t)
-          ::
             hex=(unit @ux)
-          ::
             pubkeys=(unit (list @ux))
-          ::
             sigs-required=(unit @ud)
-          ::
             pubkey=(unit @ux)
           ::
             $=  embedded
             %-  unit
             $:  script-pubkey=@ux
-              ::
                 solvable=(unit ?)
-              ::
                 desc=(unit @t)
-              ::
                 is-script=?
-              ::
                 is-change=(unit ?)
-              ::
                 is-witness=?
-              ::
                 witness-version=(unit @t)
-              ::
                 witness-program=(unit @ux)
-              ::
                 script=(unit @ux)
-              ::
                 hex=(unit @ux)
-              ::
                 pubkeys=(unit (list @ux))
-              ::
                 sigs-required=(unit @ud)
-              ::
                 pubkey=(unit @ux)
-              ::
                 is-compressed=(unit ?)
-              ::
                 label=(unit @t)
-              ::
                 hd-master-finger-print=(unit @ux)
-              ::
                 labels=(unit (list [name=@t =purpose]))
             ==
           ::
             is-compressed=(unit ?)
-          ::
             label=(unit @t)
-          ::
             timestamp=(unit @ud)
-          ::
             hd-key-path=(unit @t)
-          ::
             hd-seed-id=(unit @ux)
-          ::
             hd-master-finger-print=(unit @ux)
-          ::
             labels=(list [name=@t =purpose])
         ==
       ::
         [%get-balance amount=@t]
-      ::
         [%get-new-address =address]
-      ::
         [%get-raw-change-address =address]
-      ::
         [%get-received-by-address amount=@t]
-      ::
         [%get-received-by-label amount=@t]
       ::
         $:  %get-transaction
             amount=@t
-          ::
             fee=(unit @t)
-          ::
             confirmations=@ud
-          ::
             blockhash=(unit @ux)
-          ::
             blockindex=(unit @ud)
-          ::
             blocktime=(unit @ud)
-          ::
             txid=@ux
-          ::
             time=@ud
-          ::
             time-received=@ud
-          ::
             =bip125-replaceable
           ::
             $=  details
             %-  list
             $:  address=(unit address)
-              ::
                 =category
-              ::
                 amount=@t
-              ::
                 label=(unit @t)
-              ::
                 vout=@ud
-              ::
                 fee=(unit @t)
-              ::
                 abandoned=(unit ?)
             ==
           ::
@@ -2253,29 +1824,17 @@
       ::
         $:  %get-wallet-info
             wallet-name=@t
-          ::
             wallet-version=@ud
-          ::
             balance=@t
-          ::
             unconfirmed-balance=@t
-          ::
             immature-balance=@t
-          ::
             tx-count=@ud
-          ::
             key-pool-oldest=@ud
-          ::
             key-pool-size=@ud
-          ::
             key-pool-size-hd-internal=(unit @ud)
-          ::
             unlocked-until=(unit @ud)
-          ::
             pay-tx-fee=@t
-          ::
             hd-seed-id=(unit @ux)
-          ::
             private-keys-enabled=?
         ==
       ::
@@ -2284,20 +1843,14 @@
         $:  %import-multi
             %-  list
             $:  success=?
-              ::
                 warnings=(unit (list @t))
-              ::
                 errors=(unit [code=@t message=@t])
         ==  ==
       ::
         [%import-privkey ~]
-      ::
         [%import-pruned-funds ~]
-      ::
         [%import-pubkey ~]
-      ::
         [%import-wallet ~]
-      ::
         [%key-pool-refill ~]
       ::
         $:  %list-address-groupings
@@ -2306,47 +1859,34 @@
             %-  list
             %-  list
             $:  address
-             ::
                 amount=@t
-              ::
                 label=(unit @t)
         ==  ==
       ::
         [%list-labels labels=(list @t)]
-      ::
         [%list-lock-unspent outputs=(list [txid=@ux vout=@ud])]
       ::
         $:  %list-received-by-address
             %-  list
             $:  involves-watch-only=(unit %&)
-              ::
                 =address
-              ::
                 amount=@t
-              ::
                 confirmations=@ud
-              ::
                 label=@t
-              ::
                 txids=(list @ux)
         ==  ==
       ::
         $:  %list-received-by-label
             %-  list
             $:  involves-watch-only=(unit %&)
-              ::
                 amount=@t
-              ::
                 confirmations=@ud
-              ::
                 label=@t
         ==  ==
       ::
         $:  %lists-in-ceblock
             transactions=(list tx-in-block)
-          ::
             removed=(unit (list tx-in-block))
-          ::
             last-block=@ux
         ==
       ::
@@ -2356,74 +1896,44 @@
         $=  txs
             %-  list
             $:  txid=@ux
-          ::
                 vout=@ud
-              ::
                 =address
-              ::
                 label=@t
-              ::
                 script-pubkey=@ux
-              ::
                 amount=@t
-              ::
                 confirmations=@ud
-              ::
                 redeem-script=@ux
-              ::
                 witness-script=(unit @ux)
-              ::
                 spendable=?
-              ::
                 solvable=?
-              ::
                 desc=(unit @t)
-              ::
                 safe=?
         ==  ==
       ::
         [%list-wallet-dir wallets=(list @t)]
-      ::
         [%list-wallets wallets=(list @t)]
-      ::
         [%load-wallet name=@t warning=@t]
-      ::
         [%lock-unspent ?]
-      ::
         [%remove-pruned-funds ~]
-      ::
         [%rescan-blockchain start-height=@ud stop-height=@ud]
-      ::
         [%send-many txid=@ux]
-      ::
         [%send-to-address txid=@ux]
-      ::
         [%set-hd-seed ~]
-      ::
         [%set-label ~]
-      ::
         [%set-tx-fee ?]
-      ::
         [%sign-message signature=@t]
       ::
         $:  %sign-raw-transaction-with-wallet
             hex=@ux
-          ::
             complete=?
-          ::
             errors=(unit errors)
         ==
       ::
         [%unload-wallet ~]
-      ::
         [%wallet-create-fundedpsbt psbt=@t fee=@t changepos=?(@ud %'-1')]
-      ::
         [%wallet-lock ~]
-      ::
         [%wallet-passphrase ~]
-      ::
         [%wallet-passphrase-change ~]
-      ::
         [%wallet-process-psbt psbt=@t complete=?]
       ::
     ::  ZMQ

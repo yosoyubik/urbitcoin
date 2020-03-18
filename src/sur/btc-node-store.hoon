@@ -6,75 +6,42 @@
     +$  purpose  ?(%send %receive)
     +$  address
       $:  address=?(@uc [%bech32 @t])
-        ::
           script-pubkey=@ux
-        ::
           is-mine=?
-        ::
           is-watchonly=?
-        ::
           solvable=?
-        ::
           desc=(unit @t)
-        ::
           is-script=?
-        ::
           is-change=?
-        ::
           is-witness=?
-        ::
           witness-version=(unit @t)
-        ::
           witness-program=(unit @ux)
-        ::
           script=(unit @t)
-        ::
           hex=(unit @ux)
-        ::
           pubkeys=(unit (list @ux))
-        ::
           sigs-required=(unit @ud)
-        ::
           pubkey=(unit @ux)
-        ::
           is-compressed=(unit ?)
-        ::
           label=(unit @t)
-        ::
           timestamp=(unit @t)
-        ::
           hd-key-path=(unit @t)
-        ::
           hd-seed-id=(unit @ux)
-        ::
           hd-master-finger-print=(unit @ux)
-        ::
           labels=(list [name=@t =purpose])
       ==
     ::
     +$  wallet-attr
       $:  wallet-version=@ud
-        ::
           balance=@t
-        ::
           unconfirmed-balance=@t
-        ::
           immature-balance=@t
-        ::
           tx-count=@ud
-        ::
           key-pool-oldest=@ud
-        ::
           key-pool-size=@ud
-        ::
           key-pool-size-hd-internal=(unit @ud)
-        ::
           unlocked-until=(unit @ud)
-        ::
           pay-tx-fee=@t
-        ::
           hd-seed-id=(unit @ux)
-        ::
           private-keys-enabled=?
       ==
     ::
@@ -93,6 +60,8 @@
 ::
 ++  btc-rpc
   |%
+  ::  %action: the result of an RPC action from the full node
+  ::
   +$  action
     $%  :: [%abandon-transaction]
         :: [%abort-rescan]
@@ -153,6 +122,8 @@
         :: [%get-zmq-notifications]
     ==
   ::
+  ::  %update: modifies data on the %store app
+  ::
   +$  update
     $%  ::  Wallet name has changed
         ::
@@ -162,6 +133,8 @@
         ::
         [%wallet-attrs name=@t attr=wallet-attr]
     ==
+  ::
+  ::  %command: instruction to perform over the stored data
   ::
   +$  command
     $%  ::  Updated the default wallet stored in btc-node-store
