@@ -175,7 +175,7 @@
           bytes-sent=@ud
           bytes-recv=@ud
           conn-time=@da
-          time-offset=@ud
+          time-offset=@t
           ping-time=@rd
           min-ping=@rd
           ping-wait=(unit @ud)
@@ -1294,7 +1294,7 @@
             best-block-hash=@ux
             difficulty=@t
             median-time=@ud
-            verification-progress=@ud
+            verification-progress=@t
             initial-block-download=?
             chain-work=@ux
             size-on-disk=@ud
@@ -1561,7 +1561,7 @@
             protocol-version=@ud
             local-services=@t
             local-relay=?
-            time-offset=@ud
+            time-offset=@t
             connections=@ud
             network-active=?
             networks=(list network-info)
