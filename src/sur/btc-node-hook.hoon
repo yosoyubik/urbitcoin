@@ -169,6 +169,7 @@
           addr-bind=@t
           addr-local=(unit @t)
           services=@t
+          services-names=(list @t)
           relay-txes=?
           last-send=@da
           last-recv=@da
@@ -211,10 +212,16 @@
           %valid-fork
           %active
       ==
+    ::  $soft-fork-types:
+    ::
+    ::    Used in:
+    ::      - %get-blockchain-info/$softforks
+    ::
+    +$  soft-fork-types  ?(%buried %bip9)
     ::  $soft-fork-status:
     ::
     ::    Used in:
-    ::      - %get-blockchain-info/$bip9-softforks
+    ::      - %get-blockchain-info/$softforks
     ::
     +$  soft-fork-status  ?(%defined %started %'locked_in' %active %failed)
     ::  $purpose:
@@ -504,7 +511,9 @@
     ::      - %get-mempool-entry
     ::
     +$  mem-pool
-      $:  size=@ud
+      $:  size=(unit @ud)
+          vsize=@ud
+          weight=@ud
           fee=@t
           modified-fee=@t
           time=@ud
@@ -547,6 +556,17 @@
           ::
           [id=@ux =mem-pool]
       ::
+    ::  $descriptor
+    ::
+    ::    Used in:
+    ::      - %utxo-update-psbt
+    ::
+    +$  descriptor
+      $?  @t
+        ::
+          $:  desc=@t
+              range=(unit range)
+      ==  ==
     --
 |%
 ::
@@ -573,6 +593,9 @@
         ::  %get-block-count: Returns number of blocks in the longest blockchain
         ::
         [%get-block-count ~]
+        ::  %get-block-filter: Retrieve a BIP 157 content filter for a block.
+        ::
+        [%get-block-filter block-hash=@ux filter-type=(unit @t)]
         ::  %get-block-hash: Returns hash of block in best-block-chain at height
         ::
         [%get-block-hash height=@ud]
@@ -851,7 +874,7 @@
         ::  %send-raw-transaction: Submits raw transaction
         ::  (serialized, hex-encoded) to local node and network.
         ::
-        [%send-raw-transaction hex-string=@ux allow-high-fees=?]
+        [%send-raw-transaction hex-string=@ux allow-high-fees=(unit ?)]
         ::  %sign-raw-transaction-with-key: Sign inputs for raw transaction
         ::  (serialized, hex-encoded).
         ::
@@ -865,11 +888,14 @@
         ::  indicating if raw transaction (serialized, hex-encoded) would be
         ::  accepted by mempool.
         ::
-        [%test-mempool-accept raw-txs=(list @ux) allow-high-fees=?]
+        [%test-mempool-accept raw-txs=(list @ux) allow-high-fees=(unit ?)]
         ::  %utxo-update-psbt: Updates a PSBT with witness UTXOs retrieved from
         ::  the UTXO set or the mempool.
         ::
-        [%utxo-update-psbt psbt=@t]
+        $:  %utxo-update-psbt
+            psbt=@t
+            descriptors=(unit (list descriptor))
+        ==
     ::  Util
     ::
         ::  %create-multi-sig: Creates a multi-signature address with n
@@ -948,7 +974,13 @@
         ::      A blank wallet has no keys or HD seed.
         ::      One can be set using sethdseed.
         ::
-        [%create-wallet name=@t disable-private-keys=(unit ?) blank=(unit ?)]
+        $:  %create-wallet
+            name=@t
+            disable-private-keys=(unit ?)
+            blank=(unit ?)
+            passphrase=(unit @t)
+            avoid-reuse=(unit ?)
+        ==
         ::  %dump-privkey: Reveals the private key corresponding to 'address'.
         ::
         [%dump-privkey =address]
@@ -974,7 +1006,11 @@
             $:  dummy=(unit %'*')
                 minconf=(unit @ud)
                 include-watch-only=(unit ?)
+                avoid-reuse=(unit ?)
         ==  ==
+        ::  %get-balances: Returns an object with all balances in BTC.
+        ::
+        [%get-balances ~]
         ::  %get-new-address: Returns a new Bitcoin address for receiving
         ::  payments.
         ::
@@ -995,7 +1031,11 @@
         ::  %get-transaction:  Get detailed information about in-wallet
         ::  transaction <txid>
         ::
-        [%get-transaction txid=@ux include-watch-only=(unit ?)]
+        $:  %get-transaction
+            txid=@ux
+            include-watch-only=(unit ?)
+            verbose=(unit ?)
+        ==
         ::  %get-unconfirmed-balance:  Returns the server's total unconfirmed
         ::  balance
         ::
@@ -1159,6 +1199,7 @@
             replaceable=(unit ?)
             conf-target=(unit @ud)
             mode=(unit estimate-mode)
+            avoid-reuse=(unit ?)
         ==
         ::  %set-hd-seed: Set or generate a new HD wallet seed.
         ::  Non-HD wallets will not be upgraded to being a HD wallet.
@@ -1170,6 +1211,9 @@
         ::  %set-tx-fee: Set the transaction fee per kB for this wallet.
         ::
         [%set-tx-fee amount=@t]
+        ::  %set-wallet-flag: Change the state of the given wallet flag for a wallet.
+        ::
+        [%set-wallet-flag flag=@t value=(unit ?)]
         ::  %sign-message:   Sign a message with the private key of an address
         ::
         [%sign-message =address message=@t]
@@ -1302,10 +1346,13 @@
             pruneheight=(unit @ud)
             automatic-pruning=(unit ?)
             prune-target-size=(unit @ud)
-            soft-forks=(list [id=@t version=@t reject-status=?])
           ::
-            $=  bip9-softforks  %+  map
-                name=@t
+            $=  softforks
+            %+  map  name=@t
+            $:  type=soft-fork-types
+              ::
+                $=  bip9
+                %-  unit
                 $:  status=(unit soft-fork-status)
                     bit=(unit @ud)
                     start-time=?(%'-1' @ud)
@@ -1320,11 +1367,13 @@
                         count=@ud
                         possible=?
                 ==  ==
-          ::
-            warnings=@t
-        ==
+              ::
+                height=(unit @ud)
+                active=?
+        ==  ==
       ::
         [%get-block-count count=@ud]
+        [%get-block-filter filter=@ux header=@ux]
         [%get-block-hash hash=@ux]
       ::
         $:  %get-block-header
@@ -1403,6 +1452,7 @@
             time=@ud
             tx-count=@ud
             window-final-block-hash=@ux
+            window-final-block-height=@ud
             window-block-count=@ud
             window-tx-count=(unit @ud)
             window-interval=(unit @ud)
@@ -1560,6 +1610,7 @@
             subversion=@t
             protocol-version=@ud
             local-services=@t
+            local-services-names=(list @t)
             local-relay=?
             time-offset=@t
             connections=@ud
@@ -1701,6 +1752,7 @@
       ::
         $:  %get-descriptor-info
             descriptor=@t
+            checksum=@t
             is-range=?
             is-solvable=?
             has-private-keys=?
@@ -1789,6 +1841,22 @@
         ==
       ::
         [%get-balance amount=@t]
+      ::
+        $:  %get-balances
+            $=  mine
+            $:  trusted=(unit @t)
+                untrusted-pending=@t
+                immature=@t
+                used=(unit @t)
+            ==
+          ::
+            $=  watchonly
+            %-  unit
+            $:  trusted=@t
+                untrusted-pending=@t
+                immature=@t
+        ==  ==
+      ::
         [%get-new-address =address]
         [%get-raw-change-address =address]
         [%get-received-by-address amount=@t]
@@ -1818,6 +1886,7 @@
             ==
           ::
             hex=@ux
+            decoded=(unit raw-transaction-rpc-out)
         ==
       ::
         [%get-unconfirmed-balance amount=@t]
@@ -1836,6 +1905,8 @@
             pay-tx-fee=@t
             hd-seed-id=(unit @ux)
             private-keys-enabled=?
+            avoid-reuse=?
+            scanning=?(? [duration=@t progress=@t])
         ==
       ::
         [%import-address ~]
@@ -1906,6 +1977,7 @@
                 witness-script=(unit @ux)
                 spendable=?
                 solvable=?
+                reused=(unit ?)
                 desc=(unit @t)
                 safe=?
         ==  ==
@@ -1921,6 +1993,7 @@
         [%set-hd-seed ~]
         [%set-label ~]
         [%set-tx-fee ?]
+        [%set-wallet-flag flag-name=@t flag-state=? warnings=@t]
         [%sign-message signature=@t]
       ::
         $:  %sign-raw-transaction-with-wallet

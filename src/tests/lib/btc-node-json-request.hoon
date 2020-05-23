@@ -89,10 +89,10 @@
 ++  test-create-wallet  ^-  tang
   =/  op  %create-wallet
   =/  action=request:btc-rpc
-    [op name='test-create-wallet' disable-private-keys=`| blank=`|]
+    [op name='test-create-wallet' disable-private-keys=`| blank=`| ~ ~]
     %+  expect-eq
       !>  :^  op   (method:btc-rpc:lib op)  %list
-          ~[s+'test-create-wallet' b+| b+|]
+          ~[s+'test-create-wallet' b+| b+| ~ ~]
       !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-dump-privkey  ^-  tang
@@ -170,9 +170,9 @@
 ::
 ++  test-get-transaction  ^-  tang
   =/  op  %get-transaction
-  =/  action  [op en-txid *(unit ?)]
+  =/  action  [op en-txid *(unit ?) ~]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[[%s p='12341234'] ~]]
+    !>  [op (method:btc-rpc:lib op) %list ~[[%s p='12341234'] ~ ~]]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-get-unconfirmed-balance  ^-  tang
@@ -390,10 +390,11 @@
         replaceable=~
         conf-target=~
         estimate-mode=~
+        avoid-reuse=~
     ==
   %+  expect-eq
     !>  :*  op   (method:btc-rpc:lib op)   %list
-            ~[[%s addr] [%n ~.23.23] ~ ~ ~ ~ ~ ~]
+            ~[[%s addr] [%n ~.23.23] ~ ~ ~ ~ ~ ~ ~]
         ==
     !>  (request-to-rpc:btc-rpc:lib action)
 ::

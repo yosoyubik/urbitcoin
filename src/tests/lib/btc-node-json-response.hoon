@@ -264,7 +264,7 @@
     :*  op  '23'  (some '23')  23  (some 0x23)  (some 23)
         (some 23)  0x23  23  23  %yes
         [(some en-addr) %send '23.23' (some '23') 23 (some '23') (some %.n)]~
-        0x23
+        0x23  ~
     ==
   %+  expect-eq
     !>  exp
@@ -295,10 +295,12 @@
           ['paytxfee' n+'23.23']
           ['hdseedid' s+'23']
           ['private_keys_enabled' b+&]
+          ['avoid_reuse' b+&]
+          ['scanning' b+&]
       ==
   =/  exp=response:btc-rpc
-    :*  op  '23'  23  '23.23'  '23'  '23'  23  23
-       23  (some 23)  (some 23)  '23.23'  (some 0x23)  &
+    :*  op  '23'  23  '23.23'  '23'  '23'  23  23  23
+        (some 23)  (some 23)  '23.23'  (some 0x23)  &  &  &
     ==
   %+  expect-eq
       !>  exp
@@ -578,7 +580,10 @@
     ==  ==
   =/  exp=response:btc-rpc
     :-  op
-    [0x23 23 en-addr '23' 0x23 '23' 23 0x23 (some 0x23) %.n %.n (some '23') %.n]~
+    :_  ~
+    :*  0x23  23  en-addr  '23'  0x23  '23'  23  0x23
+        (some 0x23)  %.n  %.n  ~  (some '23')  %.n
+    ==
   %+  expect-eq
     !>  exp
     !>  (parse-response:btc-rpc:lib result)

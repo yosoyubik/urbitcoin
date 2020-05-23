@@ -1,6 +1,5 @@
 ::  Sends a command to the BTC hook app
 ::
-::
 /-  *btc-node-hook
 ::
 :-  %say

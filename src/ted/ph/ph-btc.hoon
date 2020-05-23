@@ -176,7 +176,7 @@
   ::  inputs and creating new outputs.
   ::
   "=outputs [[%data 0x1.0203] ~]"
-  ":btc-node-hook|action [%create-raw-transaction ~ outputs ~ ~]"               ::  Y
+  ":btc-node-hook|action [%create-raw-transaction ~ outs ~ ~]"               ::  Y
   ::  %decodepsbt: Return a JSON object representing the serialized,
   ::  base64-encoded partially signed Bitcoin transaction.
   ::
@@ -416,7 +416,7 @@
   ::  %get-transaction:  Get detailed information about in-wallet
   ::  transaction <txid>
   ::
-  ":btc-node-hook|action [%get-transaction txid `%.y]"                          ::  Y
+  ":btc-node-hook|action [%get-transaction txid `%.y ~]"                          ::  Y
   ::  %get-unconfirmed-balance:  Returns the server's total unconfirmed
   ::  balance
   ::
