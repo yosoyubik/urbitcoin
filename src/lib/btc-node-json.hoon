@@ -47,7 +47,9 @@
       |=  h=@ux
       ^-  @t
       %-  crip
-      =-  ((x-co:co (mul 2 p)) q)
+      ::  extend with zeros up to 64 bytes
+      ::
+      =-  ((x-co:co 64) q)
       (as-octs:mimes:html h)
     ::  %addr-type-validator: parses BTC addresses (legacy and p2sh) to @uc
     ::
