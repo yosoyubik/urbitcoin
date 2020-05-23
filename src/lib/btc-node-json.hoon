@@ -49,8 +49,7 @@
       %-  crip
       ::  extend with zeros up to 64 bytes
       ::
-      =-  ((x-co:co 64) q)
-      (as-octs:mimes:html h)
+      ((x-co:co 64) h)
     ::  %addr-type-validator: parses BTC addresses (legacy and p2sh) to @uc
     ::
     ::    bech32/segwit addressed are tagged separately.
