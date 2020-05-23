@@ -259,7 +259,7 @@
   ::  the UTXO set or the mempool.
   ::
   "=psbt 'cHNidP8BAGECAAAAAe48tdtNpIT/XpWtHwSKqPt/GAA/vkoutSlPomw3MmW6AAAAAAAAAAAAAnDtApUAAAAAF6kUrxlQrfcNttHcPY7D60KHOK65q96HAAAAAAAAAAAFagMBAgMAAAAAAAEBIAD5ApUAAAAAF6kU+jfMIvFPGJtz6FrQnynkFV043vqHAQQWABSZv6w6KjZjONZ1r1JCDem4SVXxqQABABYAFHtkC22llD4Per/ocWQCZkd9JGJnAAA='"
-  ":btc-node-hook|action [%utxo-update-psbt psbt]"                              ::  Y
+  ":btc-node-hook|action [%utxo-update-psbt psbt ~]"                              ::  Y
 ::  Util
   ::  %createmultisig: Creates a multi-signature address with n signature
   ::  of m keys required. It returns a json object with the address and

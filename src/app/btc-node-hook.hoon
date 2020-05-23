@@ -75,6 +75,7 @@
   ^-  (quip card _state)
   =/  body=request:rpc:jstd
     (request-to-rpc:btc-rpc:lib act)
+  ~&  body
   =/  =header-list:http
     :~  ['Content-Type' 'application/json']
         :-  'Authorization'

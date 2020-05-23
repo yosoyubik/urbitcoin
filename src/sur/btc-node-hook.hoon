@@ -1484,9 +1484,9 @@
                 $=  script-pubkey
                 $:  asm=@t
                     hex=@ux
-                    req-sigs=@ud
+                    req-sigs=(unit @ud)
                     type=@t
-                    addresses=(list address)
+                    addresses=(unit (list address))
                 ==
               ::
                 coinbase=?

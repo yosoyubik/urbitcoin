@@ -139,7 +139,7 @@
             %-  ou
             :~  ['asm' (un so)]
                 ['hex' (un (cu to-hex so))]
-                ['req-sigs' (uf ~ (mu ni))]
+                ['reqSigs' (uf ~ (mu ni))]
                 ['type' (un so)]
               ::
                 :-  'addresses'
@@ -1692,12 +1692,12 @@
           ['value' no]
         ::
           :-  'scriptPubKey'
-          %-  ot
-          :~  ['asm' so]
-              ['hex' (cu to-hex so)]
-              ['reqSigs' ni]
-              ['type' so]
-              ['addresses' (ar (cu addr-type-validator so))]
+          %-  ou
+          :~  ['asm' (un so)]
+              ['hex' (un (cu to-hex so))]
+              ['reqSigs' (uf ~ (mu ni))]
+              ['type' (un so)]
+              ['addresses' (uf ~ (mu (ar (cu addr-type-validator so))))]
           ==
         ::
           ['coinbase' bo]
