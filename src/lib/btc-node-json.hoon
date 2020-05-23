@@ -47,6 +47,13 @@
       |=  h=@ux
       ^-  @t
       %-  crip
+      =-  ((x-co:co (mul 2 p)) q)
+      (as-octs:mimes:html h)
+    ::
+    ++  hash-to-cord
+      |=  h=@ux
+      ^-  @t
+      %-  crip
       ::  extend with zeros up to 64 bytes
       ::
       ((x-co:co 64) h)
@@ -277,7 +284,7 @@
       ++  prev-txs
         |=  t=prev-tx
         ^-  (list (pair @t json))
-        :~  ['txid' s+(hex-to-cord txid.t)]
+        :~  ['txid' s+(hash-to-cord txid.t)]
             ['vout' (numb:enjs:format vout.t)]
             ['scriptPubKey' s+(hex-to-cord script-pubkey.t)]
           ::
@@ -312,7 +319,7 @@
       ~
     ::
         %get-block
-      ~[s+(hex-to-cord blockhash.req) (feud verbosity.req)]
+      ~[s+(hash-to-cord blockhash.req) (feud verbosity.req)]
       ::
         %get-blockchain-info
       ~
@@ -321,19 +328,19 @@
       ~
     ::
         %get-block-filter
-      ~[s+(hex-to-cord block-hash.req) (ferm filter-type.req %s)]
+      ~[s+(hash-to-cord block-hash.req) (ferm filter-type.req %s)]
     ::
         %get-block-hash
       ~[(numb height.req)]
     ::
         %get-block-header
-      ~[s+(hex-to-cord blockhash.req) (ferm verbose.req %b)]
+      ~[s+(hash-to-cord blockhash.req) (ferm verbose.req %b)]
     ::
         %get-block-stats
       :~  =*  h  hash-or-height.req
           ?-  -.h
             %num  (numb +.h)
-            %hex  s+(hex-to-cord +.h)
+            %hex  s+(hash-to-cord +.h)
           ==
         ::
           ?~  stats.req  ~
@@ -348,20 +355,20 @@
         ::
           ?~  blockhash.req
             ~
-          s+(hex-to-cord u.blockhash.req)
+          s+(hash-to-cord u.blockhash.req)
       ==
     ::
         %get-difficulty
       ~
     ::
         %get-mempool-ancestors
-      ~[s+(hex-to-cord txid.req) (ferm verbose.req %b)]
+      ~[s+(hash-to-cord txid.req) (ferm verbose.req %b)]
     ::
         %get-mempool-descendants
-      ~[s+(hex-to-cord txid.req) (ferm verbose.req %b)]
+      ~[s+(hash-to-cord txid.req) (ferm verbose.req %b)]
     ::
         %get-mempool-entry
-      ~[s+(hex-to-cord txid.req)]
+      ~[s+(hash-to-cord txid.req)]
     ::
         %get-mempool-info
       ~
@@ -370,7 +377,7 @@
       ~[(ferm verbose.req %b)]
     ::
         %get-tx-out
-      :~  s+(hex-to-cord txid.req)
+      :~  s+(hash-to-cord txid.req)
         ::
           (numb n.req)
         ::
@@ -392,7 +399,7 @@
       ~
     ::
         %precious-block
-      ~[s+(hex-to-cord blockhash.req)]
+      ~[s+(hash-to-cord blockhash.req)]
     ::
         %prune-blockchain
       ~[(numb height.req)]
@@ -500,7 +507,7 @@
       ==
     ::
         %prioritise-transaction
-      :~  [%s (hex-to-cord txid.req)]
+      :~  [%s (hash-to-cord txid.req)]
           :: dummy null argument, could be omitted by using named
           :: instead of positional json rpc arguments
           :: see https://bitcoincore.org/en/doc/0.18.0/rpc/mining/prioritisetransaction/
@@ -608,7 +615,7 @@
           |=  a=input
           ^-  json
           %-  pairs  ^-  (list (pair @t json))
-          :~  ['txid' s+(hex-to-cord txid.a)]
+          :~  ['txid' s+(hash-to-cord txid.a)]
               ['vout' (numb vout.a)]
               ['sequence' (numb sequence.a)]
           ==
@@ -644,7 +651,7 @@
           ^-  json
           %-  pairs
           ^-  (list (pair @t json))
-          :~  ['txid' s+(hex-to-cord txid.a)]
+          :~  ['txid' s+(hash-to-cord txid.a)]
               ['vout' (numb vout.a)]
               ['sequence' (numb sequence.a)]
           ==
@@ -731,12 +738,12 @@
       ==
     ::
         %get-raw-transaction
-      :~  s+(hex-to-cord txid.req)
+      :~  s+(hash-to-cord txid.req)
           (ferm verbose.req %b)
         ::
           ?~  blockhash.req
             ~
-          s+(hex-to-cord u.blockhash.req)
+          s+(hash-to-cord u.blockhash.req)
       ==
     ::
         %join-psbts
@@ -857,7 +864,7 @@
     ::  Wallet
     ::
         %abandon-transaction
-      ~[s+(hex-to-cord txid.req)]
+      ~[s+(hash-to-cord txid.req)]
     ::
         %abort-rescan
       ~
@@ -881,7 +888,7 @@
       ~[s+destination.req]
     ::
         %bump-fee
-      :~  s+(hex-to-cord txid.req)
+      :~  s+(hash-to-cord txid.req)
         ::
           %-  pairs
           ?~  options.req
@@ -963,7 +970,7 @@
       ~[s+label.req (feud minconf.req)]
     ::
         %get-transaction
-      :~  s+(hex-to-cord txid.req)
+      :~  s+(hash-to-cord txid.req)
           (ferm include-watch-only.req %b)
           (ferm verbose.req %b)
       ==
@@ -1131,7 +1138,7 @@
       =/  req  u.+.req
       :~  ?~  blockhash.req
             ~
-          s+(hex-to-cord u.blockhash.req)
+          s+(hash-to-cord u.blockhash.req)
         ::
           (feud target-confirmations.req)
           (ferm include-watch-only.req %b)
@@ -1204,11 +1211,11 @@
           |=  [t=@ux v=@ud]
           =-  ?~(- ~ (pairs -))
           ^-  (list (pair @t json))
-          ~[['txid' s+(hex-to-cord t)] ['vout' (numb v)]]
+          ~[['txid' s+(hash-to-cord t)] ['vout' (numb v)]]
       ==
     ::
         %remove-pruned-funds
-      ~[s+(hex-to-cord txid.req)]
+      ~[s+(hash-to-cord txid.req)]
     ::
         %rescan-blockchain
       :~  (feud start-height.req)
@@ -1318,7 +1325,7 @@
           |=  a=input
           ^-  json
           %-  pairs
-          :~  ['txid' s+(hex-to-cord txid.a)]
+          :~  ['txid' s+(hash-to-cord txid.a)]
               ['vout' (numb vout.a)]
               ['sequence' (numb sequence.a)]
           ==
