@@ -434,7 +434,7 @@
       ~[(feud check-level.req) (feud n-blocks.req)]
     ::
         %verify-tx-out-proof
-      ~[s+(hex-to-cord proof.req)]
+      ~[s+proof.req]
     ::  Control
     ::
         %get-memory-info
@@ -1077,7 +1077,7 @@
     ::
         %import-pruned-funds
       :~  s+(hex-to-cord raw-transaction.req)
-          s+(hex-to-cord tx-out-proof.req)
+          s+tx-out-proof.req
       ==
     ::
         %import-pubkey
@@ -1711,7 +1711,7 @@
       ==
     ::
         %get-tx-out-proof
-      [id.res ((cu to-hex so) res.res)]
+      [id.res (so res.res)]
     ::
         %get-tx-outset-info
       :-  id.res

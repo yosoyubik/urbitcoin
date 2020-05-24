@@ -680,7 +680,7 @@
         ::  in a block, returning the transaction it commits to
         :: and throwing an RPC error if the block is not in our best chain
         ::
-        [%verify-tx-out-proof proof=@ux]
+        [%verify-tx-out-proof proof=@t]
     ::  Control
     ::
         :: %getmemoryinfo: Returns an object containing information about memory
@@ -1072,7 +1072,7 @@
         [%import-privkey privkey=@t label=(unit @t) rescan=(unit ?)]
         ::  %import-pruned-funds:  Imports funds without rescan.
         ::
-        [%import-pruned-funds raw-transaction=@ux tx-out-proof=@ux]
+        [%import-pruned-funds raw-transaction=@ux tx-out-proof=@t]
         ::  %import-pubkey:  Adds a public key (in hex) that can be watched as
         ::  if it were in your wallet but cannot be used to spend.
         ::
@@ -1492,7 +1492,7 @@
                 coinbase=?
         ==  ==
       ::
-        [%get-tx-out-proof data=@ux]
+        [%get-tx-out-proof data=@t]
       ::
         $:  %get-tx-outset-info
             height=@ud

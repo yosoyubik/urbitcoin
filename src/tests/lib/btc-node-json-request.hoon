@@ -7,7 +7,7 @@
 =/  en-addr=@uc  0c1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA
 =/  addr=@t      (base58-to-cord:btc-rpc:lib en-addr)
 =/  en-txid=@ux  0x1234.1234
-=/  txid=@t      (hex-to-cord:btc-rpc:lib en-txid)
+=/  txid=@t      (hash-to-cord:btc-rpc:lib en-txid)
 ::
 =,  format
 ::
@@ -66,7 +66,7 @@
   ;:  weld
     =/  action=request:btc-rpc  [op en-txid ~]
     %+  expect-eq
-      !>  [op (method:btc-rpc:lib op) %list ~[[%s '12341234'] [%o ~]]]
+      !>  [op (method:btc-rpc:lib op) %list ~[[%s txid] [%o ~]]]
       !>  (request-to-rpc:btc-rpc:lib action)
   ::
     =/  action=request:btc-rpc
@@ -172,7 +172,7 @@
   =/  op  %get-transaction
   =/  action  [op en-txid *(unit ?) ~]
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[[%s p='12341234'] ~ ~]]
+    !>  [op (method:btc-rpc:lib op) %list ~[[%s p=txid] ~ ~]]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-get-unconfirmed-balance  ^-  tang
@@ -215,7 +215,7 @@
 ++  test-import-pruned-funds  ^-  tang
   =/  op  %import-pruned-funds
   =/  action=request:btc-rpc
-    [op raw-transaction=*@ux tx-out-proof=*@ux]
+    [op raw-transaction=*@ux tx-out-proof=*@t]
   %+  expect-eq
     !>  [op (method:btc-rpc:lib op) %list ~[s+'' s+'']]
     !>  (request-to-rpc:btc-rpc:lib action)
@@ -430,12 +430,12 @@
   =/  op  %sign-raw-transaction-with-wallet
   =/  action=request:btc-rpc
     :*  op
-        en-txid
+        0xa
         ~
         `%'ALL'
     ==
   %+  expect-eq
-    !>  [op (method:btc-rpc:lib op) %list ~[s+txid ~ s+'ALL']]
+    !>  [op (method:btc-rpc:lib op) %list ~[s+'0a' ~ s+'ALL']]
     !>  (request-to-rpc:btc-rpc:lib action)
 ::
 ++  test-unload-wallet  ^-  tang

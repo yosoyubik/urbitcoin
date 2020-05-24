@@ -20,16 +20,16 @@
 ;<  ~  bind:m  (wait-for-output ~bud "amount=0.00000000")
 ::  FIXME
 ::  Blockchain
-  ::  %getbestblockhash: Returns the hash of the
-  ::  best (tip) block in the longest blockchain.
-  ::
-  ":btc-node-hook|action [%get-best-block-hash ~]"                              ::  Y
+  ::  %getbestblockhash: Returns the hash of the                              regtest / mainnet
+  ::  best (tip) block in the longest blockchain.                               ::
+  ::                                                                            ::
+  ":btc-node-hook|action [%get-best-block-hash ~]"                              ::  Y / Y
   ::  %getblock: Returns an Object/string with information about block
   ::
   ":btc-node-hook|action [%get-block hash ~]"                                   ::  Y
-  ":btc-node-hook|action [%get-block hash `%0]"                                 ::  Y
-  ":btc-node-hook|action [%get-block hash `%1]"                                 ::  Y
-  ":btc-node-hook|action [%get-block hash `%2]"
+  ":btc-node-hook|action [%get-block hash `%0]"                                 ::  Y / ? (recover: dig: over)
+  ":btc-node-hook|action [%get-block hash `%1]"                                 ::  Y / Y
+  ":btc-node-hook|action [%get-block hash `%2]"                                 ::  Y / ? (allocate: reclaim: half of 37 entries)
   ::  %getblockchaininfo: Returns info regarding blockchain processing.
   ::
   ":btc-node-hook|action [%get-blockchain-info ~]"                              ::  Y
@@ -564,7 +564,7 @@
   ":btc-node-hook|action [%list-wallets ~]"                                     ::  Y
   ::  %load-wallet  Loads a wallet from a wallet file or directory.
   ::
-    ":btc-node-hook|action [%load-wallet 'uno']"
+  ":btc-node-hook|action [%load-wallet 'uno']"
   ::  %lock-unspent: Updates list of temporarily unspendable outputs.
   ::  unlock=?
   ::   transactions=(unit (list [txid=@ux vout=@ud]))
