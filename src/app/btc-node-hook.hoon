@@ -165,6 +165,7 @@
   ?.  ?=([%result *] rpc-resp)
     ~&  [%error +.rpc-resp]
     [~ state]
+  ~&  rpc-resp
   %-  handle-btc-response
   (parse-response:btc-rpc:lib rpc-resp)
 ::

@@ -874,7 +874,7 @@
         ::  %send-raw-transaction: Submits raw transaction
         ::  (serialized, hex-encoded) to local node and network.
         ::
-        [%send-raw-transaction hex-string=@ux allow-high-fees=(unit ?)]
+        [%send-raw-transaction hex-string=@ux max-fee-rate=(unit @t)]
         ::  %sign-raw-transaction-with-key: Sign inputs for raw transaction
         ::  (serialized, hex-encoded).
         ::
@@ -888,7 +888,7 @@
         ::  indicating if raw transaction (serialized, hex-encoded) would be
         ::  accepted by mempool.
         ::
-        [%test-mempool-accept raw-txs=(list @ux) allow-high-fees=(unit ?)]
+        [%test-mempool-accept raw-txs=(list @ux) max-fee-rate=(unit @t)]
         ::  %utxo-update-psbt: Updates a PSBT with witness UTXOs retrieved from
         ::  the UTXO set or the mempool.
         ::
@@ -1436,8 +1436,8 @@
             total-weight=@t
             total-fee=@t
             txs=@ud
-            utxo-increase=@ud
-            utxo-size-inc=@ud
+            utxo-increase=@t
+            utxo-size-inc=@t
         ==
       ::
         $:  %get-chain-tips
@@ -1719,7 +1719,7 @@
             segwit=(unit segwit-script)
         ==
       ::
-        [%finalize-psbt psbt=@t hex=(unit @ux) complete=?]
+        [%finalize-psbt psbt=(unit @t) hex=(unit @ux) complete=?]
         [%fund-raw-transaction hex=@ux fee=@t change-pos=?(@ud %'-1')]
         [%get-raw-transaction data=?(@ux raw-transaction-rpc-out)]
         [%join-psbts psbt=@t]
@@ -1762,10 +1762,10 @@
       ::
         $:  %validate-address
             is-valid=?
-            =address
-            script-pubkey=@ux
-            is-script=?
-            is-witness=?
+            address=(unit address)
+            script-pubkey=(unit @ux)
+            is-script=(unit ?)
+            is-witness=(unit ?)
             witness-version=(unit @t)
             witness-program=(unit @ux)
         ==

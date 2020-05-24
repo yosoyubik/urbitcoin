@@ -32,20 +32,20 @@
   ":btc-node-hook|action [%get-block hash `%2]"                                 ::  Y / ? (allocate: reclaim: half of 37 entries)
   ::  %getblockchaininfo: Returns info regarding blockchain processing.
   ::
-  ":btc-node-hook|action [%get-blockchain-info ~]"                              ::  Y
+  ":btc-node-hook|action [%get-blockchain-info ~]"                              ::  Y / Y
   ::  %getblockcount: Returns number of blocks in the longest blockchain.
   ::
-  ":btc-node-hook|action [%get-block-count ~]"                                  ::  Y
+  ":btc-node-hook|action [%get-block-count ~]"                                  ::  Y / Y
   ::  %getblockhash: Returns hash of block in best-block-chain at height.
   ::
-  ":btc-node-hook|action [%get-block-hash height]"                              ::  Y
+  ":btc-node-hook|action [%get-block-hash height]"                              ::  Y / Y
   ::  %getblockheader: If verbose is false, returns a string that is
   ::  serialized, hex-encoded data for blockheader 'hash'. If verbose is
   ::  true, returns an Object
   ::
-  ":btc-node-hook|action [%get-block-header hash ~]"                            ::  Y
-  ":btc-node-hook|action [%get-block-header hash `&]"                           ::  Y
-  ":btc-node-hook|action [%get-block-header hash `|]"                           ::  Y
+  ":btc-node-hook|action [%get-block-header hash ~]"                            ::  Y / Y
+  ":btc-node-hook|action [%get-block-header hash `&]"                           ::  Y / Y
+  ":btc-node-hook|action [%get-block-header hash `|]"                           ::  Y / Y
   ::  %getblockstats: Compute per block statistics for a given window.
   ::
   :: $=  hash-or-height
@@ -54,19 +54,19 @@
   :: ==
   :: stats=(unit (list @t))
   ::
-  ":btc-node-hook|action [%get-block-stats hex+hash ~]"                         ::  Y
+  ":btc-node-hook|action [%get-block-stats hex+hash ~]"                         ::  Y / X (! [%key 'utxo_increase'])
   ::  %getchaintips: Return information about tips in the block tree.
   ::
-  ":btc-node-hook|action [%get-chain-tips ~]"                                   ::  Y
+  ":btc-node-hook|action [%get-chain-tips ~]"                                   ::  Y / Y
   ::  %getchaintxstats: Compute statistics about total number rate
   ::  of transactions in the chain.
   ::
-  ":btc-node-hook|action [%get-chain-tx-stats ~ ~]"                             ::  Y
-  ":btc-node-hook|action [%get-chain-tx-stats `1 `hash]"                        ::  Y
+  ":btc-node-hook|action [%get-chain-tx-stats ~ ~]"                             ::  Y / ?
+  ":btc-node-hook|action [%get-chain-tx-stats `1 `hash]"                        ::  Y / Y
   ::  %getdifficulty: Returns the proof-of-work difficulty as a multiple
   ::  of the minimum difficulty.
   ::
-  ":btc-node-hook|action [%get-difficulty ~]"                                   ::  Y
+  ":btc-node-hook|action [%get-difficulty ~]"                                   ::  Y / Y
   ::  %getmempoolancestors: If txid is in the mempool, returns
   ::  all in-mempool ancestors.
   ::
@@ -87,48 +87,48 @@
   ::  :btc-node-hook|action [%sign-raw-transaction-with-wallet txidb ~ ~]
   ::  =txid-b :btc-node-hook|action [%send-raw-transaction txidb *?]
   ::
-  ":btc-node-hook|action [%get-mempool-ancestors txid-b ~]"                     ::  Y
-  ":btc-node-hook|action [%get-mempool-ancestors txid-b `&]"                    ::  Y
+  ":btc-node-hook|action [%get-mempool-ancestors txid-b ~]"                     ::  Y / Y
+  ":btc-node-hook|action [%get-mempool-ancestors txid-b `&]"                    ::  Y / Y
   ::  %getmempooldescendants: If txid is in the mempool, returns
   ::  all in-mempool descendants.
   ::
-  ":btc-node-hook|action [%get-mempool-descendants txid-a ~]"                   ::  Y
-  ":btc-node-hook|action [%get-mempool-descendants txid-a `&]"                  ::  Y
+  ":btc-node-hook|action [%get-mempool-descendants txid-a ~]"                   ::  Y / Y
+  ":btc-node-hook|action [%get-mempool-descendants txid-a `&]"                  ::  Y / Y
   ::  %getmempoolentry: Returns mempool data for given transaction
   ::
-  ":btc-node-hook|action [%get-mempool-entry txid-a]"                           ::  Y
+  ":btc-node-hook|action [%get-mempool-entry txid-a]"                           ::  Y / Y
   ::  %getmempoolinfo: Returns details on the active state of the
   ::  TX memory pool.
   ::  info: https://bitcoindev.network/bitcoin-transaction-mempool-statistics/
   ::
-  ":btc-node-hook|action [%get-mempool-info ~]"                                 ::  Y
+  ":btc-node-hook|action [%get-mempool-info ~]"                                 ::  Y / Y
   ::  %getrawmempool: Returns all transaction ids in memory pool as a
   ::  json array of string transaction ids.
   ::
-  ":btc-node-hook|action [%get-raw-mempool ~]"                                  ::  Y
+  ":btc-node-hook|action [%get-raw-mempool ~]"                                  ::  Y / Y
   ::  %gettxout: Returns details about an unspent transaction output.
   ::
-  ":btc-node-hook|action [%get-tx-out txid 1 ~]"                                ::  Y
+  ":btc-node-hook|action [%get-tx-out txid 1 ~]"                                ::  Y / Y
   ::  %gettxoutproof: Returns a hex-encoded proof that "txid" was
   ::  included in a block.
   ::
   "=txid 0x427b.882e.7ead.e462.fb5a.ca6c.56ce.6a72.2f18.6d37.d476.2774.714f.9237.14cc.eec5"
-  ":btc-node-hook|action [%get-tx-out-proof ~[txid] ~]"                         ::  Y
+  ":btc-node-hook|action [%get-tx-out-proof ~[txid] ~]"                         ::  Y / Y
   ::  %gettxoutsetinfo: Returns statistics about the unspent transaction
   ::  output set.
   ::
-  ":btc-node-hook|action [%get-tx-outset-info ~]"                               ::  Y
+  ":btc-node-hook|action [%get-tx-outset-info ~]"                               ::  Y / ?
   ::  %preciousblock: Treats a block as if it were received before
   ::  others with the same work.
   ::
-  ":btc-node-hook|action [%precious-block hash]"                                ::  Y
+  ":btc-node-hook|action [%precious-block hash]"                                ::  Y / Y
   ::  %pruneblockchain
   ::
   ":btc-node-hook|action [%prune-blockchain 1]"                                 ::  ?
   ::  %savemempool: Dumps the mempool to disk.
   ::  It will fail until the previous dump is fully loaded.
   ::
-  ":btc-node-hook|action [%save-mempool ~]"                                     ::  Y
+  ":btc-node-hook|action [%save-mempool ~]"                                     ::  Y / Y
   ::  %scantxoutset: Scans the unspent transaction output set for
   ::  entries that match certain output descriptors.
   ::
@@ -137,61 +137,60 @@
   ::
   "=desc 'pkh([ca8a7ee5/0\'/0\'/3\']03137b4f2d8457209d894f8252fa797f3d619a042e76c0eb7da081aeb9c822b12a)#02m2zsxq'"
   "=s-o [desc ~]"
-  ":btc-node-hook|action [%scan-tx-outset %start ~[desc]]"                      ::  Y
-  ":btc-node-hook|action [%scan-tx-outset %start s-o]"                          ::  Y
+  ":btc-node-hook|action [%scan-tx-outset %start ~[desc]]"                      ::  Y / Y
+  ":btc-node-hook|action [%scan-tx-outset %start s-o]"                          ::  Y / Y
   ::  %verifychain: Verifies blockchain database.
   ::
-  ":btc-node-hook|action [%verify-chain ~ ~]"                                   ::  Y
+  ":btc-node-hook|action [%verify-chain ~ ~]"                                   ::  Y / Y
   ::  %verifytxoutproof: Verifies that a proof points to a transaction
   ::  in a block, returning the transaction it commits to
   ::  and throwing an RPC error if the block is not in our best chain
   ::
   ":btc-node-hook|action [%get-tx-out-proof ~[txid] ~]"
   "=proof 0x1.0000.305e.9156.83b5.c647.1a6e.04aa.9a53.a1a3.17b7.c3df.bfff.a4dc.42d9.e696.a65c.36b7.24ee.3cb5.db4d.a484.ff5e.95ad.1f04.8aa8.fb7f.1800.3fbe.4a2e.b529.4fa2.6c37.3265.ba0f.fb1a.5eff.ff7f.2000.0000.0001.0000.0001.ee3c.b5db.4da4.84ff.5e95.ad1f.048a.a8fb.7f18.003f.be4a.2eb5.294f.a26c.3732.65ba.0101"
-  ":btc-node-hook|action [%verify-tx-out-proof proof]"                          ::  Y
+  ":btc-node-hook|action [%verify-tx-out-proof proof]"                          ::  Y / Y
 ::  Raw Transactions
   ::
-  ":btc-node-hook|action [%analyze-psbt psbt]"                                  ::  Y
+  ":btc-node-hook|action [%analyze-psbt psbt]"                                  ::  Y / Y
   ::  %combinepsbt: Combine multiple partially signed Bitcoin
   ::  transactions into one transaction.
   ::
-  ":btc-node-hook|action [%combine-psbt ~[psbt pbt1]]"                          ::  Y
+  ":btc-node-hook|action [%combine-psbt ~[psbt pbt1]]"                          ::  Y / Y
   ::  %combinerawtransaction: Combine multiple partially signed t
   ::  ransactions into one transaction.
   ::
-  ":btc-node-hook|action [%combine-raw-transaction ~[hex hex1]]"                ::  Y
+  ":btc-node-hook|action [%combine-raw-transaction ~[hex hex1]]"                ::  Y / Y
   ::  %converttopsbt: Converts a network serialized transaction to a PSBT.
   ::     hex-string=@ux
   ::     permit-sig-data=(unit ?)
   ::     is-witness=(unit ?)
   ::
   "=hex 0x200.0000.0001.0000.0000.0000.0000.056a.0301.0203.0000.0000"
-  ":btc-node-hook|action [%convert-to-psbt hex ~ ~]"                            ::  Y
+  ":btc-node-hook|action [%convert-to-psbt hex ~ ~]"                            ::  Y / Y
   ::  %createpsbt: Creates a transaction in the Partially Signed
   ::  Transaction format.
   ::
   "=outs [[%data 0x1.0203] ~]"
-  ":btc-node-hook|action [%create-psbt ~ outs ~ ~]"                             ::  Y
+  ":btc-node-hook|action [%create-psbt ~ outs ~ ~]"                             ::  Y / Y
   ::  %createrawtransaction: Create a transaction spending the given
   ::  inputs and creating new outputs.
   ::
   "=outputs [[%data 0x1.0203] ~]"
-  ":btc-node-hook|action [%create-raw-transaction ~ outs ~ ~]"               ::  Y
+  ":btc-node-hook|action [%create-raw-transaction ~ outs ~ ~]"                  ::  Y / Y
   ::  %decodepsbt: Return a JSON object representing the serialized,
   ::  base64-encoded partially signed Bitcoin transaction.
   ::
-  ":btc-node-hook|action [%decode-psbt psbt]"                                   ::  Y
+  ":btc-node-hook|action [%decode-psbt psbt]"                                   ::  Y / Y
   ::  %decoderawtransaction: Return a JSON object representing the
   ::  serialized, hex-encoded transaction.
   ::
-  ":btc-node-hook|action [%decode-raw-transaction hex &]"                       ::  Y
-  ":btc-node-hook|action [%decode-raw-transaction hex |]"                       ::  Y
+  ":btc-node-hook|action [%decode-raw-transaction hex |]"                       ::  Y / Y
   ::  %decodescript: Decode a hex-encoded script.
   ::
-  ":btc-node-hook|action [%decode-script hex]"                                  ::  Y
+  ":btc-node-hook|action [%decode-script hex]"                                  ::  Y / Y
   ::  %finalizepsbt: Finalize the inputs of a PSBT.
   ::
-  ":btc-node-hook|action [%finalize-psbt psbt ~]"                               ::  Y
+  ":btc-node-hook|action [%finalize-psbt psbt ~]"                               ::  Y / X (! [%key 'psbt'])
   ::  %fundrawtransaction: Add inputs to a transaction until it has
   ::  enough in value to meet its out value.
   :: hex-string=@ux
@@ -218,14 +217,14 @@
   ::  %getrawtransaction: Return the raw transaction data.
   ::
   "=txid 0x427b.882e.7ead.e462.fb5a.ca6c.56ce.6a72.2f18.6d37.d476.2774.714f.9237.14cc.eec5"
-  ":btc-node-hook|action [%get-raw-transaction txid `& ~]"                      ::  Y
-  ":btc-node-hook|action [%get-raw-transaction txid ~ ~]"                       ::  Y
+  ":btc-node-hook|action [%get-raw-transaction txid `& ~]"                      ::  Y / Y
+  ":btc-node-hook|action [%get-raw-transaction txid ~ ~]"                       ::  Y / Y
   ::  %joinpsbts: Joins multiple distinct PSBTs with different inputs
   ::  and outputs into one PSBT with inputs and outputs from all of
   ::  the PSBTs
   ::
   "=psbt2 'cHNidP8BAGECAAAAAf3Urc9TSr3BJ4odajd8JKN5C7Gm6KC72q7J8WDxOQELAAAAAAAAAAAAAgAAAAAAAAAABWoDAQIDcOYFKgEAAAAXqRRTUwFpKgXt05k7RL8hOJKq1Dhw3ocAAAAAAAEBIADyBSoBAAAAF6kU+jfMIvFPGJtz6FrQnynkFV043vqHAQQWABSZv6w6KjZjONZ1r1JCDem4SVXxqQAAAQAWABQ2/vWHW66dSAANLzMKCRKaJmp91gA='"
-  ":btc-node-hook|action [%join-psbts ~[psbt psbt2]]"                           ::  Y
+  ":btc-node-hook|action [%join-psbts ~[psbt psbt2]]"                           ::  Y / Y
   ::  %sendrawtransaction: Submits raw transaction
   ::  (serialized, hex-encoded) to local node and network.
   ::
@@ -253,35 +252,34 @@
   ::  indicating if raw transaction (serialized, hex-encoded) would be
   ::  accepted by mempool.
   ::
-  ":btc-node-hook|action [%test-mempool-accept ~[hex] &]"                       ::  Y
-  ":btc-node-hook|action [%test-mempool-accept ~[hex] |]"                       ::  Y
+  ":btc-node-hook|action [%test-mempool-accept ~[hex] ~]"                       ::  Y / Y
   ::  %utxoupdatepsbt: Updates a PSBT with witness UTXOs retrieved from
   ::  the UTXO set or the mempool.
   ::
   "=psbt 'cHNidP8BAGECAAAAAe48tdtNpIT/XpWtHwSKqPt/GAA/vkoutSlPomw3MmW6AAAAAAAAAAAAAnDtApUAAAAAF6kUrxlQrfcNttHcPY7D60KHOK65q96HAAAAAAAAAAAFagMBAgMAAAAAAAEBIAD5ApUAAAAAF6kU+jfMIvFPGJtz6FrQnynkFV043vqHAQQWABSZv6w6KjZjONZ1r1JCDem4SVXxqQABABYAFHtkC22llD4Per/ocWQCZkd9JGJnAAA='"
-  ":btc-node-hook|action [%utxo-update-psbt psbt ~]"                              ::  Y
+  ":btc-node-hook|action [%utxo-update-psbt psbt ~]"                            ::  Y / Y
 ::  Util
   ::  %createmultisig: Creates a multi-signature address with n signature
   ::  of m keys required. It returns a json object with the address and
   ::  redeemScript.
   "=n-required 1"
   "=pubkey 0x3.137b.4f2d.8457.209d.894f.8252.fa79.7f3d.619a.042e.76c0.eb7d.a081.aeb9.c822.b12a"
-  ":btc-node-hook|action [%create-multi-sig n-required ~[pubkey] ~]"            :: Y
+  ":btc-node-hook|action [%create-multi-sig n-required ~[pubkey] ~]"            :: Y / Y
   ::  %deriveaddresses: Derives one or more addresses corresponding to an
   ::  output descriptor.
   ::
   "=desc 'pkh([ca8a7ee5/0\'/0\'/3\']03137b4f2d8457209d894f8252fa797f3d619a042e76c0eb7da081aeb9c822b12a)#02m2zsxq'"
-  ":btc-node-hook|action [%derive-addresses desc ~]"                            :: ?
+  ":btc-node-hook|action [%derive-addresses desc ~]"                            :: Y / Y
   ::  %estimatesmartfee: Estimates the approximate fee per kilobyte
   ::  needed for a transaction to begin confirmation within conf_target
   ::  blocks if possible and return the number of blocks for which the
   ::  estimate is valid.
   ::
-  ":btc-node-hook|action [%estimate-smart-fee 1 ~]"                             :: Y
+  ":btc-node-hook|action [%estimate-smart-fee 1 ~]"                             :: Y / X ([%key 'feerate'])
   ::  %getdescriptorinfo: Analyses a descriptor.
   ::
   "=desc 'pkh([ca8a7ee5/0\'/0\'/3\']03137b4f2d8457209d894f8252fa797f3d619a042e76c0eb7da081aeb9c822b12a)#02m2zsxq'"
-  ":btc-node-hook|action [%get-descriptor-info desc]"                           :: Y
+  ":btc-node-hook|action [%get-descriptor-info desc]"                           :: Y / Y
   ::  %signmessagewithprivkey: Sign a message with the private key of
   ::  an address
   ::
@@ -292,7 +290,7 @@
   ::  bitcoin address.
   ::
   "=address 0cn1bExc9k899ncAreUbBfrSswitm7pGvz9A"
-  ":btc-node-hook|action [%validate-address address]"                           :: Y
+  ":btc-node-hook|action [%validate-address address]"                           :: Y / X (! [%key 'address'])
   ::  %verifymessage: Verify a signed message
   ::
   ":btc-node-hook|action [%get-new-address `'sign' `%'legacy']"

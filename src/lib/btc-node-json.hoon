@@ -751,7 +751,7 @@
     ::
         %send-raw-transaction
       :~  s+(hex-to-cord hex-string.req)
-          (ferm allow-high-fees.req %b)
+          (ferm max-fee-rate.req %s)
       ==
     ::
         %sign-raw-transaction-with-key
@@ -781,7 +781,7 @@
           %+  turn  raw-txs.req
           |=(a=@ux s+(hex-to-cord a))
         ::
-          (ferm allow-high-fees.req %b)
+          (ferm max-fee-rate.req %s)
       ==
     ::
         %utxo-update-psbt
@@ -1599,8 +1599,8 @@
           ['total_weight' no]
           ['totalfee' no]
           ['txs' ni]
-          ['utxo_increase' ni]
-          ['utxo_size_inc' ni]
+          ['utxo_increase' no]
+          ['utxo_size_inc' no]
       ==
     ::
         %get-chain-tips
@@ -2221,7 +2221,7 @@
       %.  res.res
       %-  ou
       :~  :-  'psbt'
-          =-  (un (cu - so))
+          =-  (uf ~ (mu (cu - so)))
           |=(a=@t ?>(?=(^ (de:base64 a)) a))
         ::
           ['hex' (uf ~ (mu (cu to-hex so)))]
@@ -2312,7 +2312,7 @@
       :-  id.res
       %.  res.res
       %-  ou
-      :~  ['feerate' (uf ~ (mu so))]
+      :~  ['feerate' (uf ~ (mu no))]
           ['errors' (uf ~ (mu (ar so)))]
           ['blocks' (un ni)]
       ==
@@ -2336,10 +2336,10 @@
       %.  res.res
       %-  ou
       :~  ['isvalid' (un bo)]
-          ['address' (un (cu addr-type-validator so))]
-          ['scriptPubKey' (un (cu to-hex so))]
-          ['isscript' (un bo)]
-          ['iswitness' (un bo)]
+          ['address' (uf ~ (mu (cu addr-type-validator so)))]
+          ['scriptPubKey' (uf ~ (mu (cu to-hex so)))]
+          ['isscript' (uf ~ (mu bo))]
+          ['iswitness' (uf ~ (mu bo))]
           ['witness_version' (uf ~ (mu so))]
           ['witness_program' (uf ~ (mu (cu to-hex so)))]
       ==
