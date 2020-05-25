@@ -54,7 +54,7 @@
   :: ==
   :: stats=(unit (list @t))
   ::
-  ":btc-node-hook|action [%get-block-stats hex+hash ~]"                         ::  Y / X (! [%key 'utxo_increase'])
+  ":btc-node-hook|action [%get-block-stats hex+hash ~]"                         ::  Y / Y
   ::  %getchaintips: Return information about tips in the block tree.
   ::
   ":btc-node-hook|action [%get-chain-tips ~]"                                   ::  Y / Y
@@ -190,7 +190,7 @@
   ":btc-node-hook|action [%decode-script hex]"                                  ::  Y / Y
   ::  %finalizepsbt: Finalize the inputs of a PSBT.
   ::
-  ":btc-node-hook|action [%finalize-psbt psbt ~]"                               ::  Y / X (! [%key 'psbt'])
+  ":btc-node-hook|action [%finalize-psbt psbt ~]"                               ::  Y / Y
   ::  %fundrawtransaction: Add inputs to a transaction until it has
   ::  enough in value to meet its out value.
   :: hex-string=@ux
@@ -209,9 +209,9 @@
   :: is-witness=(unit ?)
   ::
   "=hex 0x200.0000.0001.0000.0000.0000.0000.056a.0301.0203.0000.0000"
-  ":btc-node-hook|action [%fund-raw-transaction hex ~ |]"                       ::  Y
+  ":btc-node-hook|action [%fund-raw-transaction hex ~ |]"                       ::  Y / Y
   "=options `[~ `1 `%legacy ~ ~ ~ ~ ~ `1 `%'ECONOMICAL']"
-  ":btc-node-hook|action [%fund-raw-transaction hex options |]"                 ::  Y
+  ":btc-node-hook|action [%fund-raw-transaction hex options |]"                 ::  Y / Y
   ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex ~ ~]"
   ":btc-node-hook|action [%send-raw-transaction signed-hex *?]"
   ::  %getrawtransaction: Return the raw transaction data.
@@ -236,7 +236,7 @@
   "=privkey 'cVQykQVhiGf2cBxRkCAne9Qgt7yz74XA9Kp29pnAUC93TGc7j7yz'"
   ":btc-node-hook|action [%sign-raw-transaction-with-key hex ~[privkey] ~ ~]"
   "=signed-hex 0x2.0000.0000.0101.b2c6.a14d.1a54.9beb.3d89.7c70.6a4e.6c27.1b3c.6d4d.9abd.d8b8.aa3c.31ee.863d.fbd9.0000.0000.1716.0014.99bf.ac3a.2a36.6338.d675.af52.420d.e9b8.4955.f1a9.0000.0000.0200.0000.0000.0000.0005.6a03.0102.0510.2700.0000.0000.0019.76a9.1455.55e1.703b.3990.a38b.56e6.2af6.6014.c1b1.8bdf.8788.ac02.4730.4402.206a.4f04.4a6b.5bb1.5c4c.ca54.6384.0012.d722.dfea.af30.41a4.1bc2.ed86.f9c8.9cd4.e402.202b.a01f.6e6f.48c5.0f43.1edb.0310.ff42.a715.9250.5078.4931.4d6a.a039.4590.1fa6.d301.2102.7936.9dc8.1157.6fa0.c372.cc9d.1b1f.620c.6c5d.cf2d.1f04.0e8e.07d0.a79a.dd7e.36f5.0000.0000"
-  ":btc-node-hook|action [%send-raw-transaction signed-hex *?]"                 ::  Y
+  ":btc-node-hook|action [%send-raw-transaction signed-hex *?]"                 ::  Y / Y
   ::  %signrawtransactionwithkey: Sign inputs for raw transaction
   ::  (serialized, hex-encoded).
   ::
@@ -247,7 +247,7 @@
   ::
   "=hex 0x2.0000.0000.0101.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.ffff.ffff.0502.ca00.0101.ffff.ffff.0200.f902.9500.0000.0017.a914.fa37.cc22.f14f.189b.73e8.5ad0.9f29.e415.5d38.defa.8700.0000.0000.0000.0026.6a24.aa21.a9ed.e2f6.1c3f.71d1.defd.3fa9.99df.a369.5375.5c69.0689.7999.62b4.8beb.d836.974e.8cf9.0120.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000"
   "=privkey 'cQFQs6QBkLHRZHApwGwVJTPxjTK9XFg63tvrYJcQZRzVPXTEDaxL'"
-  ":btc-node-hook|action [%sign-raw-transaction-with-key hex ~[privkey] ~ ~]"   ::  Y
+  ":btc-node-hook|action [%sign-raw-transaction-with-key hex ~[privkey] ~ ~]"   ::  Y / Y
   ::  %testmempoolaccept: Returns result of mempool acceptance tests
   ::  indicating if raw transaction (serialized, hex-encoded) would be
   ::  accepted by mempool.
@@ -275,7 +275,7 @@
   ::  blocks if possible and return the number of blocks for which the
   ::  estimate is valid.
   ::
-  ":btc-node-hook|action [%estimate-smart-fee 1 ~]"                             :: Y / X ([%key 'feerate'])
+  ":btc-node-hook|action [%estimate-smart-fee 1 ~]"                             :: Y / Y
   ::  %getdescriptorinfo: Analyses a descriptor.
   ::
   "=desc 'pkh([ca8a7ee5/0\'/0\'/3\']03137b4f2d8457209d894f8252fa797f3d619a042e76c0eb7da081aeb9c822b12a)#02m2zsxq'"
@@ -285,19 +285,19 @@
   ::
   ":btc-node-hook|action [%dump-privkey address]"
   "=privkey 'cQFQs6QBkLHRZHApwGwVJTPxjTK9XFg63tvrYJcQZRzVPXTEDaxL'"
-  ":btc-node-hook|action [%sign-message-with-privkey privkey 'message']"        :: Y
+  ":btc-node-hook|action [%sign-message-with-privkey privkey 'message']"        :: Y / Y
   ::  %validateaddress: Return information about the given
   ::  bitcoin address.
   ::
   "=address 0cn1bExc9k899ncAreUbBfrSswitm7pGvz9A"
-  ":btc-node-hook|action [%validate-address address]"                           :: Y / X (! [%key 'address'])
+  ":btc-node-hook|action [%validate-address address]"                           :: Y / Y
   ::  %verifymessage: Verify a signed message
   ::
   ":btc-node-hook|action [%get-new-address `'sign' `%'legacy']"
   "=address 0cn1bExc9k899ncAreUbBfrSswitm7pGvz9A"
   ":btc-node-hook|action [%sign-message address 'message']"
   "=signature 'H51j3cleCTwjeQUPpcjizWAP4rCYwG7XJo76kz1jb74CbAcQgwgghZfUE0Jt4JtKjD0yRgwmuwn+UiMpMJvZ4XI='"
-  ":btc-node-hook|action [%verify-message address signature 'message']"         :: Y
+  ":btc-node-hook|action [%verify-message address signature 'message']"         :: Y / Y
   ::
 ::  Wallet
   ::
@@ -317,10 +317,10 @@
   ::       address-type
   ::
   "=addrs ~[0c2MsucmvV5dMPEmeq17mUh6JAvg3ZUdBK87C 0c2N2jNiPqH9aVTMVnW45EyABURmHeTgYi72F 0c2N9V9Mfcnkqqnbz9woTuE5vzhHcxzomUhZZ]"
-  ":btc-node-hook|action [%add-multisig-address 3 addrs `'mult' %p2sh-segwit]"  ::  Y
-  ":btc-node-hook|action [%add-multisig-address 3 addrs `'mult' %legacy]"       ::  Y
+  ":btc-node-hook|action [%add-multisig-address 3 addrs `'mult' %p2sh-segwit]"  ::  Y / Y
+  ":btc-node-hook|action [%add-multisig-address 3 addrs `'mult' %legacy]"       ::  Y / Y
   "=addrs ~[bech32+'bcrt1qkuv4mcl3g40xsdcwjxsw2d7hm8yavgsrel56qq']"
-  ":btc-node-hook|action [%add-multisig-address 3 addrs `'mult' %bech32]"       ::  Y
+  ":btc-node-hook|action [%add-multisig-address 3 addrs `'mult' %bech32]"       ::  Y / Y
   ::  %backupwallet: Safely copies current wallet file to destination.
   ::  destination=@t
   ::
@@ -336,9 +336,9 @@
   :: ==
   ::
   "=txid 0x427b.882e.7ead.e462.fb5a.ca6c.56ce.6a72.2f18.6d37.d476.2774.714f.9237.14cc.eec5"
-  ":btc-node-hook|action [%bump-fee txid ~]"                                    ::  Y
-  ":btc-node-hook|action [%bump-fee txid `[~ `'1.0' `%.y `'ECONOMICAL']]"       ::  Y
-  ":btc-node-hook|action [%bump-fee txid `[`1 ~ `%.y `%'ECONOMICAL']]"          ::  Y
+  ":btc-node-hook|action [%bump-fee txid ~]"                                    ::  Y / Y
+  ":btc-node-hook|action [%bump-fee txid `[~ `'1.0' `%.y `'ECONOMICAL']]"       ::  Y / Y
+  ":btc-node-hook|action [%bump-fee txid `[`1 ~ `%.y `%'ECONOMICAL']]"          ::  Y / Y
   ::  %create-wallet: Creates and loads a new wallet.
   ::
   ::    - %name: The name for the new wallet.
@@ -348,36 +348,37 @@
   ::      A blank wallet has no keys or HD seed.
   ::      One can be set using sethdseed.
   ::
-  ":btc-node-hook|action [%create-wallet 'uno' ~ ~]"                            ::  Y
-  ":btc-node-hook|action [%create-wallet 'dos' `%.y `%.y]"                      ::  Y
+  ":btc-node-hook|action [%create-wallet 'uno' ~ ~ ~ ~]"                        ::  Y / Y
+  ":btc-node-hook|action [%create-wallet 'dos' `%.y `%.y ~ ~]"                  ::  Y / Y
   ::  %dump-privkey: Reveals the private key corresponding to 'address'.
   ::
-  ":btc-node-hook|action [%dump-privkey address]"                               ::  Y
+  ":btc-node-hook|action [%dump-privkey address]"                               ::  Y / Y
   ::  %dump-wallet: Dumps all wallet keys in a human-readable format to
   ::  a server-side file.
   ::
-  ":btc-node-hook|action [%dump-wallet 'filename']"                             ::  Y
+  ":btc-node-hook|action [%dump-wallet 'filename']"                             ::  Y / Y
   ::  %encrypt-wallet: Encrypts the wallet with 'passphrase'.
   ::
-  ":btc-node-hook|action [%encrypt-wallet 'passphrase']"                        ::  Y
+  ":btc-node-hook|action [%encrypt-wallet 'passphrase']"                        ::  Y / Y
   ::  %get-addresses-by-label: Returns the list of addresses assigned the
   ::  specified label.
   ::
-  ":btc-node-hook|action [%get-addresses-by-label 'label']"                     ::  Y
+  ":btc-node-hook|action [%get-addresses-by-label 'label']"                     ::  Y / Y
   ::  %get-address-info: Return information about the given bitcoin
   ::  address.
   ::
   "=addr 0c2NEWr8bGRVLJEGocdZbuy7jqUZJFqNf1Zck"
-  ":btc-node-hook|action [%get-address-info addr]"                              ::  Y
+  ":btc-node-hook|action [%get-address-info addr]"                              ::  Y / Y
   "=addr bech32+'bcrt1qkuv4mcl3g40xsdcwjxsw2d7hm8yavgsrel56qq'"
-  ":btc-node-hook|action [%get-address-info addr]"                              ::  Y
+  ":btc-node-hook|action [%get-address-info addr]"                              ::  Y / Y
   ::  %get-balance: Returns the total available balance.
   ::  dummy=(unit @t)
   ::  minconf=(unit @ud)
   ::  include-watch-only=(unit ?)
   ::
-  ":btc-node-hook|action [%get-balance ~]"                                      ::  Y
-  ":btc-node-hook|action [%get-balance `[`%'*' `23 `%.n]]"                         ::  Y
+  ":btc-node-hook|action [%get-balances ~]"                                     ::  Y / Y
+  ":btc-node-hook|action [%get-balance ~]"                                      ::  Y / Y
+  ":btc-node-hook|action [%get-balance `[`%'*' `23 `%.n ~]]"                    ::  Y / Y
   ::  %get-new-address: Returns a new Bitcoin address for receiving
   ::  payments.
   ::  label=(unit @t) address-type=(unit address-type)
@@ -393,37 +394,37 @@
   ::  > :btc-node-hook|action [%get-new-address `'label4' `%legacy]
   ::  [%get-new-address address=0c35ZcQHQ5mdzDae2Coc1cABJJtgrbHyehSz]
   ::
-  ":btc-node-hook|action [%get-new-address `'label' `%bech32]"                  ::  Y
-  ":btc-node-hook|action [%get-new-address `'label3' `%p2sh-segwit]"            ::  Y
-  ":btc-node-hook|action [%get-new-address `'label4' `%legacy]"                 ::  Y
+  ":btc-node-hook|action [%get-new-address `'label' `%bech32]"                  ::  Y / Y
+  ":btc-node-hook|action [%get-new-address `'label3' `%p2sh-segwit]"            ::  Y / Y
+  ":btc-node-hook|action [%get-new-address `'label4' `%legacy]"                 ::  Y / Y
   ::  %get-raw-change-address: Returns a new Bitcoin address,
   ::  for receiving change.
   ::
-  ":btc-node-hook|action [%get-raw-change-address `%bech32]"                    ::  Y
+  ":btc-node-hook|action [%get-raw-change-address `%bech32]"                    ::  Y / Y
   ::  %get-received-by-address:  Returns the total amount received by the
   ::  given address in transactions with at least minconf confirmations.
   ::
   "=addr 0c2NEWr8bGRVLJEGocdZbuy7jqUZJFqNf1Zck"
   "=addr bech32+'bcrt1qkuv4mcl3g40xsdcwjxsw2d7hm8yavgsrel56qq'"
-  ":btc-node-hook|action [%get-received-by-address addr 1]"                     ::  Y
+  ":btc-node-hook|action [%get-received-by-address addr 1]"                     ::  Y / Y
   ::  %get-received-by-label:  Returns the total amount received by
   ::  addresses with <label> in transactions with at least [minconf]
   ::  confirmations.
   ::
-  ":btc-node-hook|action [%get-received-by-label 'label3' `1]"                  ::  Y
+  ":btc-node-hook|action [%get-received-by-label 'label3' `1]"                  ::  Y / Y
   ::  %get-transaction:  Get detailed information about in-wallet
   ::  transaction <txid>
   ::
-  ":btc-node-hook|action [%get-transaction txid `%.y ~]"                          ::  Y
+  ":btc-node-hook|action [%get-transaction txid `%.y ~]"                        ::  Y / Y
   ::  %get-unconfirmed-balance:  Returns the server's total unconfirmed
   ::  balance
   ::
-  ":btc-node-hook|action [%get-unconfirmed-balance ~]"                          ::  Y
+  ":btc-node-hook|action [%get-unconfirmed-balance ~]"                          ::  Y / Y
   ::  %get-wallet-info:  Returns an object containing various wallet
   ::  state info.
   ::
-  ":btc-node-hook|action [%get-wallet-info 'test']"                             ::  Y
-  ":btc-node-hook|action [%get-wallet-info '']"                                 ::  Y
+  ":btc-node-hook|action [%get-wallet-info 'test']"                             ::  Y / Y
+  ":btc-node-hook|action [%get-wallet-info '']"                                 ::  Y / Y
   ::  %import-address: Adds an address or script (in hex) that can be
   ::  watched as if it were in your wallet but cannot be used to spend.
   ::        address
@@ -435,9 +436,9 @@
   "=addr bech32+'bcrt1qkuv4mcl3g40xsdcwjxsw2d7hm8yavgsrel56qq'"
   "=addr script+0x0"
   "=addr bech32+'bcrt1qkuv4mcl3g40xsdcwjxsw2d7hm8yavgsrel56qq'"
-  ":btc-node-hook|action [%import-address addr `'addr' `%.n `%.n]"              ::  Y
-  ":btc-node-hook|action [%import-address addr `'bech32' `%.n `%.n]"            ::  Y
-  ":btc-node-hook|action [%import-address addr `'script' `%.n `%.n]"            ::  Y
+  ":btc-node-hook|action [%import-address addr `'addr' `%.n `%.n]"              ::  Y / Y
+  ":btc-node-hook|action [%import-address addr `'bech32' `%.n `%.n]"            ::  Y / Y
+  ":btc-node-hook|action [%import-address addr `'script' `%.n `%.n]"            ::  Y / Y
   ::  %import-multi: Import addresses/scripts (with private or public
   ::  keys, redeem script (P2SH)), optionally rescanning the blockchain
   ::  from the earliest creation time of the imported scripts.
@@ -462,62 +463,62 @@
   ::  Address created in another wallet
   ::
   "=i-r [~ address+0c2MyY7CAKpnyU27vURLKSQR1q3WNd5g32yyp %now ~ ~ ~ ~ ~ ~ ~ ~ ~]~"
-  ":btc-node-hook|action [%import-multi i-r `|]"                                ::  Y
+  ":btc-node-hook|action [%import-multi i-r `|]"                                ::  Y / Y
   ::  %import-privkey:  Adds a private key (as returned by dumpprivkey)
   ::  to your wallet.
   ::
   "=privkey 'cSun7g168F9DG7Xjd1yhkWrfKbfMWWSiWXAZ5ugLLAcoy2tckkBD'"
-  ":btc-node-hook|action [%import-privkey privkey `'privkey' `%.n]"             ::  Y
+  ":btc-node-hook|action [%import-privkey privkey `'privkey' `%.n]"             ::  Y / Y
   ::  %import-pruned-funds:  Imports funds without rescan.
   ::  raw-transaction=@t tx-out-proof=@t
   ::
   "=raw-transaction 0x2.0000.0000.0101.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.ffff.ffff.0502.ca00.0101.ffff.ffff.0200.f902.9500.0000.0017.a914.fa37.cc22.f14f.189b.73e8.5ad0.9f29.e415.5d38.defa.8700.0000.0000.0000.0026.6a24.aa21.a9ed.e2f6.1c3f.71d1.defd.3fa9.99df.a369.5375.5c69.0689.7999.62b4.8beb.d836.974e.8cf9.0120.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000"
   "=tx-out-proof 0x1.0000.305e.9156.83b5.c647.1a6e.04aa.9a53.a1a3.17b7.c3df.bfff.a4dc.42d9.e696.a65c.36b7.24ee.3cb5.db4d.a484.ff5e.95ad.1f04.8aa8.fb7f.1800.3fbe.4a2e.b529.4fa2.6c37.3265.ba0f.fb1a.5eff.ff7f.2000.0000.0001.0000.0001.ee3c.b5db.4da4.84ff.5e95.ad1f.048a.a8fb.7f18.003f.be4a.2eb5.294f.a26c.3732.65ba.0101"
-  ":btc-node-hook|action [%import-pruned-funds raw-transaction tx-out-proof]"   ::  Y
+  ":btc-node-hook|action [%import-pruned-funds raw-transaction tx-out-proof]"   ::  Y / Y
   ::  %import-pubkey:  Adds a public key (in hex) that can be watched as
   ::  if it were in your wallet but cannot be used to spend.
   ::
   "=pubkey 0x3.4cef.939e.228d.a2f7.82d9.ce14.2d6c.a8c2.a2a7.857c.c219.bfee.fffd.f7dd.ebc2.be5f"
   "=label `'imported'"
   "=rescan `%.n"
-  ":btc-node-hook|action [%import-pubkey pubkey label rescan]"                  ::  Y
+  ":btc-node-hook|action [%import-pubkey pubkey label rescan]"                  ::  Y / Y
   ::  %import-wallet:  Imports keys from a wallet dump file
   ::
   ":btc-node-hook|action [%import-wallet 'filename']"
   ::  %key-pool-refill:  Fills the keypool.
   ::
-  ":btc-node-hook|action [%key-pool-refill ~]"                                  ::  Y
-  ":btc-node-hook|action [%key-pool-refill `5]"                                 ::  Y
+  ":btc-node-hook|action [%key-pool-refill ~]"                                  ::  Y / Y
+  ":btc-node-hook|action [%key-pool-refill `5]"                                 ::  Y / Y
   ::  %list-address-groupings:  Lists groups of addresses which have had
   ::  their common ownership (made public by common use as inputs or as
   ::  the resulting change in past transactions)
   ::
-  ":btc-node-hook|action [%list-address-groupings ~]"                           ::  Y
+  ":btc-node-hook|action [%list-address-groupings ~]"                           ::  Y / Y
   ::  %list-labels:  Returns the list of all labels, or labels that are
   ::  assigned to addresses with a specific purpose.
   ::
-  ":btc-node-hook|action [%list-labels ~]"                                      ::  Y
-  ":btc-node-hook|action [%list-labels `%send]"                                 ::  Y
-  ":btc-node-hook|action [%list-labels `%receive]"                              ::  Y
+  ":btc-node-hook|action [%list-labels ~]"                                      ::  Y / Y
+  ":btc-node-hook|action [%list-labels `%send]"                                 ::  Y / Y
+  ":btc-node-hook|action [%list-labels `%receive]"                              ::  Y / Y
   ::  %list-lock-unspent:  Returns list of temporarily unspendable
   ::  outputs.
   ::
-  ":btc-node-hook|action [%list-lock-unspent ~]"                                ::  Y
+  ":btc-node-hook|action [%list-lock-unspent ~]"                                ::  Y / Y
   ::  %list-received-by-address: List balances by receiving address.
   ::       minconf=(unit @ud)
   ::       include-empty=(unit ?)
   ::       include-watch-only=(unit ?)
   ::       address-filter=(unit @t)
   ::
-  ":btc-node-hook|action [%list-received-by-address ~]"                         ::  Y
-  ":btc-node-hook|action [%list-received-by-address `1 `| `| ~]"                ::  Y
+  ":btc-node-hook|action [%list-received-by-address ~]"                         ::  Y / Y
+  ":btc-node-hook|action [%list-received-by-address `[`1 `| `| ~]]"             ::  Y / Y
   ::  %list-received-by-label: List received transactions by label.
   ::      minconf=(unit @ud)
   ::      include-empty=(unit ?)
   ::      include-watch-only=(unit ?)
   ::
-  ":btc-node-hook|action [%list-received-by-label ~]"                           ::  Y
-  ":btc-node-hook|action [%list-received-by-label `1 `| `|]"                    ::  Y
+  ":btc-node-hook|action [%list-received-by-label ~]"                           ::  Y / Y
+  ":btc-node-hook|action [%list-received-by-label `[`1 `| `|]]"                 ::  Y / Y
   ::  %lists-in-ceblock: Get all transactions in blocks since block
   ::  [blockhash], or all transactions if omitted.
   ::        blockhash=(unit blockhash)
@@ -525,9 +526,9 @@
   ::        include-watch-only=(unit ?)
   ::        include-removed=(unit ?)
   ::
-  ":btc-node-hook|action [%lists-in-ceblock ~]"                                 ::  Y
+  ":btc-node-hook|action [%lists-in-ceblock ~]"                                 ::  Y / Y
   "=h 0x3a47.188d.6065.233e.1c0f.97cf.ec4b.012c.beb6.ace2.604b.5a32.80f1.4412.631f.19c7"
-  ":btc-node-hook|action [%lists-in-ceblock `h `1 `| `|]"                       ::  Y
+  ":btc-node-hook|action [%lists-in-ceblock `[`h `1 `| `|]]"                    ::  Y / Y
   ::  %list-transactions: If a label name is provided, this will return
   ::  only incoming transactions paying to addresses with the specified
   ::  label.
@@ -536,8 +537,8 @@
   ::        skip=(unit @ud)
   ::        include-watch-only=(unit ?)
   ::
-  ":btc-node-hook|action [%list-transactions ~]"                                ::  Y
-  ":btc-node-hook|action [%list-transactions `'label' `1 `1 `|]"                ::  Y
+  ":btc-node-hook|action [%list-transactions ~]"                                ::  Y / Y
+  ":btc-node-hook|action [%list-transactions `[`'label' `1 `1 `|]]"             ::  Y / Y
   ::  %list-unspent: Returns array of unspent transaction outputs
   ::  (with between minconf and maxconf (inclusive) confirmations.
   ::    minconf=(unit @ud)
@@ -550,16 +551,16 @@
   ::        maximum-count=(unit @ud)
   ::        minimum-sum-amount=(unit @ud)
   ::
-  ":btc-node-hook|action [%list-unspent ~]"                                     ::  Y
+  ":btc-node-hook|action [%list-unspent ~]"                                     ::  Y / Y
   "=addr 0c2MxnKaTkg4mfQ7xNHzpddTiyfhs8ztJzn17"
-  ":btc-node-hook|action [%list-unspent `1 `150 `~[addr] `| `[`0 `120 `120 `2]]"::  Y
+  ":btc-node-hook|action [%list-unspent `[`1 `150 `~[addr] `| `[`0 `120 `120 `2]]]"::  Y / Y
   ::  %list-wallet-dir  Returns a list of wallets in the wallet directory.
   ::
-  ":btc-node-hook|action [%list-wallet-dir ~]"                                  ::  Y
+  ":btc-node-hook|action [%list-wallet-dir ~]"                                  ::  Y / Y
   ::  %list-wallets  Returns a list of currently loaded wallets.
   ::  (For full information on the wallet, use "getwalletinfo"
   ::
-  ":btc-node-hook|action [%list-wallets ~]"                                     ::  Y
+  ":btc-node-hook|action [%list-wallets ~]"                                     ::  Y / Y
   ::  %load-wallet  Loads a wallet from a wallet file or directory.
   ::
   ":btc-node-hook|action [%load-wallet 'uno']"
@@ -568,11 +569,11 @@
   ::   transactions=(unit (list [txid=@ux vout=@ud]))
   ::
   "=tx 0xde1d.e97c.0301.b0af.026d.1a17.4cc7.e46c.b663.100e.073d.ad51.d26c.5532.78cb.4576z"
-  ":btc-node-hook|action [%lock-unspent | `[tx 0]~]"                            ::  Y
+  ":btc-node-hook|action [%lock-unspent | `[tx 0]~]"                            ::  Y / Y
   ::  %remove-pruned-funds  Deletes the specified transaction from the
   ::  wallet.
   ::
-  ":btc-node-hook|action [%remove-pruned-funds txid]"                           ::  Y
+  ":btc-node-hook|action [%remove-pruned-funds txid]"                           ::  Y / Y
   ::  %rescan-blockchain  Rescan the local blockchain for wallet related
   ::  transactions.
   ::  start-height=(unit @ud) stop-height=(unit @ud)
@@ -590,8 +591,8 @@
   :: 1
   "=to [0c2MsucmvV5dMPEmeq17mUh6JAvg3ZUdBK87C '1']~"
   "=fee `~[0c2MxnKaTkg4mfQ7xNHzpddTiyfhs8ztJzn17]"
-  ":btc-node-hook|action [%send-many %'' to `1 `'comm' fee `| `1 `%'UNSET']"    ::  Y
-  ":btc-node-hook|action [%send-many %'' to ~ `'comm' ~ `| ~ ~]"                ::  Y
+  ":btc-node-hook|action [%send-many %'' to `1 `'comm' fee `| `1 `%'UNSET']"    ::  Y / Y
+  ":btc-node-hook|action [%send-many %'' to ~ `'comm' ~ `| ~ ~]"                ::  Y / Y
   ::  %send-to-address: Send an amount to a given address.
   ::        address
   ::        amount=@t
@@ -602,22 +603,22 @@
   ::        conf-target=(unit @ud)
   ::        estimate-mode=(unit @t)
   ::
-  ":btc-node-hook|action [%send-to-address address '1' `'comm' `'comm' `| `|  `1 `%'UNSET']"
+  ":btc-node-hook|action [%send-to-address address '1' `'comm' `'comm' `| `|  `1 `%'UNSET' ~]"  ::  Y / Y
   ::  %set-hd-seed: Set or generate a new HD wallet seed.
   ::  Non-HD wallets will not be upgraded to being a HD wallet.
   ::
-  ":btc-node-hook|action [%set-hd-seed ~]"                                      ::  Y
+  ":btc-node-hook|action [%set-hd-seed ~]"                                      ::  Y / Y
   ::  %set-label:   Sets the label associated with the given address.
   ::
-  ":btc-node-hook|action [%set-label address 'label']"                          ::  Y
+  ":btc-node-hook|action [%set-label address 'label']"                          ::  Y / Y
   ::  %set-tx-fee: Set the transaction fee per kB for this wallet.
   ::
-  ":btc-node-hook|action [%set-tx-fee '5']"                                     ::  Y
+  ":btc-node-hook|action [%set-tx-fee '5']"                                     ::  Y / Y
   ::  %sign-message:   Sign a message with the private key of an address
   ::
-  ":btc-node-hook|action [%get-new-address `'sign' `%legacy]"
+  ":btc-node-hook|action [%get-new-address `'sign' `%legacy]"                   ::  Y / Y
   "=address 0cmjiSfqxQeMsRgkEAddmdANrSVC6NU98wWF"
-  ":btc-node-hook|action [%sign-message address 'message']"                     ::  Y
+  ":btc-node-hook|action [%sign-message address 'message']"                     ::  Y / Y
   ::  %sign-raw-transaction-with-wallet: Sign inputs for raw transaction
   ::  (serialized, hex-encoded).
   ::
@@ -627,15 +628,15 @@
   ::   ==
   ::
   "=hex 0x2.0000.0000.0101.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.ffff.ffff.0502.ca00.0101.ffff.ffff.0200.f902.9500.0000.0017.a914.fa37.cc22.f14f.189b.73e8.5ad0.9f29.e415.5d38.defa.8700.0000.0000.0000.0026.6a24.aa21.a9ed.e2f6.1c3f.71d1.defd.3fa9.99df.a369.5375.5c69.0689.7999.62b4.8beb.d836.974e.8cf9.0120.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000.0000"
-  ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex ~ ~]"           ::  Y
+  ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex ~ ~]"           ::  Y / Y
   "=prevtx 0xefd3.369e.1338.6cd7.357d.d2bc.249f.8d0a.a9e2.a1c7.4271.0693.bf16.e45f.81b9.4433"
   "=script-pubkey 0xa9.1476.03a9.eabd.c983.6eb8.dc6c.4ed0.8d92.106d.2c97.aa87"
   "=prev ~[prevtx 0 script-pubkey ~ ~ ~]"
-  ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex `prev ~]"       ::  Y
+  ":btc-node-hook|action [%sign-raw-transaction-with-wallet hex `prev ~]"       ::  Y / Y
   ::  %unload-wallet:   Unloads the wallet referenced by the request
   ::  endpoint otherwise unloads the wallet specified in the argument.
   ::
-  ":btc-node-hook|action [%unload-wallet `'test']"                              ::  Y
+  ":btc-node-hook|action [%unload-wallet `'test']"                              ::  Y / Y
   ::  %wallet-create-fundedpsbt: Creates and funds a transaction in the
   ::  Partially Signed Transaction format.
   ::  Inputs will be added if supplied inputs are not enough
@@ -664,7 +665,7 @@
   "=outputs [[%data 0x1.0203] ~]"
   "=options `[~ `1 `%legacy `& `& ~ `~[1] `& `1 `%'ECONOMICAL']"
   "=options `[~ `1 `%legacy `& `& ~ `~[1] `& `1 `%'ECONOMICAL']"
-  ":btc-node-hook|action [%wallet-create-fundedpsbt inputs outputs ~ options ~]"      ::  Y
+  ":btc-node-hook|action [%wallet-create-fundedpsbt inputs outputs ~ options ~]"::  Y / Y
   ::>=
   :: [ %wallet-create-fundedpsbt
   ::     psbt
@@ -683,11 +684,11 @@
   ::  %wallet-passphrase:   Stores the wallet decryption key in memory
   ::  for 'timeout' seconds.
   ::
-  ":btc-node-hook|action [%wallet-passphrase 'pass' 20]"                        ::  Y
+  ":btc-node-hook|action [%wallet-passphrase 'pass' 20]"                        ::  Y / Y
   ::  %wallet-passphrase-changehange: s the wallet passphrase from
   ::  'oldpassphrase' to 'newpassphrase'.
   ::
-  ":btc-node-hook|action [%wallet-passphrase-change `'pass' `'pass.2']"         ::  Y
+  ":btc-node-hook|action [%wallet-passphrase-change `'pass' `'pass.2']"         ::  Y / Y
   ::  %wallet-process-psbt: Update a PSBT with input information from
   ::  our wallet and then sign inputs
   ::              psbt=@t
@@ -698,7 +699,7 @@
   ::  txid with amount='25.00000000'
   ::
   "=psbt 'cHNidP8BAGECAAAAAe48tdtNpIT/XpWtHwSKqPt/GAA/vkoutSlPomw3MmW6AAAAAAAAAAAAAnDtApUAAAAAF6kUrxlQrfcNttHcPY7D60KHOK65q96HAAAAAAAAAAAFagMBAgMAAAAAAAEBIAD5ApUAAAAAF6kU+jfMIvFPGJtz6FrQnynkFV043vqHAQQWABSZv6w6KjZjONZ1r1JCDem4SVXxqQABABYAFHtkC22llD4Per/ocWQCZkd9JGJnAAA='"
-  ":btc-node-hook|action [%wallet-process-psbt psbt | %'ALL' ~]"                ::  Y
+  ":btc-node-hook|action [%wallet-process-psbt psbt | %'ALL' ~]"                ::  Y / Y
   ::  ZMQ management
   ::
   ":btc-node-hook|action [%get-zmq-notifications ~]"                            ::  ?
