@@ -70,7 +70,7 @@
       !>  (request-to-rpc:btc-rpc:lib action)
   ::
     =/  action=request:btc-rpc
-      [op en-txid `[`23 `'23' `& `%'ECONOMICAL']]
+      [op en-txid `[`23 `'23' `'23' `& `%'ECONOMICAL']]
     =/  exp
       :^  op   (method:btc-rpc:lib op)  %list
           :~  s+txid
@@ -78,6 +78,7 @@
               =-  (pairs:enjs -)
               :~  ['confTarget' n+'23']
                   ['totalFee' n+~.23]
+                  ['fee_rate' n+~.23]
                   ['replaceable' b+&]
                   ['estimate_mode' s+'ECONOMICAL']
           ==  ==

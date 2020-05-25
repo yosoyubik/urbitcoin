@@ -962,6 +962,7 @@
             %-  unit
             $:  conf-target=(unit @ud)
                 total-fee=(unit @t)
+                fee-rate=(unit @t)
                 replaceable=(unit ?)
                 mode=(unit estimate-mode)
         ==  ==

@@ -337,8 +337,8 @@
   ::
   "=txid 0x427b.882e.7ead.e462.fb5a.ca6c.56ce.6a72.2f18.6d37.d476.2774.714f.9237.14cc.eec5"
   ":btc-node-hook|action [%bump-fee txid ~]"                                    ::  Y / Y
-  ":btc-node-hook|action [%bump-fee txid `[~ `'1.0' `%.y `'ECONOMICAL']]"       ::  Y / Y
-  ":btc-node-hook|action [%bump-fee txid `[`1 ~ `%.y `%'ECONOMICAL']]"          ::  Y / Y
+  ":btc-node-hook|action [%bump-fee txid `[~ `'1.0' ~ `%.y `%'ECONOMICAL']]"     ::  Y / Y
+  ":btc-node-hook|action [%bump-fee txid `[`1 ~  ~`%.y `%'ECONOMICAL']]"        ::  Y / Y
   ::  %create-wallet: Creates and loads a new wallet.
   ::
   ::    - %name: The name for the new wallet.
@@ -703,6 +703,39 @@
   ::  ZMQ management
   ::
   ":btc-node-hook|action [%get-zmq-notifications ~]"                            ::  ?
+
+
+::  BTC bounty 2
+
+  %get-memory-info         :: Y / Y
+  %get-rpc-info            :: Y / Y
+  %help                    :: Y
+  %logging                 :: Y
+  %stop                    :: Y
+  %uptime                  :: Y / Y
+  %generate                :: Y
+  %generate-to-address     :: Y
+  %get-block-template      :: ?
+  %get-mining-info         :: X
+  %get-network-hash-ps     :: X
+  %prioritise-transaction  :: Y
+  %submit-block            :: Y
+  %submit-header           :: Y
+  %add-node                :: Y
+  %clear-banned            :: Y
+  %disconnect-node         :: Y
+  %get-added-node-info     :: Y
+  %get-connection-count    :: Y
+  %get-net-totals          :: Y
+  %get-network-info        :: Y
+  %get-node-addresses      :: Y
+  %get-peer-info           :: Y
+  %list-banned             :: Y
+  %ping                    :: Y
+  %set-ban                 :: Y
+  %set-network-active      :: Y
+
+
 
 ;<  ~  bind:m  end-simple
 (pure:m *vase)

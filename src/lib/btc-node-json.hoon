@@ -900,6 +900,7 @@
           ^-  (list (pair @t json))
           :~  ['confTarget' (feud conf-target.opts)]
               ['totalFee' (ferm total-fee.opts %n)]
+              ['fee_rate' (ferm total-fee.opts %n)]
               ['replaceable' (ferm replaceable.opts %b)]
               ['estimate_mode' (ferm mode.opts %s)]
       ==  ==
@@ -1219,7 +1220,6 @@
     ::
         %rescan-blockchain
       :~  (feud start-height.req)
-        ::
           (feud stop-height.req)
       ==
     ::
